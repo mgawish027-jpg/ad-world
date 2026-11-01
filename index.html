@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<title>AD WORLD</title>
+<link rel="manifest" href="manifest.json">
+<style>
+:root{--blue:#2563eb;--purple:#7c3aed;--ink:#172033;--muted:#667085;--line:#e7eaf0;--bg:#f5f7fb}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,var(--blue),var(--purple));color:white;padding:22px 18px 26px;border-radius:0 0 24px 24px}
+.brand{font-size:25px;font-weight:800;letter-spacing:.5px}.tag{font-size:13px;opacity:.9;margin-top:5px}
+.wrap{max-width:720px;margin:auto;padding:14px}
+.search{width:100%;border:0;border-radius:13px;padding:14px;margin-top:18px;font-size:15px}
+.actions{display:flex;gap:9px;margin-top:12px}.btn{border:0;border-radius:12px;padding:12px 15px;font-weight:700;font-size:14px;cursor:pointer}
+.primary{background:var(--blue);color:white}.light{background:white;color:var(--blue)}
+h2{font-size:18px;margin:20px 2px 12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.cat{background:white;border:1px solid var(--line);border-radius:14px;padding:14px 6px;text-align:center;font-size:13px;cursor:pointer}
+.cat span{display:block;font-size:25px;margin-bottom:7px}
+.card{background:white;border:1px solid var(--line);border-radius:15px;padding:14px;margin:9px 0}
+.muted{color:var(--muted);font-size:13px}.adtitle{font-weight:700;margin:5px 0}
+nav{position:sticky;bottom:0;background:white;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px;max-width:720px;margin:auto}
+nav button{background:none;border:0;color:var(--muted);font-size:12px;padding:5px}
+nav button b{display:block;font-size:19px;margin-bottom:3px}
+.screen{display:none}.screen.active{display:block}.back{background:#eef2ff;color:#334155;margin:0 0 10px}.empty{padding:18px;text-align:center;color:var(--muted)}.cat{min-height:92px}
+input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0;font:inherit;background:white}
+label{font-size:13px;color:var(--muted)}
+.notice{background:#eef4ff;border:1px solid #d7e5ff;padding:12px;border-radius:12px;font-size:13px;line-height:1.6}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
+</style>
+</head>
+<body>
+<header>
+ <div class="brand">🌍 AD WORLD</div>
+ <div class="tag">سوقك وإعلاناتك في مكان واحد</div>
+ <input class="search" id="search" placeholder="ابحث عن منتج أو خدمة أو إعلان..." oninput="renderAds()">
+ <div class="actions"><button class="btn light" onclick="show('add')">＋ أضف إعلانًا</button><button class="btn light" onclick="show('account')">دخول / اشتراك</button></div>
+</header>
+<main class="wrap">
+<section id="home" class="screen active">
+ <h2>تصفح الأقسام</h2>
+ <div class="grid">
+  <button class="cat" onclick="openCategory('سيارات')"><span>🚗</span>سيارات</button>
+  <button class="cat" onclick="openCategory('عقارات')"><span>🏠</span>عقارات</button>
+  <button class="cat" onclick="openCategory('إلكترونيات')"><span>📱</span>إلكترونيات</button>
+  <button class="cat" onclick="openCategory('أثاث')"><span>🛋️</span>أثاث</button>
+  <button class="cat" onclick="openCategory('وظائف')"><span>💼</span>وظائف</button>
+  <button class="cat" onclick="openCategory('خدمات')"><span>🧰</span>خدمات</button>
+ </div>
+ <h2>أحدث الإعلانات</h2>
+ <div id="ads"></div>
+ <div class="notice">هذه نسخة تجريبية للتصميم. الإعلانات المعروضة تجريبية، ولا يوجد حتى الآن تسجيل حقيقي أو دفع أو مكافآت مالية.</div>
+</section>
+<section id="category" class="screen">
+ <button class="btn back" onclick="show('home')">→ رجوع للرئيسية</button>
+ <h2 id="categoryTitle">القسم</h2>
+ <div class="actions" style="margin:0 0 12px"><button class="btn primary" onclick="addFromCategory()">＋ أضف إعلانًا في هذا القسم</button></div>
+ <div id="categoryAds"></div>
+</section>
+<section id="add" class="screen">
+ <h2>إضافة إعلان</h2>
+ <div class="card">
+  <label>عنوان الإعلان</label><input id="title" placeholder="مثال: هاتف بحالة ممتازة">
+  <label>القسم</label><select id="category"><option>إلكترونيات</option><option>سيارات</option><option>عقارات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option></select>
+  <label>السعر</label><input id="price" type="number" placeholder="السعر">
+  <label>الدولة / المدينة</label><input id="place" placeholder="مثال: مصر - الغردقة">
+  <label>وصف الإعلان</label><textarea id="description" rows="4" placeholder="اكتب تفاصيل الإعلان"></textarea>
+  <button class="btn primary" style="width:100%" onclick="addAd()">نشر تجريبي</button>
+ </div>
+ <p class="muted">الإعلان يُحفظ على هذا الجهاز فقط في هذه النسخة التجريبية.</p>
+</section>
+<section id="account" class="screen">
+ <h2>حسابي</h2>
+ <div class="card">
+  <p><b>مرحبًا بك في AD WORLD</b></p>
+  <input placeholder="البريد الإلكتروني أو رقم الهاتف">
+  <input placeholder="كلمة المرور" type="password">
+  <button class="btn primary" style="width:100%" onclick="alert('التسجيل الحقيقي سيُضاف في مرحلة ربط قاعدة البيانات.')">دخول</button>
+  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="alert('إنشاء الحساب سيُضاف في المرحلة التالية.')">إنشاء حساب جديد</button>
+ </div>
+</section>
+<section id="rewards" class="screen">
+ <h2>شاهد واكسب</h2>
+ <div class="card">
+  <div style="font-size:35px">🎁</div>
+  <b>المكافآت قيد التجهيز</b>
+  <p class="muted">سنضيف هذا القسم بعد ربط التطبيق بمعلنين حقيقيين والتأكد من تمويل المكافآت من إيرادات فعلية.</p>
+ </div>
+</section>
+<section id="business" class="screen">
+ <h2>إعلانات الشركات</h2>
+ <div class="card"><b>روّج لنشاطك التجاري</b><p class="muted">مساحة مخصصة للمحلات والشركات والعروض الممولة.</p><button class="btn primary" onclick="alert('نموذج حساب الشركات سيُضاف في المرحلة التالية.')">ابدأ كصاحب نشاط</button></div>
+</section>
+</main>
+<nav>
+ <button onclick="show('home')"><b>⌂</b>الرئيسية</button>
+ <button onclick="show('business')"><b>▣</b>الشركات</button>
+ <button onclick="show('add')"><b>＋</b>أضف إعلان</button>
+ <button onclick="show('rewards')"><b>🎁</b>المكافآت</button>
+ <button onclick="show('account')"><b>♙</b>حسابي</button>
+</nav>
+<footer>AD WORLD · نموذج أولي تجريبي</footer>
+<script>
+let sample=[
+ {title:'هاتف ذكي بحالة ممتازة',category:'إلكترونيات',price:'8500',place:'مصر - الغردقة',description:'إعلان تجريبي لعرض شكل الإعلانات.'},
+ {title:'شقة للإيجار',category:'عقارات',price:'6000',place:'مصر - الإسكندرية',description:'شقة تجريبية بالقرب من الخدمات.'},
+ {title:'سيارة مستعملة',category:'سيارات',price:'420000',place:'مصر - القاهرة',description:'بيانات تجريبية وليست عرض بيع حقيقي.'}
+];
+let ads=[...sample], currentFilter='';
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function renderAds(){let q=(document.getElementById('search').value||'').toLowerCase();document.getElementById('ads').innerHTML=ads.filter(a=>(!currentFilter||a.category===currentFilter)&&(`${a.title} ${a.category} ${a.place}`.toLowerCase().includes(q))).map(a=>`<div class="card"><div class="muted">${a.category} · ${a.place}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة.</p>'}
+function filterCat(c){openCategory(c)}
+function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
+function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card"><div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
+function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
+function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}ads.unshift({title,category:document.getElementById('category').value,price:document.getElementById('price').value,place:document.getElementById('place').value||'الموقع غير محدد',description:document.getElementById('description').value});['title','price','place','description'].forEach(id=>document.getElementById(id).value='');currentFilter='';show('home');renderAds();if(document.getElementById('categoryAds'))renderCategoryAds();alert('تمت إضافة الإعلان في النسخة التجريبية على هذا الجهاز.')}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+renderAds();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body></html>
