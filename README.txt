@@ -1,0 +1,1 @@
+AD WORLD prototype\nOpen index.html in a browser. For installable PWA behavior, host these files on an HTTPS static host. This is a front-end demo only; authentication, database, payments, ads network and rewards are not connected.
