@@ -279,7 +279,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
 </script>
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail, sendEmailVerification, reload, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
@@ -420,8 +420,13 @@ window.loginAccount = async () => {
   const password = document.getElementById("authPassword").value;
   if (!email || !password) return alert("اكتب البريد الإلكتروني وكلمة المرور.");
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    alert("تم تسجيل الدخول بنجاح.");
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    await reload(credential.user);
+    await credential.user.getIdToken(true);
+    updateAccountUI(credential.user);
+    alert(credential.user.email === "mgawish027@gmail.com" && !credential.user.emailVerified
+      ? "تم تسجيل الدخول، لكن يجب تأكيد بريدك الإلكتروني لتفعيل صلاحيات المالك. افتح رسالة التحقق التي أرسلناها لك."
+      : "تم تسجيل الدخول بنجاح.");
     show("home");
   } catch (error) {
     alert("تعذر تسجيل الدخول: " + (error.code || error.message));
@@ -443,8 +448,12 @@ window.createAccount = async () => {
     } else {
       await createUserWithEmailAndPassword(auth, email, password);
     }
-    updateAccountUI(auth.currentUser);
-    alert("تم إنشاء حسابك بنجاح. أنت الآن داخل حسابك.");
+    const newUser = auth.currentUser;
+    if (newUser && newUser.email && !newUser.emailVerified) {
+      await sendEmailVerification(newUser);
+    }
+    updateAccountUI(newUser);
+    alert("تم إنشاء حسابك بنجاح. أرسلنا رسالة تأكيد إلى بريدك الإلكتروني. افتح الرسالة واضغط رابط التأكيد، ثم سجّل الدخول مرة أخرى لتفعيل صلاحيات المالك إذا كان هذا بريد المالك.");
     show("home");
   } catch (error) {
     const messages = {
