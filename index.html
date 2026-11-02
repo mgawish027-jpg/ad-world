@@ -28,6 +28,28 @@ input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);borde
 label{font-size:13px;color:var(--muted)}
 .notice{background:#eef4ff;border:1px solid #d7e5ff;padding:12px;border-radius:12px;font-size:13px;line-height:1.6}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
+
+/* Clean, mobile-first sign-in screen */
+#account{padding:18px 0 30px;background:linear-gradient(180deg,#f3f7ff 0%,#f8faff 100%);min-height:68vh;border-radius:22px}
+#account .auth-wrap{max-width:440px;margin:0 auto;padding:8px 14px}
+#account .auth-brand{display:flex;align-items:center;gap:11px;margin:8px 4px 25px}
+#account .auth-logo{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;font-weight:900;font-size:17px;box-shadow:0 7px 18px #315ed52b}
+#account .auth-brand strong{display:block;font-size:17px;letter-spacing:.5px;color:#172554}
+#account .auth-brand span{display:block;font-size:11px;color:#7b8498;margin-top:3px}
+#account .auth-card{background:#fff;border:1px solid #e9eef8;border-radius:22px;padding:24px 20px;box-shadow:0 12px 35px rgba(35,64,120,.08)}
+#account .auth-welcome-icon{width:48px;height:48px;border-radius:16px;background:#eef4ff;display:grid;place-items:center;font-size:24px;margin-bottom:13px}
+#account .auth-title{font-size:23px;margin:0 0 7px;color:#172554}
+#account .auth-subtitle{font-size:13px;line-height:1.7;color:#7b8498;margin:0 0 19px}
+#account .auth-status{font-size:12px;line-height:1.7;color:#315a9d;background:#f0f6ff;border:1px solid #dfebff;border-radius:12px;padding:10px 12px;margin-bottom:16px}
+#account #authForm label,#account .auth-profile label{display:block;font-size:12px;font-weight:700;color:#475569;margin:12px 2px 6px}
+#account #authForm input,#account .auth-profile input{width:100%;height:48px;border:1px solid #e1e7f0;border-radius:12px;padding:0 13px;margin:0 0 5px;background:#fbfcff;font-size:14px;outline:none;transition:border .2s,box-shadow .2s}
+#account #authForm input:focus,#account .auth-profile input:focus{border-color:#6b8ff0;box-shadow:0 0 0 3px #2563eb15;background:#fff}
+#account .auth-login{width:100%;height:48px;border-radius:12px;margin-top:17px;background:linear-gradient(110deg,#2563eb,#5146d8);color:#fff;font-size:15px;box-shadow:0 7px 15px #315ed52b}
+#account .auth-create{width:100%;height:46px;border:1px solid #dce6f8;border-radius:12px;background:#f7f9ff;color:#3157a5;font-weight:700;margin-top:10px;font-size:14px}
+#account .auth-forgot{display:block;margin:13px auto 0;border:0;background:none;color:#64748b;font-size:12px;padding:7px}
+#account .auth-profile{margin-top:18px;padding-top:12px;border-top:1px solid #edf0f5}
+#account .auth-logout{width:100%;height:45px;border:0;border-radius:12px;background:#fff1f2;color:#be123c;font-weight:700;margin-top:14px}
+#account .auth-footnote{text-align:center;color:#9aa3b4;font-size:11px;margin:16px 0 0}
 </style>
 </head>
 <body>
@@ -95,17 +117,26 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <p class="muted">سيتم حفظ الإعلان على الإنترنت ليظهر بعد إعادة فتح التطبيق.</p>
 </section>
 <section id="account" class="screen">
- <h2>حسابي</h2>
- <div class="card">
-  <p><b>مرحبًا بك في AD WORLD</b></p>
-  <div id="accountStatus" class="notice">أنت تستخدم التطبيق كزائر. سجّل الدخول أو أنشئ حسابًا لحفظ إعلاناتك باسمك.</div>
-  <label>البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">
-  <label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل">
-  <button class="btn primary" style="width:100%" onclick="loginAccount()">دخول</button>
-  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="createAccount()">إنشاء حساب جديد</button>
-  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="resetPassword()">نسيت كلمة المرور؟</button>
-  <div id="sellerProfileEditor" style="margin-top:14px;display:none"><label>اسم المعلن الظاهر</label><input id="sellerDisplayName" maxlength="50" placeholder="اسمك أو اسم نشاطك"><button class="btn primary" onclick="saveSellerDisplayName()">حفظ الاسم</button></div>
-  <button id="logoutButton" class="btn" style="display:none;width:100%;margin-top:8px;background:#fee2e2;color:#991b1b" onclick="logoutAccount()">تسجيل الخروج</button>
+ <div class="auth-wrap">
+  <div class="auth-brand"><div class="auth-logo">AW</div><div><strong>AD WORLD</strong><span>إعلاناتك وفرصك في مكان واحد</span></div></div>
+  <div class="auth-card">
+   <div class="auth-welcome-icon">👋</div>
+   <h2 class="auth-title">أهلاً بعودتك</h2>
+   <p class="auth-subtitle">سجّل دخولك لمتابعة إعلاناتك والتواصل مع الآخرين.</p>
+   <div id="accountStatus" class="auth-status">أنت تستخدم التطبيق كزائر. سجّل الدخول أو أنشئ حسابًا لحفظ إعلاناتك باسمك.</div>
+   <div id="authForm">
+    <label for="authEmail">البريد الإلكتروني</label>
+    <input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">
+    <label for="authPassword">كلمة المرور</label>
+    <input id="authPassword" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل">
+    <button class="btn primary auth-login" onclick="loginAccount()">تسجيل الدخول</button>
+    <button class="auth-create" onclick="createAccount()">إنشاء حساب جديد</button>
+    <button class="auth-forgot" onclick="resetPassword()">نسيت كلمة المرور؟</button>
+   </div>
+   <div id="sellerProfileEditor" class="auth-profile" style="display:none"><label for="sellerDisplayName">اسم المعلن الظاهر</label><input id="sellerDisplayName" maxlength="50" placeholder="اسمك أو اسم نشاطك"><button class="btn primary auth-login" onclick="saveSellerDisplayName()">حفظ الاسم</button></div>
+   <button id="logoutButton" class="auth-logout" style="display:none" onclick="logoutAccount()">تسجيل الخروج</button>
+  </div>
+  <p class="auth-footnote">🔒 بياناتك محفوظة بأمان مع AD WORLD</p>
  </div>
 </section>
 <section id="rewards" class="screen">
@@ -280,7 +311,7 @@ let adsListenerStarted = false;
 function updateAccountUI(user) {
   const box = document.getElementById("accountStatus");
   const logout = document.getElementById("logoutButton");
-  const authControls = document.querySelectorAll("#account .card > label, #account .card > input, #account .card > button:not(#logoutButton)");
+  const authControls = document.querySelectorAll("#authForm label, #authForm input, #authForm button");
   const headerAccount = document.querySelector("header .actions button:last-child");
   if (!box) return;
   if (user && !user.isAnonymous) {
