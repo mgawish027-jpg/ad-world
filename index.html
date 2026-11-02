@@ -213,6 +213,7 @@ function renderAds(){
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
+window.openCategory = openCategory;
 function renderCategoryAds(){
  let list=ads.filter(a=>a.category===currentFilter);
  document.getElementById('categoryAds').innerHTML=list.map(a=>{
