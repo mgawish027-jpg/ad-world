@@ -66,6 +66,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <div id="ads"></div>
  <div class="notice">حالة الاتصال: <b id="firebaseStatus">جارٍ الاتصال بخدمات Firebase...</b><br>الإعلانات التجريبية للعرض فقط.</div>
 </section>
+<section id="inbox" class="screen"><h2>استفسارات العملاء ✉️</h2><button class="btn back" onclick="loadSellerInquiries()">↻ تحديث الاستفسارات</button><div id="inquiryList"></div></section>
 <section id="notifications" class="screen"><h2>الإشعارات 🔔</h2><div id="notificationList"></div></section>
 <section id="favorites" class="screen"><h2>إعلاناتي المفضلة ❤️</h2><div id="favoriteAds"></div></section>
 <section id="category" class="screen">
@@ -122,6 +123,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <button onclick="show('home')"><b>⌂</b>الرئيسية</button>
  <button onclick="show('business')"><b>▣</b>الشركات</button>
  <button onclick="showNotifications()"><b>🔔</b><span id="notificationNavLabel">الإشعارات</span></button>
+ <button onclick="loadSellerInquiries()"><b>✉️</b>استفساراتي</button>
   <button onclick="renderFavorites();show('favorites')"><b>♥</b>المفضلة</button>
  <button onclick="show('add')"><b>＋</b>أضف إعلان</button>
  <button onclick="show('rewards')"><b>🎁</b>المكافآت</button>
@@ -167,6 +169,20 @@ window.sendAdInquiry=async(sellerId,adId)=>{
   alert('تم إرسال استفسارك لصاحب الإعلان.');
  }catch(e){console.error('Inquiry send failed',e);alert('تعذر إرسال الاستفسار. قد تحتاج قواعد Firestore إلى السماح بإنشاء الاستفسارات والإشعارات. ('+(e.code||e.message)+')');}
 };
+window.loadSellerInquiries=async()=>{
+ show('inbox');const box=document.getElementById('inquiryList');box.innerHTML='<p class="muted">جارٍ تحميل الاستفسارات...</p>';
+ await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous){box.innerHTML='<div class="card empty">سجّل الدخول بحسابك لعرض استفسارات إعلاناتك.</div>';return;}
+ try{const snap=await getDocs(query(collection(db,'inquiries'),where('sellerId','==',currentUser.uid)));const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+ box.innerHTML=items.map(x=>'<div class="card"><b>'+escapeHtml(x.adTitle||'إعلان')+'</b><p>'+escapeHtml(x.message||'')+'</p><small class="muted">'+(x.createdAt?.toDate?x.createdAt.toDate().toLocaleString('ar-EG'):'')+'</small>'+(x.reply?'<div class="notice" style="margin-top:8px"><b>ردك:</b><p>'+escapeHtml(x.reply)+'</p></div>':'<p class="muted">بانتظار ردك</p>')+'<button class="btn primary" style="margin-top:8px" onclick="replyToInquiry(\\''+x.id+'\\')">'+(x.reply?'تعديل الرد':'الرد على العميل')+'</button></div>').join('')||'<div class="card empty">لا توجد استفسارات على إعلاناتك حتى الآن.</div>';
+ }catch(e){console.error(e);box.innerHTML='<div class="card empty">تعذر تحميل الاستفسارات: '+escapeHtml(e.code||e.message)+'</div>';}
+}
+window.replyToInquiry=async(id)=>{
+ await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous)return alert('سجّل الدخول أولًا.');
+ const snap=await getDocs(query(collection(db,'inquiries'),where('sellerId','==',currentUser.uid)));const found=snap.docs.find(d=>d.id===id);if(!found)return alert('هذا الاستفسار غير متاح لحسابك.');
+ const data=found.data();const reply=prompt('اكتب ردك للعميل:',data.reply||'');if(reply===null)return;const clean=reply.trim();if(!clean)return alert('اكتب الرد أولًا.');if(clean.length>1000)return alert('الرد طويل. الحد الأقصى 1000 حرف.');
+ try{await updateDoc(doc(db,'inquiries',id),{reply:clean,repliedAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:data.buyerId,type:'inquiry_reply',title:'رد جديد من المعلن 💬',message:'رد صاحب الإعلان على استفسارك: '+String(data.adTitle||''),adId:data.adId,read:false,createdAt:serverTimestamp()});alert('تم إرسال الرد للعميل.');await loadSellerInquiries();}
+ catch(e){console.error(e);alert('تعذر إرسال الرد. راجع قواعد Firestore. ('+(e.code||e.message)+')');}
+}
 function startNotificationsListener(user){if(notificationsListenerStarted||!user||user.isAnonymous)return;notificationsListenerStarted=true;onSnapshot(query(collection(db,'notifications'),where('recipientId','==',user.uid),orderBy('createdAt','desc')),snap=>{notificationItems=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotifications();},err=>{console.warn('Notifications listener failed',err);const box=document.getElementById('notificationList');if(box)box.textContent='تعذر تحميل الإشعارات حاليًا.';});}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
 function renderAds(){
