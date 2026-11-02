@@ -66,6 +66,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <div id="ads"></div>
  <div class="notice">حالة الاتصال: <b id="firebaseStatus">جارٍ الاتصال بخدمات Firebase...</b><br>الإعلانات التجريبية للعرض فقط.</div>
 </section>
+<section id="sellerProfile" class="screen"><button class="btn back" onclick="show('home')">رجوع</button><div id="sellerProfileContent"></div></section>
 <section id="inbox" class="screen"><h2>استفسارات العملاء ✉️</h2><button class="btn back" onclick="loadSellerInquiries()">↻ تحديث الاستفسارات</button><div id="inquiryList"></div></section>
 <section id="notifications" class="screen"><h2>الإشعارات 🔔</h2><div id="notificationList"></div></section>
 <section id="favorites" class="screen"><h2>إعلاناتي المفضلة ❤️</h2><div id="favoriteAds"></div></section>
@@ -103,6 +104,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <button class="btn primary" style="width:100%" onclick="loginAccount()">دخول</button>
   <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="createAccount()">إنشاء حساب جديد</button>
   <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="resetPassword()">نسيت كلمة المرور؟</button>
+  <div id="sellerProfileEditor" style="margin-top:14px;display:none"><label>اسم المعلن الظاهر</label><input id="sellerDisplayName" maxlength="50" placeholder="اسمك أو اسم نشاطك"><button class="btn primary" onclick="saveSellerDisplayName()">حفظ الاسم</button></div>
   <button id="logoutButton" class="btn" style="display:none;width:100%;margin-top:8px;background:#fee2e2;color:#991b1b" onclick="logoutAccount()">تسجيل الخروج</button>
  </div>
 </section>
@@ -228,7 +230,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
@@ -269,11 +271,29 @@ function updateAccountUI(user) {
   if (user && !user.isAnonymous) {
     box.textContent = "تم تسجيل الدخول: " + (user.email || "");
     if (logout) logout.style.display = "block";
+    const editor=document.getElementById("sellerProfileEditor");if(editor)editor.style.display="block";
+    loadSellerDisplayName(user);
   } else {
     box.textContent = "أنت تستخدم التطبيق كزائر. يمكنك إنشاء حساب بالبريد الإلكتروني وكلمة المرور.";
     if (logout) logout.style.display = "none";
+    const editor=document.getElementById("sellerProfileEditor");if(editor)editor.style.display="none";
   }
 }
+
+async function loadSellerDisplayName(user){
+ try{const s=await getDoc(doc(db,"sellerProfiles",user.uid));const i=document.getElementById("sellerDisplayName");if(i)i.value=s.exists()?(s.data().name||""):"";}catch(e){console.warn(e);}
+}
+window.saveSellerDisplayName=async()=>{
+ await authReady;const u=auth.currentUser;if(!u||u.isAnonymous)return alert("سجّل الدخول أولًا.");
+ const name=document.getElementById("sellerDisplayName").value.trim();if(name.length<2||name.length>50)return alert("اكتب اسمًا من 2 إلى 50 حرفًا.");
+ try{await setDoc(doc(db,"sellerProfiles",u.uid),{name:name,updatedAt:serverTimestamp()},{merge:true});alert("تم حفظ اسم المعلن.");}catch(e){alert("تعذر الحفظ. راجع قواعد Firestore: "+(e.code||e.message));}
+};
+window.openSellerProfile=async(uid)=>{
+ show("sellerProfile");const box=document.getElementById("sellerProfileContent");box.textContent="جارٍ التحميل...";
+ try{const s=await getDoc(doc(db,"sellerProfiles",uid));const p=s.exists()?s.data():{};const count=ads.filter(a=>a.ownerId===uid).length;box.innerHTML='<div class="card"><h2>'+escapeHtml(p.name||"معلن على AD WORLD")+'</h2><p>عدد الإعلانات الظاهرة: '+count+'</p></div>';}
+ catch(e){box.textContent="تعذر تحميل الملف الشخصي: "+(e.code||e.message);}
+};
+
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   updateAccountUI(user);
