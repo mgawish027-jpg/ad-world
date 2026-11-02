@@ -242,7 +242,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
 </script>
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
@@ -355,16 +355,29 @@ window.createAccount = async () => {
   const password = document.getElementById("authPassword").value;
   if (!email || !password) return alert("اكتب البريد الإلكتروني وكلمة المرور.");
   if (password.length < 6) return alert("كلمة المرور لازم تكون 6 أحرف على الأقل.");
+  const button = document.querySelector('#account button[onclick="createAccount()"]');
+  if (button) { button.disabled = true; button.textContent = "جارٍ إنشاء الحساب..."; }
   try {
-    await createUserWithEmailAndPassword(auth, email, password);
+    await authReady;
+    const activeUser = auth.currentUser;
+    if (activeUser && activeUser.isAnonymous) {
+      const credential = EmailAuthProvider.credential(email, password);
+      await linkWithCredential(activeUser, credential);
+    } else {
+      await createUserWithEmailAndPassword(auth, email, password);
+    }
     alert("تم إنشاء حسابك بنجاح.");
   } catch (error) {
     const messages = {
-      "auth/email-already-in-use": "هذا البريد مسجل بالفعل. جرّب تسجيل الدخول.",
+      "auth/email-already-in-use": "هذا البريد مسجل بالفعل. استخدم زر دخول بدل إنشاء حساب جديد.",
       "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.",
-      "auth/weak-password": "اختر كلمة مرور أقوى من 6 أحرف."
+      "auth/weak-password": "اختر كلمة مرور من 6 أحرف على الأقل.",
+      "auth/credential-already-in-use": "هذا البريد مرتبط بحساب موجود بالفعل. استخدم زر دخول.",
+      "auth/provider-already-linked": "هذا الحساب مرتبط بالفعل بالبريد الإلكتروني. سجّل الخروج ثم ادخل بالبريد وكلمة المرور."
     };
     alert(messages[error.code] || ("تعذر إنشاء الحساب: " + (error.code || error.message)));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "إنشاء حساب جديد"; }
   }
 };
 window.resetPassword = async () => {
