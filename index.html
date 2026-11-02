@@ -129,7 +129,7 @@ let sample=[
  {title:'شقة للإيجار',category:'عقارات',price:'6000',place:'مصر - الإسكندرية',description:'شقة تجريبية بالقرب من الخدمات.'},
  {title:'سيارة مستعملة',category:'سيارات',price:'420000',place:'مصر - القاهرة',description:'بيانات تجريبية وليست عرض بيع حقيقي.'}
 ];
-let ads=[...sample], currentFilter='';
+let ads=[...sample], currentFilter='', editingAdId=null;
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
 function renderAds(){
  let q=(document.getElementById('search').value||'').trim().toLowerCase();
@@ -147,14 +147,24 @@ function renderAds(){
  if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
  else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
  else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
- document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+ document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
 }
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
-function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
+function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
-async function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}const categoryEl=document.getElementById('category');const ad={title:String(title),category:String(categoryEl?.value||'عام').trim()||'عام',price:String(document.getElementById('price').value||''),place:String(document.getElementById('place').value||'الموقع غير محدد'),description:String(document.getElementById('description').value||'')};const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent='جارٍ نشر الإعلان...';try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');const imageFile=document.getElementById('adImage')?.files?.[0];if(imageFile){btn.textContent='جارٍ رفع الصورة...';ad.imageFile=imageFile;}await window.saveAdToCloud(ad);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');clearAdImage();currentFilter='';show('home');alert('تم نشر إعلانك وحفظه على الإنترنت.');}catch(e){console.error(e);alert('فشل حفظ الإعلان.\\nرمز الخطأ: '+(e.code||'غير متاح')+'\\nالتفاصيل: '+(e.message||'غير متاحة'));}finally{btn.disabled=false;btn.textContent='نشر الإعلان'} }
+async function addAd(){
+ let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}
+ const categoryEl=document.getElementById('category');
+ const ad={title:String(title),category:String(categoryEl?.value||'عام').trim()||'عام',price:String(document.getElementById('price').value||''),place:String(document.getElementById('place').value||'الموقع غير محدد'),description:String(document.getElementById('description').value||'')};
+ const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent=editingAdId?'جارٍ حفظ التعديلات...':'جارٍ نشر الإعلان...';
+ try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');const imageFile=document.getElementById('adImage')?.files?.[0];if(imageFile){btn.textContent='جارٍ رفع الصورة...';ad.imageFile=imageFile;}await window.saveAdToCloud(ad,editingAdId);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');clearAdImage();editingAdId=null;const heading=document.querySelector('#add h2');if(heading)heading.textContent='أضف إعلانًا جديدًا';currentFilter='';show('home');alert('تم حفظ الإعلان بنجاح.');}
+ catch(e){console.error(e);alert('فشل حفظ الإعلان.\\nرمز الخطأ: '+(e.code||'غير متاح')+'\\nالتفاصيل: '+(e.message||'غير متاحة'));}
+ finally{btn.disabled=false;btn.textContent='نشر الإعلان'}
+}
+function editAd(id){const ad=ads.find(x=>x.id===id);if(!ad||ad.ownerId!==window.currentAdUserId)return alert('لا يمكنك تعديل هذا الإعلان.');editingAdId=id;document.getElementById('title').value=ad.title||'';document.getElementById('category').value=ad.category||'عام';document.getElementById('price').value=ad.price||'';document.getElementById('place').value=ad.place||'';document.getElementById('description').value=ad.description||'';clearAdImage();const heading=document.querySelector('#add h2');if(heading)heading.textContent='تعديل الإعلان';const btn=document.querySelector('#add button.primary');if(btn)btn.textContent='حفظ التعديلات';show('add')}
+async function deleteAd(id){const ad=ads.find(x=>x.id===id);if(!ad||ad.ownerId!==window.currentAdUserId)return alert('لا يمكنك حذف هذا الإعلان.');if(!confirm('هل أنت متأكد من حذف الإعلان؟ لا يمكن التراجع عن هذه الخطوة.'))return;try{await window.deleteAdFromCloud(id);alert('تم حذف الإعلان.')}catch(e){console.error(e);alert('تعذر حذف الإعلان: '+(e.code||e.message))}}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 window.previewAdImage = event => {const file=event.target.files?.[0];if(!file)return;if(!file.type.startsWith('image/')){alert('اختار ملف صورة فقط.');event.target.value='';return}if(file.size>5*1024*1024){alert('حجم الصورة أكبر من 5 ميجابايت. اختار صورة أصغر.');event.target.value='';return}const reader=new FileReader();reader.onload=()=>{document.getElementById('previewImg').src=reader.result;document.getElementById('imagePreview').style.display='block'};reader.readAsDataURL(file)};
 window.clearAdImage = () => {const input=document.getElementById('adImage');if(input)input.value='';const preview=document.getElementById('imagePreview');if(preview)preview.style.display='none';const img=document.getElementById('previewImg');if(img)img.removeAttribute('src')};
@@ -164,7 +174,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
@@ -221,6 +231,7 @@ onAuthStateChanged(auth, async user => {
     }
     return;
   }
+  window.currentAdUserId = user.uid;
   resolveAuthReady();
   setFirebaseStatus(user.isAnonymous ? "تم الدخول كزائر؛ جارٍ الاتصال بقاعدة البيانات..." : "تم تسجيل الدخول بحسابك؛ جارٍ الاتصال بقاعدة البيانات...");
   if (!adsListenerStarted) {
@@ -310,7 +321,7 @@ window.generateAdWithAI = async () => {
   }
 };
 
-window.saveAdToCloud = async (ad) => {
+window.saveAdToCloud = async (ad, editingId = null) => {
   await authReady;
   currentUser = auth.currentUser || currentUser;
   if (!currentUser) throw new Error("not-authenticated");
@@ -328,9 +339,23 @@ window.saveAdToCloud = async (ad) => {
     place: String(ad.place || "الموقع غير محدد"),
     description: String(ad.description || ""),
     ownerId: currentUser.uid,
-    createdAt: serverTimestamp()
+    ...(editingId ? {} : { createdAt: serverTimestamp() })
   };
-  await addDoc(collection(db, "ads"), safeAd);
+  if (editingId) {
+    const existing = cloudAds.find(item => item.id === editingId);
+    if (!existing || existing.ownerId !== currentUser.uid) throw new Error("not-owner");
+    if (!ad.imageFile) safeAd.imageUrl = existing.imageUrl || "";
+    await updateDoc(doc(db, "ads", editingId), safeAd);
+  } else {
+    await addDoc(collection(db, "ads"), safeAd);
+  }
+};
+window.deleteAdFromCloud = async (id) => {
+  await authReady;
+  currentUser = auth.currentUser || currentUser;
+  const existing = cloudAds.find(item => item.id === id);
+  if (!currentUser || !existing || existing.ownerId !== currentUser.uid) throw new Error("not-owner");
+  await deleteDoc(doc(db, "ads", id));
 };
 </script>
 </body></html>
