@@ -195,15 +195,19 @@ function renderAds(){
  let max=document.getElementById('maxPrice')?.value;
  let sort=document.getElementById('sortAds')?.value||'newest';
  let list=ads.filter(a=>{
-  let price=Number(a.price);
-  let hasPrice=String(a.price||'').trim()!==''&&Number.isFinite(price);
-  let text=`${a.title||''} ${a.category||''} ${a.place||''} ${a.description||''}`.toLowerCase();
+  let price=Number(a.price);let hasPrice=String(a.price||'').trim()!==''&&Number.isFinite(price);
+  let text=[a.title,a.category,a.place,a.description].join(' ').toLowerCase();
   return (!currentFilter||a.category===currentFilter)&&(!category||a.category===category)&&(!q||text.includes(q))&&(!city||String(a.place||'').toLowerCase().includes(city))&&(min===''||min==null||(hasPrice&&price>=Number(min)))&&(max===''||max==null||(hasPrice&&price<=Number(max)));
  });
  if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
  else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
  else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
- document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId ? '<div class="muted" id="sellerRating-\${a.id}" style="margin-top:8px">⭐ جارٍ تحميل تقييم المعلن...</div><button class="btn light" style="margin-top:6px" onclick="rateSeller(&quot;\${a.ownerId}&quot;,&quot;\${a.id}&quot;)">⭐ قيّم المعلن</button>' : ''}${contactButtons(a)}${contactButtons(a)}${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)});
+ document.getElementById('ads').innerHTML=list.map(a=>{
+  const seller=a.ownerId?'<div class="muted" id="sellerRating-'+escapeHtml(a.id)+'" style="margin-top:8px">⭐ جارٍ تحميل تقييم المعلن...</div><button class="btn light" style="margin-top:6px" onclick="rateSeller(\''+escapeHtml(a.ownerId)+'\',\''+escapeHtml(a.id)+'\')">⭐ قيّم المعلن</button><button class="btn light" style="margin:6px 0" onclick="openSellerProfile(\''+escapeHtml(a.ownerId)+'\')">👤 عرض ملف المعلن</button>':'';
+  const own=a.ownerId&&a.ownerId===window.currentAdUserId?'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+escapeHtml(a.id)+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+escapeHtml(a.id)+'\')">حذف</button></div>':'';
+  return '<div class="card">'+(a.imageUrl?'<img src="'+escapeHtml(a.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'')+'<div class="muted">'+escapeHtml(a.category)+' · '+escapeHtml(a.place)+'</div><div class="adtitle">'+escapeHtml(a.title)+'</div><b>'+(a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(a.description||'')+'</p>'+seller+contactButtons(a)+favoriteButton(a)+own+'</div>';
+ }).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+ list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)});
 }
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
