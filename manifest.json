@@ -1,1 +1,19 @@
-{"name":"AD WORLD","short_name":"AD WORLD","start_url":"./index.html","display":"standalone","background_color":"#f5f7fb","theme_color":"#2563eb","lang":"ar","dir":"rtl"}
+{
+  "name": "AD WORLD",
+  "short_name": "AD WORLD",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#2563eb",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
