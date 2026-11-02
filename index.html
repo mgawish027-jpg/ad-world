@@ -316,6 +316,7 @@ window.openSellerProfile=async(uid)=>{
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   updateAccountUI(user);
+  if (user && !user.isAnonymous) show("home");
   if (!user) {
     try { await signInAnonymously(auth); }
     catch (error) {
