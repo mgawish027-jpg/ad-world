@@ -114,7 +114,7 @@ function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
 function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card"><div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
-async function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}const ad={title,category:document.getElementById('category').value,price:document.getElementById('price').value,place:document.getElementById('place').value||'الموقع غير محدد',description:document.getElementById('description').value};const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent='جارٍ نشر الإعلان...';try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');await window.saveAdToCloud(ad);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');currentFilter='';show('home');alert('تم نشر إعلانك وحفظه على الإنترنت.');}catch(e){console.error(e);alert('فشل حفظ الإعلان.\nرمز الخطأ: '+(e.code||'غير متاح')+'\nالتفاصيل: '+(e.message||'غير متاحة'));}finally{btn.disabled=false;btn.textContent='نشر الإعلان'} }
+async function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}const categoryEl=document.getElementById('category');const ad={title:String(title),category:String(categoryEl?.value||'عام').trim()||'عام',price:String(document.getElementById('price').value||''),place:String(document.getElementById('place').value||'الموقع غير محدد'),description:String(document.getElementById('description').value||'')};const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent='جارٍ نشر الإعلان...';try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');await window.saveAdToCloud(ad);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');currentFilter='';show('home');alert('تم نشر إعلانك وحفظه على الإنترنت.');}catch(e){console.error(e);alert('فشل حفظ الإعلان.\nرمز الخطأ: '+(e.code||'غير متاح')+'\nالتفاصيل: '+(e.message||'غير متاحة'));}finally{btn.disabled=false;btn.textContent='نشر الإعلان'} }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 renderAds();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -170,11 +170,16 @@ const authReady = signInAnonymously(auth).then(result => {
 window.saveAdToCloud = async (ad) => {
   await authReady;
   if (!currentUser) throw new Error("not-authenticated");
-  await addDoc(collection(db, "ads"), {
-    ...ad,
+  const safeAd = {
+    title: String(ad.title || "إعلان بدون عنوان"),
+    category: String(ad.category || "عام"),
+    price: String(ad.price || ""),
+    place: String(ad.place || "الموقع غير محدد"),
+    description: String(ad.description || ""),
     ownerId: currentUser.uid,
     createdAt: serverTimestamp()
-  });
+  };
+  await addDoc(collection(db, "ads"), safeAd);
 };
 </script>
 </body></html>
