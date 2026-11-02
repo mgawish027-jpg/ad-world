@@ -157,12 +157,12 @@ function renderAds(){
  if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
  else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
  else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
- document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${contactButtons(a)}${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+ document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId ? '<div class="muted" id="sellerRating-\${a.id}" style="margin-top:8px">⭐ جارٍ تحميل تقييم المعلن...</div><button class="btn light" style="margin-top:6px" onclick="rateSeller(&quot;\${a.ownerId}&quot;,&quot;\${a.id}&quot;)">⭐ قيّم المعلن</button>' : ''}${contactButtons(a)}${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)});
 }
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
-function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
+function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>';list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)})}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
 async function addAd(){
  let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}
@@ -184,7 +184,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
@@ -331,6 +331,17 @@ window.generateAdWithAI = async () => {
   }
 };
 
+async function loadSellerRating(adId,sellerId){
+ const el=document.getElementById('sellerRating-'+adId);if(!el||!sellerId)return;
+ try{const snap=await getDocs(query(collection(db,'sellerRatings'),where('sellerId','==',sellerId)));const node=document.getElementById('sellerRating-'+adId);if(!node)return;const vals=snap.docs.map(d=>Number(d.data().rating)).filter(n=>n>=1&&n<=5);const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;node.textContent=vals.length?'⭐ '+avg.toFixed(1)+' / 5 ('+vals.length+' تقييم)':'⭐ لا توجد تقييمات حتى الآن';}
+ catch(e){console.warn('Seller rating read failed',e);const node=document.getElementById('sellerRating-'+adId);if(node)node.textContent='⭐ التقييم غير متاح حاليًا';}
+}
+window.rateSeller=async(sellerId,adId)=>{
+ await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser)return alert('سجّل الدخول أولًا.');if(currentUser.uid===sellerId)return alert('لا يمكنك تقييم إعلانك.');
+ const value=Number(prompt('قيّم المعلن من 1 إلى 5 نجوم:'));if(!Number.isInteger(value)||value<1||value>5)return alert('اكتب رقمًا صحيحًا من 1 إلى 5.');
+ try{const existing=await getDocs(query(collection(db,'sellerRatings'),where('sellerId','==',sellerId),where('raterId','==',currentUser.uid)));if(existing.empty)await addDoc(collection(db,'sellerRatings'),{sellerId:sellerId,raterId:currentUser.uid,rating:value,createdAt:serverTimestamp()});else await updateDoc(doc(db,'sellerRatings',existing.docs[0].id),{rating:value,updatedAt:serverTimestamp()});await loadSellerRating(adId,sellerId);alert('شكرًا لك، تم حفظ تقييمك.');}
+ catch(e){console.error('Rating save failed',e);alert('تعذر حفظ التقييم. قد تحتاج قواعد Firestore إلى السماح بقراءة وكتابة تقييمات المعلنين. ('+(e.code||e.message)+')');}
+}
 window.saveAdToCloud = async (ad, editingId = null) => {
   await authReady;
   currentUser = auth.currentUser || currentUser;
