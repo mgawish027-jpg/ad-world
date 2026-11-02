@@ -212,6 +212,84 @@ function renderAds(){
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
+function renderCategoryAds(){
+ let list=ads.filter(a=>a.category===currentFilter);
+ document.getElementById('categoryAds').innerHTML=list.map(a=>{
+  const seller=a.ownerId?'<div class="muted" id="categorySellerRating-'+escapeHtml(a.id)+'" style="margin-top:8px">⭐ تقييم المعلن</div><button class="btn light" style="margin-top:6px" onclick="openSellerProfile(\''+escapeHtml(a.ownerId)+'\')">👤 عرض ملف المعلن</button>':'';
+  const own=a.ownerId&&a.ownerId===window.currentAdUserId?'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+escapeHtml(a.id)+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+escapeHtml(a.id)+'\')">حذف</button></div>':'';
+  return '<div class="card">'+(a.imageUrl?'<img src="'+escapeHtml(a.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'')+'<div class="muted">'+escapeHtml(a.category)+' · '+escapeHtml(a.place)+'</div><div class="adtitle">'+escapeHtml(a.title)+'</div><b>'+(a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(a.description||'')+'</p>'+seller+contactButtons(a)+favoriteButton(a)+own+'</div>';
+ }).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>';
+}
+function contactButtons(ad){
+ const raw=String(ad.contactPhone||'').trim();let phoneHtml='';
+ if(raw){let digits=raw.replace(/\D/g,'');if(digits.startsWith('00'))digits=digits.slice(2);if(digits.startsWith('0'))digits='20'+digits.slice(1);const encoded=encodeURIComponent('مرحبًا، أتواصل معك بخصوص إعلانك: '+String(ad.title||''));phoneHtml='<a class="btn primary" style="text-decoration:none" href="tel:'+digits+'">📞 اتصال</a><a class="btn" style="background:#dcfce7;color:#166534;text-decoration:none" href="https://wa.me/'+digits+'?text='+encoded+'" target="_blank" rel="noopener noreferrer">واتساب</a>';}
+ const inquiryCall='sendAdInquiry('+JSON.stringify(String(ad.ownerId||''))+','+JSON.stringify(String(ad.id||''))+')';
+ const inquiryHtml=ad.ownerId&&ad.ownerId!==window.currentAdUserId?'<button class="btn light" onclick="'+escapeHtml(inquiryCall)+'">✉️ أرسل استفسارًا</button>':'';
+ return phoneHtml||inquiryHtml?'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+phoneHtml+inquiryHtml+'</div>':'';
+}
+function favoriteButton(ad){const key=adFavoriteKey(ad);return '<button class="btn light" style="margin-top:8px;color:#be123c" onclick="toggleFavorite('+JSON.stringify(key)+')">'+(isFavorite(ad)?'♥ إزالة من المفضلة':'♡ أضف للمفضلة')+'</button>';}
+function renderFavorites(){const list=ads.filter(isFavorite);document.getElementById('favoriteAds').innerHTML=list.map(a=>'<div class="card">'+(a.imageUrl?'<img src="'+escapeHtml(a.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'')+'<div class="muted">'+escapeHtml(a.category)+' · '+escapeHtml(a.place)+'</div><div class="adtitle">'+escapeHtml(a.title)+'</div><b>'+(a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(a.description||'')+'</p>'+favoriteButton(a)+'</div>').join('')||'<div class="card empty">لم تحفظ أي إعلان في المفضلة بعد.</div>';}
+function renderNotifications(){
+ const box=document.getElementById('notificationList');if(!box)return;
+ box.innerHTML=notificationItems.map(n=>'<div class="card" style="border-right:4px solid '+(n.read?'#cbd5e1':'#2563eb')+'"><b>'+escapeHtml(n.title||'إشعار جديد')+'</b><p class="muted">'+escapeHtml(n.message||'')+'</p><small class="muted">'+(n.read?'مقروء':'جديد')+'</small></div>').join('')||'<div class="card empty">لا توجد إشعارات حتى الآن.</div>';
+ const unread=notificationItems.filter(n=>!n.read).length;const label=document.getElementById('notificationNavLabel');if(label)label.textContent=unread?'الإشعارات ('+unread+')':'الإشعارات';
+}
+function showNotifications(){show('notifications');renderNotifications();if(!currentUser||currentUser.isAnonymous)return;const unread=notificationItems.filter(n=>!n.read);Promise.all(unread.map(n=>updateDoc(doc(db,'notifications',n.id),{read:true}))).catch(e=>console.warn('Could not mark notifications read',e));}
+window.sendAdInquiry=async(sellerId,adId)=>{
+ await authReady;currentUser=auth.currentUser||currentUser;
+ if(!currentUser||currentUser.isAnonymous)return alert('لإرسال استفسار، سجّل الدخول أو أنشئ حسابًا أولًا من صفحة حسابي.');
+ if(currentUser.uid===sellerId)return alert('لا يمكنك مراسلة نفسك.');
+ const ad=ads.find(x=>x.id===adId)||cloudAds.find(x=>x.id===adId);if(!ad)return alert('الإعلان غير متاح حاليًا.');
+ const message=prompt('اكتب استفسارك لصاحب الإعلان: '+(ad.title||''));if(message===null)return;
+ const clean=message.trim();if(!clean)return alert('اكتب رسالة قبل الإرسال.');
+ if(clean.length>1000)return alert('الرسالة طويلة. الحد الأقصى 1000 حرف.');
+ try{
+  await addDoc(collection(db,'inquiries'),{sellerId:sellerId,buyerId:currentUser.uid,adId:adId,adTitle:String(ad.title||''),message:clean,createdAt:serverTimestamp()});
+  await addDoc(collection(db,'notifications'),{recipientId:sellerId,type:'inquiry',title:'استفسار جديد ✉️',message:'وصلك استفسار جديد بخصوص إعلان: '+String(ad.title||''),adId:adId,read:false,createdAt:serverTimestamp()});
+  alert('تم إرسال استفسارك لصاحب الإعلان.');
+ }catch(e){console.error('Inquiry send failed',e);alert('تعذر إرسال الاستفسار. قد تحتاج قواعد Firestore إلى السماح بإنشاء الاستفسارات والإشعارات. ('+(e.code||e.message)+')');}
+};
+window.loadSellerInquiries=async()=>{
+ show('inbox');const box=document.getElementById('inquiryList');box.innerHTML='<p class="muted">جارٍ تحميل الاستفسارات...</p>';
+ await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous){box.innerHTML='<div class="card empty">سجّل الدخول بحسابك لعرض استفسارات إعلاناتك.</div>';return;}
+ try{const snap=await getDocs(query(collection(db,'inquiries'),where('sellerId','==',currentUser.uid)));const items=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+ box.innerHTML=items.map(x=>'<div class="card"><b>'+escapeHtml(x.adTitle||'إعلان')+'</b><p>'+escapeHtml(x.message||'')+'</p><small class="muted">'+(x.createdAt?.toDate?x.createdAt.toDate().toLocaleString('ar-EG'):'')+'</small>'+(x.reply?'<div class="notice" style="margin-top:8px"><b>ردك:</b><p>'+escapeHtml(x.reply)+'</p></div>':'<p class="muted">بانتظار ردك</p>')+'<button class="btn primary" style="margin-top:8px" onclick="replyToInquiry(\\''+x.id+'\\')">'+(x.reply?'تعديل الرد':'الرد على العميل')+'</button></div>').join('')||'<div class="card empty">لا توجد استفسارات على إعلاناتك حتى الآن.</div>';
+ }catch(e){console.error(e);box.innerHTML='<div class="card empty">تعذر تحميل الاستفسارات: '+escapeHtml(e.code||e.message)+'</div>';}
+}
+window.replyToInquiry=async(id)=>{
+ await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous)return alert('سجّل الدخول أولًا.');
+ const snap=await getDocs(query(collection(db,'inquiries'),where('sellerId','==',currentUser.uid)));const found=snap.docs.find(d=>d.id===id);if(!found)return alert('هذا الاستفسار غير متاح لحسابك.');
+ const data=found.data();const reply=prompt('اكتب ردك للعميل:',data.reply||'');if(reply===null)return;const clean=reply.trim();if(!clean)return alert('اكتب الرد أولًا.');if(clean.length>1000)return alert('الرد طويل. الحد الأقصى 1000 حرف.');
+ try{await updateDoc(doc(db,'inquiries',id),{reply:clean,repliedAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:data.buyerId,type:'inquiry_reply',title:'رد جديد من المعلن 💬',message:'رد صاحب الإعلان على استفسارك: '+String(data.adTitle||''),adId:data.adId,read:false,createdAt:serverTimestamp()});alert('تم إرسال الرد للعميل.');await loadSellerInquiries();}
+ catch(e){console.error(e);alert('تعذر إرسال الرد. راجع قواعد Firestore. ('+(e.code||e.message)+')');}
+}
+function startNotificationsListener(user){if(notificationsListenerStarted||!user||user.isAnonymous)return;notificationsListenerStarted=true;onSnapshot(query(collection(db,'notifications'),where('recipientId','==',user.uid),orderBy('createdAt','desc')),snap=>{notificationItems=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotifications();},err=>{console.warn('Notifications listener failed',err);const box=document.getElementById('notificationList');if(box)box.textContent='تعذر تحميل الإشعارات حاليًا.';});}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+function renderAds(){
+ let q=(document.getElementById('search').value||'').trim().toLowerCase();
+ let category=document.getElementById('filterCategory')?.value||'';
+ let city=(document.getElementById('filterCity')?.value||'').trim().toLowerCase();
+ let min=document.getElementById('minPrice')?.value;
+ let max=document.getElementById('maxPrice')?.value;
+ let sort=document.getElementById('sortAds')?.value||'newest';
+ let list=ads.filter(a=>{
+  let price=Number(a.price);let hasPrice=String(a.price||'').trim()!==''&&Number.isFinite(price);
+  let text=[a.title,a.category,a.place,a.description].join(' ').toLowerCase();
+  return (!currentFilter||a.category===currentFilter)&&(!category||a.category===category)&&(!q||text.includes(q))&&(!city||String(a.place||'').toLowerCase().includes(city))&&(min===''||min==null||(hasPrice&&price>=Number(min)))&&(max===''||max==null||(hasPrice&&price<=Number(max)));
+ });
+ if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
+ else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
+ else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+ document.getElementById('ads').innerHTML=list.map(a=>{
+  const seller=a.ownerId?'<div class="muted" id="sellerRating-'+escapeHtml(a.id)+'" style="margin-top:8px">⭐ جارٍ تحميل تقييم المعلن...</div><button class="btn light" style="margin-top:6px" onclick="rateSeller(\''+escapeHtml(a.ownerId)+'\',\''+escapeHtml(a.id)+'\')">⭐ قيّم المعلن</button><button class="btn light" style="margin:6px 0" onclick="openSellerProfile(\''+escapeHtml(a.ownerId)+'\')">👤 عرض ملف المعلن</button>':'';
+  const own=a.ownerId&&a.ownerId===window.currentAdUserId?'<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+escapeHtml(a.id)+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+escapeHtml(a.id)+'\')">حذف</button></div>':'';
+  return '<div class="card">'+(a.imageUrl?'<img src="'+escapeHtml(a.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'')+'<div class="muted">'+escapeHtml(a.category)+' · '+escapeHtml(a.place)+'</div><div class="adtitle">'+escapeHtml(a.title)+'</div><b>'+(a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(a.description||'')+'</p>'+seller+contactButtons(a)+favoriteButton(a)+own+'</div>';
+ }).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+ list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)});
+}
+function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
+function filterCat(c){openCategory(c)}
+function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
 function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>';list.forEach(a=>{if(a.ownerId)loadSellerRating(a.id,a.ownerId)})}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
 async function addAd(){
