@@ -280,14 +280,20 @@ let adsListenerStarted = false;
 function updateAccountUI(user) {
   const box = document.getElementById("accountStatus");
   const logout = document.getElementById("logoutButton");
+  const authControls = document.querySelectorAll("#account .card > label, #account .card > input, #account .card > button:not(#logoutButton)");
+  const headerAccount = document.querySelector("header .actions button:last-child");
   if (!box) return;
   if (user && !user.isAnonymous) {
-    box.textContent = "تم تسجيل الدخول: " + (user.email || "");
+    box.textContent = "أنت مسجل الدخول بنجاح بالبريد: " + (user.email || "") + " — يمكنك الآن إضافة إعلاناتك وإدارتها.";
+    authControls.forEach(el => el.style.display = "none");
+    if (headerAccount) headerAccount.textContent = "حسابي";
     if (logout) logout.style.display = "block";
     const editor=document.getElementById("sellerProfileEditor");if(editor)editor.style.display="block";
     loadSellerDisplayName(user);
   } else {
-    box.textContent = "أنت تستخدم التطبيق كزائر. يمكنك إنشاء حساب بالبريد الإلكتروني وكلمة المرور.";
+    box.textContent = "أنت تستخدم التطبيق كزائر. سجّل الدخول أو أنشئ حسابًا لحفظ إعلاناتك باسمك.";
+    authControls.forEach(el => el.style.display = "");
+    if (headerAccount) headerAccount.textContent = "دخول / اشتراك";
     if (logout) logout.style.display = "none";
     const editor=document.getElementById("sellerProfileEditor");if(editor)editor.style.display="none";
   }
@@ -346,6 +352,7 @@ window.loginAccount = async () => {
   try {
     await signInWithEmailAndPassword(auth, email, password);
     alert("تم تسجيل الدخول بنجاح.");
+    show("home");
   } catch (error) {
     alert("تعذر تسجيل الدخول: " + (error.code || error.message));
   }
@@ -366,7 +373,9 @@ window.createAccount = async () => {
     } else {
       await createUserWithEmailAndPassword(auth, email, password);
     }
-    alert("تم إنشاء حسابك بنجاح.");
+    updateAccountUI(auth.currentUser);
+    alert("تم إنشاء حسابك بنجاح. أنت الآن داخل حسابك.");
+    show("home");
   } catch (error) {
     const messages = {
       "auth/email-already-in-use": "هذا البريد مسجل بالفعل. استخدم زر دخول بدل إنشاء حساب جديد.",
