@@ -1,10 +1,7 @@
 {
   "appId": "com.adworld.app",
   "appName": "AD WORLD",
-  "webDir": ".",
-  "server": {
-    "androidScheme": "https"
-  },
+  "webDir": "www",
   "android": {
     "allowMixedContent": false
   }
