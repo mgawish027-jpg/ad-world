@@ -66,6 +66,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <div id="ads"></div>
  <div class="notice">حالة الاتصال: <b id="firebaseStatus">جارٍ الاتصال بخدمات Firebase...</b><br>الإعلانات التجريبية للعرض فقط.</div>
 </section>
+<section id="favorites" class="screen"><h2>إعلاناتي المفضلة ❤️</h2><div id="favoriteAds"></div></section>
 <section id="category" class="screen">
  <button class="btn back" onclick="show('home')">→ رجوع للرئيسية</button>
  <h2 id="categoryTitle">القسم</h2>
@@ -118,6 +119,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 <nav>
  <button onclick="show('home')"><b>⌂</b>الرئيسية</button>
  <button onclick="show('business')"><b>▣</b>الشركات</button>
+  <button onclick="renderFavorites();show('favorites')"><b>♥</b>المفضلة</button>
  <button onclick="show('add')"><b>＋</b>أضف إعلان</button>
  <button onclick="show('rewards')"><b>🎁</b>المكافآت</button>
  <button onclick="show('account')"><b>♙</b>حسابي</button>
@@ -130,6 +132,12 @@ let sample=[
  {title:'سيارة مستعملة',category:'سيارات',price:'420000',place:'مصر - القاهرة',description:'بيانات تجريبية وليست عرض بيع حقيقي.'}
 ];
 let ads=[...sample], currentFilter='', editingAdId=null;
+let favoriteAdKeys=JSON.parse(localStorage.getItem('adworld_favorites_v1')||'[]');
+function adFavoriteKey(ad){return ad.id||('sample-'+String(ad.title||'')+'-'+String(ad.place||''));}
+function isFavorite(ad){return favoriteAdKeys.includes(adFavoriteKey(ad));}
+function toggleFavorite(key){favoriteAdKeys=favoriteAdKeys.includes(key)?favoriteAdKeys.filter(x=>x!==key):[...favoriteAdKeys,key];localStorage.setItem('adworld_favorites_v1',JSON.stringify(favoriteAdKeys));renderAds();if(currentFilter)renderCategoryAds();renderFavorites();}
+function favoriteButton(ad){const key=adFavoriteKey(ad);return '<button class="btn light" style="margin-top:8px;color:#be123c" onclick="toggleFavorite('+JSON.stringify(key)+')">'+(isFavorite(ad)?'♥ إزالة من المفضلة':'♡ أضف للمفضلة')+'</button>';}
+function renderFavorites(){const list=ads.filter(isFavorite);document.getElementById('favoriteAds').innerHTML=list.map(a=>'<div class="card">'+(a.imageUrl?'<img src="'+escapeHtml(a.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'')+'<div class="muted">'+escapeHtml(a.category)+' · '+escapeHtml(a.place)+'</div><div class="adtitle">'+escapeHtml(a.title)+'</div><b>'+(a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(a.description||'')+'</p>'+favoriteButton(a)+'</div>').join('')||'<div class="card empty">لم تحفظ أي إعلان في المفضلة بعد.</div>';}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
 function renderAds(){
  let q=(document.getElementById('search').value||'').trim().toLowerCase();
@@ -147,12 +155,12 @@ function renderAds(){
  if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
  else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
  else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
- document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+ document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
 }
 function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
-function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
+function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p>${favoriteButton(a)}${a.ownerId && a.ownerId===window.currentAdUserId ? '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn light" onclick="editAd(\''+a.id+'\')">تعديل</button><button class="btn" style="background:#fee2e2;color:#991b1b" onclick="deleteAd(\''+a.id+'\')">حذف</button></div>' : ''}</div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
 async function addAd(){
  let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}
