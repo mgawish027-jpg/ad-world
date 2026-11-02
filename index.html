@@ -74,10 +74,13 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <h2>حسابي</h2>
  <div class="card">
   <p><b>مرحبًا بك في AD WORLD</b></p>
-  <input placeholder="البريد الإلكتروني أو رقم الهاتف">
-  <input placeholder="كلمة المرور" type="password">
-  <button class="btn primary" style="width:100%" onclick="alert('التسجيل الحقيقي سيُضاف في مرحلة ربط قاعدة البيانات.')">دخول</button>
-  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="alert('إنشاء الحساب سيُضاف في المرحلة التالية.')">إنشاء حساب جديد</button>
+  <div id="accountStatus" class="notice">أنت تستخدم التطبيق كزائر. سجّل الدخول أو أنشئ حسابًا لحفظ إعلاناتك باسمك.</div>
+  <label>البريد الإلكتروني</label><input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com">
+  <label>كلمة المرور</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="6 أحرف على الأقل">
+  <button class="btn primary" style="width:100%" onclick="loginAccount()">دخول</button>
+  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="createAccount()">إنشاء حساب جديد</button>
+  <button class="btn" style="width:100%;margin-top:8px;background:#eee" onclick="resetPassword()">نسيت كلمة المرور؟</button>
+  <button id="logoutButton" class="btn" style="display:none;width:100%;margin-top:8px;background:#fee2e2;color:#991b1b" onclick="logoutAccount()">تسجيل الخروج</button>
  </div>
 </section>
 <section id="rewards" class="screen">
@@ -121,7 +124,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
 </script>
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
+import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -147,28 +150,97 @@ window.addEventListener("offline", () => setFirebaseStatus("لا يوجد اتص
 window.addEventListener("online", () => setFirebaseStatus("عاد الإنترنت؛ جارٍ إعادة الاتصال..."));
 if (!navigator.onLine) setFirebaseStatus("لا يوجد اتصال بالإنترنت");
 
-const authReady = signInAnonymously(auth).then(result => {
-  currentUser = result.user;
-  setFirebaseStatus("تم تسجيل الدخول؛ جارٍ الاتصال بقاعدة البيانات...");
-  const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"));
-  onSnapshot(adsQuery, snapshot => {
-    cloudAds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    ads = [...cloudAds, ...sample];
-    renderAds();
-    if (currentFilter) renderCategoryAds();
-    setFirebaseStatus("متصل بقاعدة البيانات — الإعلانات السحابية تعمل.");
-  }, error => {
-    console.error("Firestore read error:", error);
-    setFirebaseStatus("خطأ في قاعدة البيانات: " + (error.code || error.message));
-  });
-}).catch(error => {
-  console.error("Firebase sign-in error:", error);
-  setFirebaseStatus("فشل تسجيل الدخول: " + (error.code || error.message));
-  throw error;
+let resolveAuthReady;
+const authReady = new Promise(resolve => { resolveAuthReady = resolve; });
+let adsListenerStarted = false;
+function updateAccountUI(user) {
+  const box = document.getElementById("accountStatus");
+  const logout = document.getElementById("logoutButton");
+  if (!box) return;
+  if (user && !user.isAnonymous) {
+    box.textContent = "تم تسجيل الدخول: " + (user.email || "");
+    if (logout) logout.style.display = "block";
+  } else {
+    box.textContent = "أنت تستخدم التطبيق كزائر. يمكنك إنشاء حساب بالبريد الإلكتروني وكلمة المرور.";
+    if (logout) logout.style.display = "none";
+  }
+}
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  updateAccountUI(user);
+  if (!user) {
+    try { await signInAnonymously(auth); }
+    catch (error) {
+      console.error("Firebase sign-in error:", error);
+      setFirebaseStatus("فشل الاتصال: " + (error.code || error.message));
+      resolveAuthReady();
+    }
+    return;
+  }
+  resolveAuthReady();
+  setFirebaseStatus(user.isAnonymous ? "تم الدخول كزائر؛ جارٍ الاتصال بقاعدة البيانات..." : "تم تسجيل الدخول بحسابك؛ جارٍ الاتصال بقاعدة البيانات...");
+  if (!adsListenerStarted) {
+    adsListenerStarted = true;
+    const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"));
+    onSnapshot(adsQuery, snapshot => {
+      cloudAds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      ads = [...cloudAds, ...sample];
+      renderAds();
+      if (currentFilter) renderCategoryAds();
+      setFirebaseStatus("متصل بقاعدة البيانات — الإعلانات السحابية تعمل.");
+    }, error => {
+      console.error("Firestore read error:", error);
+      setFirebaseStatus("خطأ في قاعدة البيانات: " + (error.code || error.message));
+    });
+  }
 });
+
+window.loginAccount = async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  if (!email || !password) return alert("اكتب البريد الإلكتروني وكلمة المرور.");
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("تم تسجيل الدخول بنجاح.");
+  } catch (error) {
+    alert("تعذر تسجيل الدخول: " + (error.code || error.message));
+  }
+};
+window.createAccount = async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  if (!email || !password) return alert("اكتب البريد الإلكتروني وكلمة المرور.");
+  if (password.length < 6) return alert("كلمة المرور لازم تكون 6 أحرف على الأقل.");
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+    alert("تم إنشاء حسابك بنجاح.");
+  } catch (error) {
+    const messages = {
+      "auth/email-already-in-use": "هذا البريد مسجل بالفعل. جرّب تسجيل الدخول.",
+      "auth/invalid-email": "صيغة البريد الإلكتروني غير صحيحة.",
+      "auth/weak-password": "اختر كلمة مرور أقوى من 6 أحرف."
+    };
+    alert(messages[error.code] || ("تعذر إنشاء الحساب: " + (error.code || error.message)));
+  }
+};
+window.resetPassword = async () => {
+  const email = document.getElementById("authEmail").value.trim();
+  if (!email) return alert("اكتب بريدك الإلكتروني أولًا.");
+  try {
+    await sendPasswordResetEmail(auth, email);
+    alert("أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك.");
+  } catch (error) {
+    alert("تعذر إرسال الرابط: " + (error.code || error.message));
+  }
+};
+window.logoutAccount = async () => {
+  try { await signOut(auth); alert("تم تسجيل الخروج."); }
+  catch (error) { alert("تعذر تسجيل الخروج: " + (error.code || error.message)); }
+};
 
 window.saveAdToCloud = async (ad) => {
   await authReady;
+  currentUser = auth.currentUser || currentUser;
   if (!currentUser) throw new Error("not-authenticated");
   const safeAd = {
     title: String(ad.title || "إعلان بدون عنوان"),
