@@ -48,7 +48,21 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <button class="cat" onclick="openCategory('وظائف')"><span>💼</span>وظائف</button>
   <button class="cat" onclick="openCategory('خدمات')"><span>🧰</span>خدمات</button>
  </div>
- <h2>أحدث الإعلانات</h2>
+ <h2>ابحث وصفّي الإعلانات</h2>
+ <div class="card" style="margin-top:8px">
+  <label>القسم</label>
+  <select id="filterCategory" onchange="renderAds()"><option value="">كل الأقسام</option><option>سيارات</option><option>عقارات</option><option>إلكترونيات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option></select>
+  <label>المدينة أو المنطقة</label>
+  <input id="filterCity" placeholder="مثال: الغردقة أو القاهرة" oninput="renderAds()">
+  <div style="display:flex;gap:8px">
+   <div style="flex:1"><label>أقل سعر</label><input id="minPrice" type="number" min="0" placeholder="من" oninput="renderAds()"></div>
+   <div style="flex:1"><label>أعلى سعر</label><input id="maxPrice" type="number" min="0" placeholder="إلى" oninput="renderAds()"></div>
+  </div>
+  <label>ترتيب النتائج</label>
+  <select id="sortAds" onchange="renderAds()"><option value="newest">الأحدث أولًا</option><option value="low">السعر: من الأقل للأعلى</option><option value="high">السعر: من الأعلى للأقل</option></select>
+  <button class="btn" style="width:100%;background:#eef2ff;color:#1d4ed8;margin-top:6px" onclick="resetAdFilters()">مسح الفلاتر</button>
+ </div>
+ <h2>الإعلانات</h2>
  <div id="ads"></div>
  <div class="notice">حالة الاتصال: <b id="firebaseStatus">جارٍ الاتصال بخدمات Firebase...</b><br>الإعلانات التجريبية للعرض فقط.</div>
 </section>
@@ -117,7 +131,25 @@ let sample=[
 ];
 let ads=[...sample], currentFilter='';
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
-function renderAds(){let q=(document.getElementById('search').value||'').toLowerCase();document.getElementById('ads').innerHTML=ads.filter(a=>(!currentFilter||a.category===currentFilter)&&(`${a.title} ${a.category} ${a.place}`.toLowerCase().includes(q))).map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة.</p>'}
+function renderAds(){
+ let q=(document.getElementById('search').value||'').trim().toLowerCase();
+ let category=document.getElementById('filterCategory')?.value||'';
+ let city=(document.getElementById('filterCity')?.value||'').trim().toLowerCase();
+ let min=document.getElementById('minPrice')?.value;
+ let max=document.getElementById('maxPrice')?.value;
+ let sort=document.getElementById('sortAds')?.value||'newest';
+ let list=ads.filter(a=>{
+  let price=Number(a.price);
+  let hasPrice=String(a.price||'').trim()!==''&&Number.isFinite(price);
+  let text=`${a.title||''} ${a.category||''} ${a.place||''} ${a.description||''}`.toLowerCase();
+  return (!currentFilter||a.category===currentFilter)&&(!category||a.category===category)&&(!q||text.includes(q))&&(!city||String(a.place||'').toLowerCase().includes(city))&&(min===''||min==null||(hasPrice&&price>=Number(min)))&&(max===''||max==null||(hasPrice&&price<=Number(max)));
+ });
+ if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));
+ else if(sort==='high')list.sort((a,b)=>(Number(b.price)||-Infinity)-(Number(a.price)||-Infinity));
+ else list.sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+ document.getElementById('ads').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+' جنيه':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<p class="muted">لا توجد إعلانات مطابقة للفلاتر الحالية.</p>';
+}
+function resetAdFilters(){['search','filterCategory','filterCity','minPrice','maxPrice'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});const sort=document.getElementById('sortAds');if(sort)sort.value='newest';currentFilter='';renderAds()}
 function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
 function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card">${a.imageUrl?`<img src="${escapeHtml(a.imageUrl)}" alt="صورة الإعلان" style="width:100%;max-height:230px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">`:''}<div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
