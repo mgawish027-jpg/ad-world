@@ -65,8 +65,10 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <label>القسم</label><select id="category"><option>إلكترونيات</option><option>سيارات</option><option>عقارات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option></select>
   <label>السعر</label><input id="price" type="number" placeholder="السعر">
   <label>الدولة / المدينة</label><input id="place" placeholder="مثال: مصر - الغردقة">
-  <label>وصف الإعلان</label><textarea id="description" rows="4" placeholder="اكتب تفاصيل الإعلان"></textarea>
-  <button class="btn primary" style="width:100%" onclick="addAd()">نشر تجريبي</button>
+  <label>وصف المنتج أو الخدمة</label><textarea id="description" rows="4" placeholder="اكتب التفاصيل كما تعرفها، حتى لو بشكل بسيط"></textarea>
+  <button class="btn" style="width:100%;margin:8px 0;background:#ede9fe;color:#5b21b6" onclick="generateAdWithAI()">✨ حسّن إعلاني بالذكاء الاصطناعي</button>
+  <div id="aiStatus" class="muted" style="margin:6px 0;line-height:1.6">اكتب تفاصيل المنتج، وسيساعدك الذكاء الاصطناعي في صياغة عنوان ووصف واقتراح سعر.</div>
+  <button class="btn primary" style="width:100%" onclick="addAd()">نشر الإعلان</button>
  </div>
  <p class="muted">سيتم حفظ الإعلان على الإنترنت ليظهر بعد إعادة فتح التطبيق.</p>
 </section>
@@ -126,6 +128,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDlWVwB--j3Lu2Ye1je_hRT7Dzw6ndHV2I",
@@ -140,6 +143,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const aiService = getAI(app, { backend: new GoogleAIBackend() });
+const adWriterModel = getGenerativeModel(aiService, { model: "gemini-2.5-flash" });
 let currentUser = null;
 let cloudAds = [];
 const statusEl = document.getElementById("firebaseStatus");
@@ -236,6 +241,34 @@ window.resetPassword = async () => {
 window.logoutAccount = async () => {
   try { await signOut(auth); alert("تم تسجيل الخروج."); }
   catch (error) { alert("تعذر تسجيل الخروج: " + (error.code || error.message)); }
+};
+
+window.generateAdWithAI = async () => {
+  const details = document.getElementById("description").value.trim();
+  const category = document.getElementById("category").value;
+  const priceNow = document.getElementById("price").value.trim();
+  const status = document.getElementById("aiStatus");
+  const button = document.querySelector('#add button[onclick="generateAdWithAI()"]');
+  if (!details) return alert("اكتب وصف المنتج أو الخدمة أولًا.");
+  button.disabled = true;
+  button.textContent = "الذكاء الاصطناعي يجهّز إعلانك...";
+  status.textContent = "جارٍ إعداد عنوان ووصف احترافي واقتراح سعر تقريبي...";
+  try {
+    const prompt = `أنت مساعد كتابة إعلانات لتطبيق سوق مصري اسمه AD WORLD. اكتب إعلانًا عربيًا واضحًا وجذابًا دون مبالغة أو اختلاق أي مواصفات. القسم: ${category}. تفاصيل المستخدم: ${details}. السعر الذي أدخله المستخدم إن وجد: ${priceNow || "لم يحدد"}. أعد النتيجة فقط بصيغة JSON صحيحة بهذه المفاتيح: {"title":"عنوان قصير","description":"وصف احترافي أمين للتفاصيل","suggestedPrice":"سعر رقمي تقريبي بالجنيه المصري أو فارغ إذا لم تتوفر معلومات كافية","priceNote":"تنبيه مختصر يوضح أن السعر تقديري ويتغير حسب الحالة والسوق"}. لا تخترع ماركة أو حالة أو ضمانًا أو مواصفات غير مذكورة.`;
+    const result = await adWriterModel.generateContent(prompt);
+    const raw = result.response.text().trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    const data = JSON.parse(raw);
+    if (data.title) document.getElementById("title").value = data.title;
+    if (data.description) document.getElementById("description").value = data.description;
+    if (!priceNow && data.suggestedPrice) document.getElementById("price").value = String(data.suggestedPrice).replace(/[^0-9.]/g, "");
+    status.textContent = "تم تجهيز إعلانك بالذكاء الاصطناعي. راجع التفاصيل والسعر قبل النشر. " + (data.priceNote || "");
+  } catch (error) {
+    console.error("AD WORLD AI error:", error);
+    status.textContent = "لم يعمل الذكاء الاصطناعي بعد. تأكد من تفعيل Firebase AI Logic في مشروع Firebase ثم جرّب مرة أخرى. (" + (error.code || error.message || "خطأ غير معروف") + ")";
+  } finally {
+    button.disabled = false;
+    button.textContent = "✨ حسّن إعلاني بالذكاء الاصطناعي";
+  }
 };
 
 window.saveAdToCloud = async (ad) => {
