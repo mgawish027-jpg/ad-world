@@ -147,6 +147,11 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <p class="muted">سنضيف هذا القسم بعد ربط التطبيق بمعلنين حقيقيين والتأكد من تمويل المكافآت من إيرادات فعلية.</p>
  </div>
 </section>
+<section id="admin" class="screen">
+ <h2>لوحة إدارة AD WORLD 🛡️</h2>
+ <div class="notice">هذه اللوحة مخصصة لحساب المدير الموثق فقط.</div>
+ <div class="card"><b>إدارة الإعلانات</b><div id="adminAdsList" class="muted" style="margin-top:10px">جارٍ التحميل...</div></div>
+</section>
 <section id="business" class="screen">
  <h2>إعلانات الشركات</h2>
  <div class="card"><b>روّج لنشاطك التجاري</b><p class="muted">مساحة مخصصة للمحلات والشركات والعروض الممولة.</p><button class="btn primary" onclick="alert('نموذج حساب الشركات سيُضاف في المرحلة التالية.')">ابدأ كصاحب نشاط</button></div>
@@ -161,6 +166,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <button onclick="show('add')"><b>＋</b>أضف إعلان</button>
  <button onclick="show('rewards')"><b>🎁</b>المكافآت</button>
  <button onclick="show('account')"><b>♙</b>حسابي</button>
+ <button id="adminNavButton" style="display:none" onclick="openAdminPanel()"><b>🛡️</b>الإدارة</button>
 </nav>
 <footer>AD WORLD · نموذج أولي تجريبي</footer>
 <script>
@@ -313,6 +319,9 @@ function updateAccountUI(user) {
   const logout = document.getElementById("logoutButton");
   const authControls = document.querySelectorAll("#authForm label, #authForm input, #authForm button");
   const headerAccount = document.querySelector("header .actions button:last-child");
+  const adminButton = document.getElementById("adminNavButton");
+  const isAdmin = !!(user && !user.isAnonymous && user.email === "mgawish027@gmail.com" && user.emailVerified);
+  if (adminButton) adminButton.style.display = isAdmin ? "block" : "none";
   if (!box) return;
   if (user && !user.isAnonymous) {
     box.textContent = "أنت مسجل الدخول بنجاح بالبريد: " + (user.email || "") + " — يمكنك الآن إضافة إعلاناتك وإدارتها.";
@@ -376,6 +385,35 @@ onAuthStateChanged(auth, async user => {
     });
   }
 });
+
+
+window.openAdminPanel = async () => {
+  const user = auth.currentUser;
+  if (!user || user.isAnonymous || user.email !== "mgawish027@gmail.com" || !user.emailVerified) {
+    alert("لوحة الإدارة متاحة فقط لبريد المدير بعد تأكيد البريد الإلكتروني.");
+    return;
+  }
+  show("admin");
+  const box = document.getElementById("adminAdsList");
+  box.textContent = "جارٍ تحميل الإعلانات...";
+  try {
+    const snap = await getDocs(query(collection(db, "ads"), orderBy("createdAt", "desc")));
+    if (snap.empty) { box.textContent = "لا توجد إعلانات حاليًا."; return; }
+    box.innerHTML = snap.docs.map(d => {
+      const a = d.data();
+      return '<div style="border-top:1px solid #e7eaf0;padding:12px 0"><b>' + escapeHtml(a.title || "إعلان") + '</b><div class="muted">' + escapeHtml(a.place || "") + ' · صاحب الإعلان: ' + escapeHtml(a.ownerId || "") + '</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd(' + JSON.stringify(d.id) + ')">حذف الإعلان</button></div>';
+    }).join("");
+  } catch (e) {
+    box.textContent = "تعذر تحميل الإعلانات: " + (e.code || e.message);
+  }
+};
+window.adminDeleteAd = async (id) => {
+  const user = auth.currentUser;
+  if (!user || user.email !== "mgawish027@gmail.com" || !user.emailVerified) return alert("غير مصرح.");
+  if (!confirm("تأكيد حذف هذا الإعلان نهائيًا؟")) return;
+  try { await deleteDoc(doc(db, "ads", id)); alert("تم حذف الإعلان."); await openAdminPanel(); }
+  catch (e) { alert("تعذر الحذف: " + (e.code || e.message)); }
+};
 
 window.loginAccount = async () => {
   const email = document.getElementById("authEmail").value.trim();
