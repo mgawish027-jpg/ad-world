@@ -50,7 +50,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  </div>
  <h2>أحدث الإعلانات</h2>
  <div id="ads"></div>
- <div class="notice">الإعلانات التجريبية للعرض فقط. الإعلانات التي ينشرها المستخدمون تُحفظ على الإنترنت بعد تفعيل خدمات Firebase.</div>
+ <div class="notice">حالة الاتصال: <b id="firebaseStatus">جارٍ الاتصال بخدمات Firebase...</b><br>الإعلانات التجريبية للعرض فقط.</div>
 </section>
 <section id="category" class="screen">
  <button class="btn back" onclick="show('home')">→ رجوع للرئيسية</button>
@@ -114,7 +114,7 @@ function filterCat(c){openCategory(c)}
 function openCategory(c){currentFilter=c;document.getElementById('categoryTitle').textContent='إعلانات '+c;renderCategoryAds();show('category')}
 function renderCategoryAds(){let list=ads.filter(a=>a.category===currentFilter);document.getElementById('categoryAds').innerHTML=list.map(a=>`<div class="card"><div class="muted">${escapeHtml(a.category)} · ${escapeHtml(a.place)}</div><div class="adtitle">${escapeHtml(a.title)}</div><b>${a.price?Number(a.price).toLocaleString('en-US')+'':'السعر عند التواصل'}</b><p class="muted">${escapeHtml(a.description||'')}</p></div>`).join('')||'<div class="card empty">لا توجد إعلانات في هذا القسم حاليًا.<br>كن أول من يضيف إعلانًا!</div>'}
 function addFromCategory(){show('add');document.getElementById('category').value=currentFilter}
-async function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}const ad={title,category:document.getElementById('category').value,price:document.getElementById('price').value,place:document.getElementById('place').value||'الموقع غير محدد',description:document.getElementById('description').value};const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent='جارٍ نشر الإعلان...';try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');await window.saveAdToCloud(ad);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');currentFilter='';show('home');alert('تم نشر إعلانك وحفظه على الإنترنت.');}catch(e){console.error(e);alert('لم يتم حفظ الإعلان على الإنترنت. تأكد من إعداد Firebase واتصال الإنترنت ثم حاول مرة أخرى.');}finally{btn.disabled=false;btn.textContent='نشر الإعلان'} }
+async function addAd(){let title=document.getElementById('title').value.trim();if(!title){alert('اكتب عنوان الإعلان أولًا');return}const ad={title,category:document.getElementById('category').value,price:document.getElementById('price').value,place:document.getElementById('place').value||'الموقع غير محدد',description:document.getElementById('description').value};const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent='جارٍ نشر الإعلان...';try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');await window.saveAdToCloud(ad);['title','price','place','description'].forEach(id=>document.getElementById(id).value='');currentFilter='';show('home');alert('تم نشر إعلانك وحفظه على الإنترنت.');}catch(e){console.error(e);alert('فشل حفظ الإعلان.\nرمز الخطأ: '+(e.code||'غير متاح')+'\nالتفاصيل: '+(e.message||'غير متاحة'));}finally{btn.disabled=false;btn.textContent='نشر الإعلان'} }
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 renderAds();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -139,18 +139,31 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser = null;
 let cloudAds = [];
+const statusEl = document.getElementById("firebaseStatus");
+function setFirebaseStatus(message) {
+  if (statusEl) statusEl.textContent = message;
+}
+window.addEventListener("offline", () => setFirebaseStatus("لا يوجد اتصال بالإنترنت"));
+window.addEventListener("online", () => setFirebaseStatus("عاد الإنترنت؛ جارٍ إعادة الاتصال..."));
+if (!navigator.onLine) setFirebaseStatus("لا يوجد اتصال بالإنترنت");
 
 const authReady = signInAnonymously(auth).then(result => {
   currentUser = result.user;
+  setFirebaseStatus("تم تسجيل الدخول؛ جارٍ الاتصال بقاعدة البيانات...");
   const adsQuery = query(collection(db, "ads"), orderBy("createdAt", "desc"));
   onSnapshot(adsQuery, snapshot => {
     cloudAds = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     ads = [...cloudAds, ...sample];
     renderAds();
     if (currentFilter) renderCategoryAds();
-  }, error => console.error("Firestore read error:", error));
+    setFirebaseStatus("متصل بقاعدة البيانات — الإعلانات السحابية تعمل.");
+  }, error => {
+    console.error("Firestore read error:", error);
+    setFirebaseStatus("خطأ في قاعدة البيانات: " + (error.code || error.message));
+  });
 }).catch(error => {
   console.error("Firebase sign-in error:", error);
+  setFirebaseStatus("فشل تسجيل الدخول: " + (error.code || error.message));
   throw error;
 });
 
