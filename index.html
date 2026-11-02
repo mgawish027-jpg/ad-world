@@ -422,10 +422,13 @@ window.loginAccount = async () => {
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     await reload(credential.user);
+    if (credential.user.email === "mgawish027@gmail.com" && !credential.user.emailVerified) {
+      await sendEmailVerification(credential.user);
+    }
     await credential.user.getIdToken(true);
     updateAccountUI(credential.user);
     alert(credential.user.email === "mgawish027@gmail.com" && !credential.user.emailVerified
-      ? "تم تسجيل الدخول، لكن يجب تأكيد بريدك الإلكتروني لتفعيل صلاحيات المالك. افتح رسالة التحقق التي أرسلناها لك."
+      ? "تم تسجيل الدخول، وأرسلنا رسالة تأكيد جديدة إلى بريد المالك. افتح الرسالة واضغط رابط التأكيد، ثم سجّل الدخول مرة أخرى."
       : "تم تسجيل الدخول بنجاح.");
     show("home");
   } catch (error) {
