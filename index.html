@@ -164,6 +164,28 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <div id="adminAdsList" style="margin-top:10px">جارٍ التحميل...</div>
  </div>
  <div class="card">
+  <b>ملخص المنصة</b>
+  <div class="grid" style="grid-template-columns:repeat(2,1fr)">
+   <div><div class="muted">المستخدمون المسجلون</div><strong id="adminUsersCount">—</strong></div>
+   <div><div class="muted">الاستفسارات</div><strong id="adminInquiriesCount">—</strong></div>
+   <div><div class="muted">التقييمات</div><strong id="adminRatingsCount">—</strong></div>
+   <div><div class="muted">الحسابات الموقوفة</div><strong id="adminBlockedCount">—</strong></div>
+  </div>
+ </div>
+ <div class="card">
+  <b>إدارة المستخدمين</b>
+  <p class="muted">عرض الحسابات التي أنشأت ملفًا داخل التطبيق، مع إمكانية إيقافها أو إعادة تفعيلها.</p>
+  <input id="adminUsersSearch" placeholder="ابحث بالاسم أو رقم الحساب..." oninput="filterAdminUsers()">
+  <div id="adminUsersList" class="muted">جارٍ تحميل المستخدمين...</div>
+ </div>
+ <div class="card">
+  <b>إرسال إشعار عام 📢</b>
+  <label>عنوان الإشعار</label><input id="adminBroadcastTitle" maxlength="80" placeholder="مثال: تحديث جديد في AD WORLD">
+  <label>نص الرسالة</label><textarea id="adminBroadcastMessage" rows="3" maxlength="500" placeholder="اكتب الرسالة التي ستصل للمستخدمين"></textarea>
+  <button class="btn primary" style="width:100%" onclick="adminBroadcast()">إرسال لجميع المستخدمين</button>
+  <div id="adminBroadcastStatus" class="muted" style="margin-top:8px"></div>
+ </div>
+ <div class="card">
   <b>حساب المالك</b>
   <p class="muted" id="adminOwnerEmail">mgawish027@gmail.com</p>
   <p class="muted">حالة الدخول: مدير موثّق</p>
@@ -384,6 +406,10 @@ onAuthStateChanged(auth, async user => {
     return;
   }
   window.currentAdUserId = user.uid;
+  if (!user.isAnonymous) {
+    setDoc(doc(db, "sellerProfiles", user.uid), { lastSeenAt: serverTimestamp() }, { merge: true })
+      .catch(error => console.warn("User directory update failed:", error));
+  }
   startNotificationsListener(user);
   resolveAuthReady();
   setFirebaseStatus(user.isAnonymous ? "تم الدخول كزائر؛ جارٍ الاتصال بقاعدة البيانات..." : "تم تسجيل الدخول بحسابك؛ جارٍ الاتصال بقاعدة البيانات...");
@@ -428,9 +454,67 @@ window.openAdminPanel = async () => {
     const owner = document.getElementById("adminOwnerEmail");
     if(owner) owner.textContent = user.email;
     filterAdminAds();
+    await loadAdminOverview();
   } catch (e) {
     box.textContent = "تعذر تحميل البيانات: " + (e.code || e.message) + " — راجع قواعد Firestore.";
   }
+};
+let adminUsersCache = [];
+window.loadAdminOverview = async () => {
+  if (!isOwnerAdmin(auth.currentUser)) return;
+  const ids = ["adminUsersCount","adminInquiriesCount","adminRatingsCount","adminBlockedCount"];
+  try {
+    const [users, inquiries, ratings] = await Promise.all([
+      getDocs(collection(db,"sellerProfiles")), getDocs(collection(db,"inquiries")), getDocs(collection(db,"sellerRatings"))
+    ]);
+    adminUsersCache = users.docs.map(d=>({id:d.id,...d.data()}));
+    document.getElementById(ids[0]).textContent = String(adminUsersCache.length);
+    document.getElementById(ids[1]).textContent = String(inquiries.size);
+    document.getElementById(ids[2]).textContent = String(ratings.size);
+    document.getElementById(ids[3]).textContent = String(adminUsersCache.filter(u=>u.blocked===true).length);
+    filterAdminUsers();
+  } catch(e) {
+    const box=document.getElementById("adminUsersList");
+    if(box) box.textContent="تعذر تحميل ملخص المنصة: "+(e.code||e.message)+" — تأكد من نشر قواعد Firestore الجديدة.";
+  }
+};
+window.filterAdminUsers = () => {
+  const box=document.getElementById("adminUsersList"); if(!box)return;
+  const term=(document.getElementById("adminUsersSearch")?.value||"").trim().toLowerCase();
+  const rows=adminUsersCache.filter(u=>[u.name,u.id].some(v=>String(v||"").toLowerCase().includes(term)));
+  if(!rows.length){box.innerHTML='<div class="empty">لا توجد حسابات مسجلة في دليل المستخدمين حتى الآن.</div>';return;}
+  box.innerHTML=rows.map(u=>{
+    const name=escapeHtml(u.name||"مستخدم بدون اسم"), uid=escapeHtml(u.id), blocked=u.blocked===true;
+    return '<div class="card" style="margin:9px 0"><b>'+name+'</b><div class="muted" style="word-break:break-all">معرّف الحساب: '+uid+'</div><div class="muted">آخر نشاط: '+(u.lastSeenAt&&u.lastSeenAt.toDate?u.lastSeenAt.toDate().toLocaleString("ar-EG"):"غير متاح")+'</div><div style="color:'+(blocked?'#b91c1c':'#15803d')+';font-size:12px;margin:6px 0">'+(blocked?'الحساب موقوف':'الحساب نشط')+'</div><button class="btn" style="background:'+(blocked?'#dcfce7':'#fee2e2')+';color:'+(blocked?'#166534':'#991b1b')+'" onclick="adminSetUserBlocked('+JSON.stringify(u.id)+','+(!blocked)+')">'+(blocked?'إعادة تفعيل الحساب':'إيقاف الحساب')+'</button></div>';
+  }).join("");
+};
+window.adminSetUserBlocked = async (uid, blocked) => {
+  if(!isOwnerAdmin(auth.currentUser)) return alert("غير مصرح.");
+  if(uid===auth.currentUser.uid) return alert("لا يمكنك إيقاف حساب المالك.");
+  if(!confirm(blocked?"تأكيد إيقاف هذا الحساب؟":"تأكيد إعادة تفعيل هذا الحساب؟"))return;
+  try { await updateDoc(doc(db,"sellerProfiles",uid),{blocked,updatedAt:serverTimestamp()}); await loadAdminOverview(); alert(blocked?"تم إيقاف الحساب.":"تمت إعادة تفعيل الحساب."); }
+  catch(e) { alert("تعذر تحديث الحساب: "+(e.code||e.message)); }
+};
+window.adminBroadcast = async () => {
+  if(!isOwnerAdmin(auth.currentUser)) return alert("غير مصرح.");
+  const title=document.getElementById("adminBroadcastTitle").value.trim();
+  const message=document.getElementById("adminBroadcastMessage").value.trim();
+  const status=document.getElementById("adminBroadcastStatus");
+  if(!title||!message)return alert("اكتب عنوان الإشعار والرسالة أولًا.");
+  if(!confirm("سيتم إرسال الإشعار إلى كل الحسابات النشطة المسجلة. هل تتابع؟"))return;
+  status.textContent="جارٍ تجهيز الإشعارات...";
+  try {
+    const users=await getDocs(collection(db,"sellerProfiles"));
+    const recipients=users.docs.filter(d=>d.id!==auth.currentUser.uid&&d.data().blocked!==true);
+    for(let i=0;i<recipients.length;i+=400){
+      const batch=writeBatch(db);
+      recipients.slice(i,i+400).forEach(d=>batch.set(doc(collection(db,"notifications")),{recipientId:d.id,type:"announcement",title,message,read:false,createdAt:serverTimestamp()}));
+      await batch.commit();
+    }
+    status.textContent="تم إرسال الإشعار إلى "+recipients.length+" حساب.";
+    document.getElementById("adminBroadcastTitle").value="";
+    document.getElementById("adminBroadcastMessage").value="";
+  } catch(e) { status.textContent="تعذر الإرسال: "+(e.code||e.message)+". تأكد من نشر قواعد Firestore."; }
 };
 window.filterAdminAds = () => {
   const box = document.getElementById("adminAdsList");
