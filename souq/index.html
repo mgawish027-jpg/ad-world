@@ -60,7 +60,7 @@ body{background:radial-gradient(ellipse at 8% 0%,#e9efff 0,transparent 35%),var(
 <div class="actions"><button class="btn secondary" id="switchRegister" type="button">إنشاء حساب جديد</button><button class="btn secondary" id="switchLogin" type="button" style="display:none">لدي حساب بالفعل</button></div>
 <button class="small-link" id="resetPassword" type="button" style="margin-top:14px">نسيت كلمة المرور؟</button><p id="authMessage" class="muted" aria-live="polite"></p></div>
 <div class="card" id="authLoggedIn" style="display:none"><div style="font-size:35px">👤</div><h3 id="profileName">حسابك</h3><p class="muted" id="profileEmail"></p><p class="muted">تم تسجيل الدخول بنجاح.</p><button class="btn secondary" onclick="show('mine')">عرض إعلاناتي</button><button class="btn danger" id="signOutBtn" type="button" style="width:100%;margin-top:10px">تسجيل الخروج</button></div>
-<div class="card"><b>أدوات الإدارة التجريبية</b><p class="muted">لوحة محلية لاختبار إدارة الإعلانات والبلاغات على هذا الجهاز فقط. ليست لوحة مدير آمنة ولا تمنح صلاحيات حقيقية.</p><button class="btn secondary" onclick="show('admin')">فتح لوحة الإدارة التجريبية</button></div><div class="card"><b>عن سوق</b><p class="muted">منصة مبسطة للبيع والشراء والإعلانات المبوبة.</p><p class="muted">الإصدار التجريبي 1.3</p></div><div class="note">لا ترسل أموالاً قبل معاينة المنتج والتأكد من البائع. لا تشارك رموز التحقق أو بياناتك البنكية مع أي شخص.</div></section>
+<div class="card" id="adminAccess" style="display:none"><b>لوحة الإدارة</b><p class="muted">الدخول متاح لحسابات المديرين المعتمدة فقط.</p><button class="btn secondary" onclick="show('admin')">فتح لوحة الإدارة</button></div><div class="card"><b>عن سوق</b><p class="muted">منصة مبسطة للبيع والشراء والإعلانات المبوبة.</p><p class="muted">الإصدار التجريبي 1.3</p></div><div class="note">لا ترسل أموالاً قبل معاينة المنتج والتأكد من البائع. لا تشارك رموز التحقق أو بياناتك البنكية مع أي شخص.</div></section>
 <section id="admin" class="screen"><div class="section-head"><h2>لوحة الإدارة التجريبية</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div class="note">تنبيه أمني: هذه البيانات محلية ويمكن لأي شخص يستخدم نفس الجهاز فتح هذه اللوحة. لا تستخدمها لإدارة منصة عامة قبل ربط تسجيل دخول وصلاحيات مدير من الخادم.</div><div class="categories" style="margin-top:12px"><div class="card"><div class="muted">كل الإعلانات</div><h2 id="statAds">0</h2></div><div class="card"><div class="muted">البلاغات</div><h2 id="statReports">0</h2></div><div class="card"><div class="muted">الأقسام</div><h2>6</h2></div></div><div class="section-head"><h2>إدارة الإعلانات</h2></div><div id="adminAds"></div><div class="section-head"><h2>مراجعة البلاغات</h2></div><div id="adminReports"></div>
 <div class="section-head"><h2>إدارة الأقسام</h2></div>
 <div class="card"><div id="adminCategories"></div><div class="actions"><button class="btn secondary" onclick="adminAddCategory()">إضافة قسم</button><button class="btn secondary" onclick="adminResetCategories()">استعادة الأقسام الأساسية</button></div></div>
@@ -87,7 +87,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function money(v){return v?Number(v).toLocaleString('ar-EG')+' جنيه':'السعر عند التواصل'}
 function categoryIcon(c){return (cats.find(x=>x[0]===c)||['','📦'])[1]}
 function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c,i])=>'<button type="button" class="cat" data-category="'+esc(c)+'" onclick="openCategory(this.dataset.category)"><span>'+esc(i)+'</span><small>'+esc(c)+'</small></button>').join('')}
-function show(id,btn){if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
+function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
 function openCategory(c){currentCategoryPage=c;activeCat='';renderCats();document.getElementById('categoryPageTitle').textContent='إعلانات '+c;show('categoryPage')}
 function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&a.category===c);const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
@@ -194,7 +194,7 @@ if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWor
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -208,6 +208,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 window.souqUserId = null;
+window.souqIsAdmin = false;
 window.souqSaveCloudAd = async function(ad) {
   const user = auth.currentUser;
   if (!user) throw new Error("يجب تسجيل الدخول أولاً.");
@@ -294,15 +295,15 @@ $("signOutBtn").addEventListener("click",async()=>{
   try { await signOut(auth);authMessage("تم تسجيل الخروج."); }
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
-onAuthStateChanged(auth,user=>{
-  window.souqUserId = user ? user.uid : null;
-  loadCloudAds();
-  $("authLoggedOut").style.display=user?"none":"block";
-  $("authLoggedIn").style.display=user?"block":"none";
-  if(user) {
-    $("profileName").textContent=user.displayName||"أهلاً بيك في سوق";
-    $("profileEmail").textContent=user.email||"";
+onAuthStateChanged(auth,async user=>{
+  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false;
+  $("adminAccess").style.display="none";
+  $("authLoggedOut").style.display=user?"none":"block"; $("authLoggedIn").style.display=user?"block":"none";
+  if(user){ $("profileName").textContent=user.displayName||"أهلاً بيك في سوق"; $("profileEmail").textContent=user.email||"";
+    try { const roleDoc=await getDoc(doc(db,"users",user.uid)); window.souqIsAdmin=roleDoc.exists()&&roleDoc.data().role==="admin"; $("adminAccess").style.display=window.souqIsAdmin?"block":"none"; }
+    catch(error){ console.error("Admin role check failed",error); authMessage("تعذر التحقق من صلاحية المدير.",true); }
   }
+  loadCloudAds();
 });
 </script>
 
