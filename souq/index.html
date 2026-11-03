@@ -167,7 +167,7 @@ function renderAdmin(){
 }
 function changeStatus(id,status){const a=ads.find(x=>x.id===id);if(!a)return;const old=a.status;a.status=status;audit('تغيير حالة إعلان',a.title+' ← '+statusText(a));if(!persist()){a.status=old;return}renderAds();renderMine();renderAdmin();renderFavorites();if(document.getElementById('modal').classList.contains('show'))details(id)}
 
-function adminDeleteAd(id){if(!confirm('حذف الإعلان نهائياً من هذا الجهاز؟'))return;const deleted=ads.find(a=>a.id===id);ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine()}
+async function adminDeleteAd(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}if(!confirm('حذف الإعلان نهائياً من قاعدة البيانات ومن التطبيق كله؟'))return;const deleted=ads.find(a=>a.id===id);try{if(typeof window.souqDeleteCloudAd!=='function')throw new Error('خدمة الحذف السحابي غير جاهزة. حدّث الصفحة وحاول مرة أخرى.');await window.souqDeleteCloudAd(id)}catch(error){alert('لم يتم حذف الإعلان من قاعدة البيانات: '+(error.message||'تحقق من الاتصال والصلاحيات.'));return}ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان من قاعدة البيانات',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine();renderFavorites();alert('تم حذف الإعلان من قاعدة البيانات ومن التطبيق كله.')}
 function adminViewReported(id){if(!ads.some(a=>a.id===id)){alert('الإعلان لم يعد موجوداً.');return}details(id)}
 function dismissReport(id){audit('إغلاق بلاغ',id);reports=reports.filter(r=>r.id!==id);try{localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin()}catch(e){alert('تعذر تحديث البلاغات.')}}
 
@@ -194,7 +194,7 @@ if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWor
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -214,6 +214,13 @@ window.souqSaveCloudAd = async function(ad) {
   if (!user) throw new Error("يجب تسجيل الدخول أولاً.");
   const cloudAd = {...ad, ownerId:user.uid, photos:[], photo:""};
   await setDoc(doc(db,"ads",ad.id),cloudAd,{merge:true});
+};
+window.souqDeleteCloudAd = async function(adId) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("يجب تسجيل الدخول أولاً.");
+  const roleDoc = await getDoc(doc(db,"users",user.uid));
+  if (!roleDoc.exists() || roleDoc.data().role !== "admin") throw new Error("ليس لديك صلاحية حذف الإعلانات.");
+  await deleteDoc(doc(db,"ads",adId));
 };
 async function loadCloudAds() {
   try {
