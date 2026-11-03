@@ -657,7 +657,11 @@ window.rateSeller=async(sellerId,adId)=>{
  catch(e){console.error('Rating save failed',e);alert('تعذر حفظ التقييم. قد تحتاج قواعد Firestore إلى السماح بقراءة وكتابة تقييمات المعلنين. ('+(e.code||e.message)+')');}
 }
 window.saveAdToCloud = async (ad, editingId = null) => {
-  await authReady;
+  // Never leave the publish button spinning forever if Firebase Auth has not initialized.
+  await Promise.race([
+    authReady,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("انتهت مهلة تهيئة تسجيل الدخول. حدّث الصفحة وسجّل الدخول مرة أخرى.")), 12000))
+  ]);
   currentUser = auth.currentUser || currentUser;
   if (!currentUser || currentUser.isAnonymous) throw new Error("يجب تسجيل الدخول بحساب قبل نشر الإعلان.");
   const waitWithTimeout = (promise, label) => Promise.race([
