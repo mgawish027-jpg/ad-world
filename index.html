@@ -657,24 +657,20 @@ window.rateSeller=async(sellerId,adId)=>{
  catch(e){console.error('Rating save failed',e);alert('تعذر حفظ التقييم. قد تحتاج قواعد Firestore إلى السماح بقراءة وكتابة تقييمات المعلنين. ('+(e.code||e.message)+')');}
 }
 window.saveAdToCloud = async (ad, editingId = null) => {
-  // Never leave the publish button spinning forever if Firebase Auth has not initialized.
   await Promise.race([
     authReady,
-    new Promise((_, reject) => setTimeout(() => reject(new Error("انتهت مهلة تهيئة تسجيل الدخول. حدّث الصفحة وسجّل الدخول مرة أخرى.")), 12000))
+    new Promise((_, reject) => setTimeout(() => reject(new Error("انتهت مهلة تسجيل الدخول. حدّث الصفحة وسجّل الدخول مرة أخرى.")), 12000))
   ]);
   currentUser = auth.currentUser || currentUser;
   if (!currentUser || currentUser.isAnonymous) throw new Error("يجب تسجيل الدخول بحساب قبل نشر الإعلان.");
-  const waitWithTimeout = (promise, label) => Promise.race([
-    promise,
-    new Promise((_, reject) => setTimeout(() => reject(new Error(label)), 20000))
-  ]);
-  await waitWithTimeout(enableNetwork(db), "تعذر تفعيل اتصال قاعدة البيانات. افحص الإنترنت وحاول مجددًا.");
+
   let imageUrl = "";
   if (ad.imageFile) {
     const imageRef = ref(storage, `ad-images/${currentUser.uid}/${Date.now()}-${ad.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
-    const imageSnapshot = await waitWithTimeout(uploadBytes(imageRef, ad.imageFile, { contentType: ad.imageFile.type }), "انتهت مهلة رفع الصورة. افحص الإنترنت قبل إعادة المحاولة.");
+    const imageSnapshot = await uploadBytes(imageRef, ad.imageFile, { contentType: ad.imageFile.type });
     imageUrl = await getDownloadURL(imageSnapshot.ref);
   }
+
   const safeAd = {
     title: String(ad.title || "إعلان بدون عنوان"),
     imageUrl,
@@ -686,13 +682,14 @@ window.saveAdToCloud = async (ad, editingId = null) => {
     ownerId: currentUser.uid,
     ...(editingId ? {} : { createdAt: serverTimestamp() })
   };
+
   if (editingId) {
     const existing = cloudAds.find(item => item.id === editingId);
     if (!existing || existing.ownerId !== currentUser.uid) throw new Error("not-owner");
     if (!ad.imageFile) safeAd.imageUrl = existing.imageUrl || "";
-    await waitWithTimeout(updateDoc(doc(db, "ads", editingId), safeAd), "انتهت مهلة حفظ التعديل. قد يكون الاتصال بقاعدة البيانات متوقفًا؛ لا تكرر العملية قبل تحديث الصفحة.");
+    await updateDoc(doc(db, "ads", editingId), safeAd);
   } else {
-    await waitWithTimeout(addDoc(collection(db, "ads"), safeAd), "انتهت مهلة النشر بعد 20 ثانية. قاعدة البيانات لم تؤكد الحفظ؛ افحص اتصال الإنترنت ولا تكرر النشر فورًا لتجنب إعلان مكرر.");
+    await addDoc(collection(db, "ads"), safeAd);
   }
 };
 window.deleteAdFromCloud = async (id) => {
