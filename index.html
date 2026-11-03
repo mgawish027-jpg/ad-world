@@ -319,7 +319,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail, sendEmailVerification, reload, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, enableNetwork } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
@@ -659,11 +659,16 @@ window.rateSeller=async(sellerId,adId)=>{
 window.saveAdToCloud = async (ad, editingId = null) => {
   await authReady;
   currentUser = auth.currentUser || currentUser;
-  if (!currentUser) throw new Error("not-authenticated");
+  if (!currentUser || currentUser.isAnonymous) throw new Error("يجب تسجيل الدخول بحساب قبل نشر الإعلان.");
+  const waitWithTimeout = (promise, label) => Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(label)), 20000))
+  ]);
+  await waitWithTimeout(enableNetwork(db), "تعذر تفعيل اتصال قاعدة البيانات. افحص الإنترنت وحاول مجددًا.");
   let imageUrl = "";
   if (ad.imageFile) {
     const imageRef = ref(storage, `ad-images/${currentUser.uid}/${Date.now()}-${ad.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
-    const imageSnapshot = await uploadBytes(imageRef, ad.imageFile, { contentType: ad.imageFile.type });
+    const imageSnapshot = await waitWithTimeout(uploadBytes(imageRef, ad.imageFile, { contentType: ad.imageFile.type }), "انتهت مهلة رفع الصورة. افحص الإنترنت قبل إعادة المحاولة.");
     imageUrl = await getDownloadURL(imageSnapshot.ref);
   }
   const safeAd = {
@@ -673,7 +678,7 @@ window.saveAdToCloud = async (ad, editingId = null) => {
     price: String(ad.price || ""),
     place: String(ad.place || "الموقع غير محدد"),
     description: String(ad.description || ""),
-    contactPhone: String(ad.contactPhone || ""),
+    contactPhone: String(ad.contactPhone || "").trim(),
     ownerId: currentUser.uid,
     ...(editingId ? {} : { createdAt: serverTimestamp() })
   };
@@ -681,9 +686,9 @@ window.saveAdToCloud = async (ad, editingId = null) => {
     const existing = cloudAds.find(item => item.id === editingId);
     if (!existing || existing.ownerId !== currentUser.uid) throw new Error("not-owner");
     if (!ad.imageFile) safeAd.imageUrl = existing.imageUrl || "";
-    await updateDoc(doc(db, "ads", editingId), safeAd);
+    await waitWithTimeout(updateDoc(doc(db, "ads", editingId), safeAd), "انتهت مهلة حفظ التعديل. قد يكون الاتصال بقاعدة البيانات متوقفًا؛ لا تكرر العملية قبل تحديث الصفحة.");
   } else {
-    await addDoc(collection(db, "ads"), safeAd);
+    await waitWithTimeout(addDoc(collection(db, "ads"), safeAd), "انتهت مهلة النشر بعد 20 ثانية. قاعدة البيانات لم تؤكد الحفظ؛ افحص اتصال الإنترنت ولا تكرر النشر فورًا لتجنب إعلان مكرر.");
   }
 };
 window.deleteAdFromCloud = async (id) => {
