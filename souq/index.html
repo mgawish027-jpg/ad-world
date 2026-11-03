@@ -100,7 +100,34 @@ function adminAddCategory(){const name=prompt('اسم القسم الجديد:')
 function adminRemoveCategory(i){if(cats.length<=1){alert('يجب أن يبقى قسم واحد على الأقل.');return}const item=cats[i];if(!item)return;if(ads.some(a=>a.category===item[0])){alert('لا يمكن حذف قسم يحتوي على إعلانات. انقل الإعلانات أولاً.');return}if(!confirm('حذف قسم '+item[0]+'؟'))return;cats.splice(i,1);localStorage.setItem('souq_categories_v1',JSON.stringify(cats));audit('حذف قسم',item[0]);renderCats();renderAdminCategories();renderAudit();document.getElementById('category').innerHTML=cats.map(x=>'<option>'+esc(x[0])+'</option>').join('')}
 function adminResetCategories(){if(!confirm('استعادة الأقسام الأساسية؟'))return;const base=[['سيارات','🚗'],['عقارات','🏠'],['موبايلات','📱'],['أجهزة','💻'],['أثاث','🛋️'],['أخرى','📦']];if(ads.some(a=>!base.some(x=>x[0]===a.category))){alert('هناك إعلانات في أقسام مخصصة. انقلها أولاً.');return}cats=base;localStorage.setItem('souq_categories_v1',JSON.stringify(cats));audit('استعادة الأقسام','الأقسام الأساسية');renderCats();renderAdminCategories();renderAudit();document.getElementById('category').innerHTML=cats.map(x=>'<option>'+esc(x[0])+'</option>').join('')}
 function exportBackup(){const data={app:'Souq',version:1,exportedAt:new Date().toISOString(),ads,favs,reports,cats,settings:read('souq_settings_v1',{})};const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='souq-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();URL.revokeObjectURL(url);audit('تصدير نسخة احتياطية','تم إنشاء ملف النسخة');renderAudit()}
-async function importBackup(event){const file=event.target.files&&event.target.files[0];if(!file)return;try{if(file.size>25*1024*1024)throw new Error('حجم النسخة أكبر من 25 ميجابايت');const data=JSON.parse(await file.text());if(data.app!=='Souq'||!Array.isArray(data.ads)||!Array.isArray(data.favs)||!Array.isArray(data.reports)||!Array.isArray(data.cats))throw new Error('ملف النسخة غير صالح أو لا يخص سوق');if(!confirm('سيتم استبدال البيانات المحلية الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;const old={ads,favs,reports,cats};ads=data.ads;favs=data.favs;reports=data.reports;cats=data.cats;if(!persist()){Object.assign(window,{});ads=old.ads;favs=old.favs;reports=old.reports;cats=old.cats;throw new Error('تعذر حفظ البيانات المستعادة')}localStorage.setItem(RKEY,JSON.stringify(reports));localStorage.setItem('souq_categories_v1',JSON.stringify(cats));localStorage.setItem('souq_settings_v1',JSON.stringify(data.settings||{}));audit('استيراد نسخة احتياطية','تم استعادة البيانات من ملف');renderCats();renderAdmin();renderAds();alert('تم استيراد النسخة بنجاح على هذا الجهاز.')}catch(e){alert(e.message||'تعذر قراءة ملف النسخة.')}finally{event.target.value=''}}
+async function importBackup(event){
+ const file=event.target.files&&event.target.files[0];if(!file)return;
+ const keys=[KEY,FKEY,RKEY,'souq_categories_v1','souq_settings_v1'];
+ const previous=Object.fromEntries(keys.map(k=>[k,localStorage.getItem(k)]));
+ const oldState={ads,favs,reports,cats};
+ try{
+  if(file.size>25*1024*1024)throw new Error('حجم النسخة أكبر من 25 ميجابايت');
+  const data=JSON.parse(await file.text());
+  if(data.app!=='Souq'||!Array.isArray(data.ads)||!Array.isArray(data.favs)||!Array.isArray(data.reports)||!Array.isArray(data.cats))throw new Error('ملف النسخة غير صالح أو لا يخص سوق');
+  if(data.ads.some(a=>!a||typeof a!=='object'||typeof a.id!=='string'||typeof a.title!=='string')||data.cats.some(x=>!Array.isArray(x)||typeof x[0]!=='string'||typeof x[1]!=='string'))throw new Error('النسخة تحتوي على بيانات غير سليمة');
+  if(!confirm('سيتم استبدال البيانات المحلية الحالية بمحتوى النسخة. هل تريد المتابعة؟'))return;
+  ads=data.ads;favs=data.favs.filter(id=>ads.some(a=>a.id===id));reports=data.reports;cats=data.cats;
+  localStorage.setItem(KEY,JSON.stringify(ads));
+  localStorage.setItem(FKEY,JSON.stringify(favs));
+  localStorage.setItem(RKEY,JSON.stringify(reports));
+  localStorage.setItem('souq_categories_v1',JSON.stringify(cats));
+  localStorage.setItem('souq_settings_v1',JSON.stringify(data.settings||{}));
+  audit('استيراد نسخة احتياطية','تم استعادة البيانات من ملف');
+  renderCats();
+  document.getElementById('category').innerHTML=cats.map(x=>'<option>'+esc(x[0])+'</option>').join('');
+  renderAdmin();renderAds();renderFavorites();renderMine();
+  alert('تم استيراد النسخة بنجاح على هذا الجهاز.');
+ }catch(e){
+  ads=oldState.ads;favs=oldState.favs;reports=oldState.reports;cats=oldState.cats;
+  for(const k of keys){try{if(previous[k]===null)localStorage.removeItem(k);else localStorage.setItem(k,previous[k])}catch(restoreError){}}
+  alert(e.message||'تعذر قراءة ملف النسخة أو حفظه.');
+ }finally{event.target.value=''}
+}
 function clearAuditLog(){if(!confirm('مسح سجل العمليات المحلي؟'))return;localStorage.removeItem('souq_audit_v1');renderAudit()}
 function renderAdmin(){
  document.getElementById('statAds').textContent=ads.length;
