@@ -86,7 +86,7 @@ function renderCats(){
    document.getElementById('listTitle').textContent=activeCat?'إعلانات '+activeCat:'أحدث الإعلانات';
    renderCats();
    renderAds();
-   document.getElementById('home').scrollIntoView({behavior:'smooth',block:'start'});
+   document.getElementById('listTitle').scrollIntoView({behavior:'smooth',block:'start'});
   });
  });
 }
