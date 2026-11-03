@@ -1,4 +1,4 @@
-const CACHE="ad-world-v10";
+const CACHE="ad-world-v11";
 const ASSETS=["./","./index.html","./manifest.json","./icon.svg"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
