@@ -76,7 +76,7 @@ function persist(){try{localStorage.setItem(KEY,JSON.stringify(ads));localStorag
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(v){return v?Number(v).toLocaleString('ar-EG')+' جنيه':'السعر عند التواصل'}
 function categoryIcon(c){return (cats.find(x=>x[0]===c)||['','📦'])[1]}
-function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c,i])=>'<button class="cat '+(activeCat===c?'active':'')+'" onclick="filterCat(\''+c+'\')"><span>'+i+'</span><small>'+c+'</small></button>').join('')}
+function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c,i])=>'<button type="button" class="cat '+(activeCat===c?'active':'')+'" data-category="'+esc(c)+'" onclick="filterCat(this.dataset.category)"><span>'+esc(i)+'</span><small>'+esc(c)+'</small></button>').join('')}
 function show(id,btn){if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));window.scrollTo(0,0);if(id==='home')renderAds();if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
 function filterCat(c){activeCat=activeCat===c?'':c;document.getElementById('listTitle').textContent=activeCat?'إعلانات '+activeCat:'أحدث الإعلانات';renderCats();show('home')}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
