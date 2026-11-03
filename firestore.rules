@@ -5,44 +5,126 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.firebase.sign_in_provider != 'anonymous';
     }
+
     function admin() {
       return signedIn()
         && request.auth.token.email == 'mgawish027@gmail.com'
         && request.auth.token.email_verified == true;
     }
+
     function activeUser() {
       return signedIn()
         && (!exists(/databases/$(database)/documents/sellerProfiles/$(request.auth.uid))
           || get(/databases/$(database)/documents/sellerProfiles/$(request.auth.uid)).data.blocked != true);
     }
+
     match /ads/{adId} {
       allow read: if true;
-      allow create: if activeUser() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if admin() || (activeUser() && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId);
-      allow delete: if admin() || (activeUser() && resource.data.ownerId == request.auth.uid);
+      allow create: if activeUser()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update: if admin()
+        || (activeUser()
+          && resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId);
+      allow delete: if admin()
+        || (activeUser() && resource.data.ownerId == request.auth.uid);
     }
+
     match /sellerProfiles/{userId} {
       allow read: if true;
-      allow create: if admin() || (activeUser() && request.auth.uid == userId && !('blocked' in request.resource.data));
-      allow update: if admin() || (activeUser() && request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','updatedAt','lastSeenAt']));
+      allow create: if admin()
+        || (activeUser()
+          && request.auth.uid == userId
+          && !('blocked' in request.resource.data));
+      allow update: if admin()
+        || (activeUser()
+          && request.auth.uid == userId
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'updatedAt', 'lastSeenAt']));
       allow delete: if admin();
     }
+
     match /inquiries/{inquiryId} {
-      allow create: if activeUser() && request.resource.data.buyerId == request.auth.uid && request.resource.data.sellerId is string && request.resource.data.adId is string;
-      allow read: if admin() || (activeUser() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid));
-      allow update: if admin() || (activeUser() && resource.data.sellerId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reply','repliedAt']));
+      allow create: if activeUser()
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.sellerId is string
+        && request.resource.data.sellerId != request.auth.uid
+        && request.resource.data.adId is string
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 0
+        && request.resource.data.message.size() <= 1000;
+      allow read: if admin()
+        || (activeUser()
+          && (resource.data.buyerId == request.auth.uid
+            || resource.data.sellerId == request.auth.uid));
+      allow update: if admin()
+        || (activeUser()
+          && resource.data.sellerId == request.auth.uid
+          && request.resource.data.buyerId == resource.data.buyerId
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.adId == resource.data.adId
+          && request.resource.data.message == resource.data.message
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['reply', 'repliedAt'])
+          && request.resource.data.reply is string
+          && request.resource.data.reply.size() > 0
+          && request.resource.data.reply.size() <= 1000);
       allow delete: if admin();
     }
+
     match /notifications/{notificationId} {
-      allow read: if admin() || (activeUser() && resource.data.recipientId == request.auth.uid);
-      allow create: if admin() || (activeUser() && request.resource.data.recipientId == request.auth.uid);
-      allow update: if admin() || (activeUser() && resource.data.recipientId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
+      allow read: if admin()
+        || (activeUser() && resource.data.recipientId == request.auth.uid);
+
+      allow create: if admin()
+        || (activeUser() && (
+          (request.resource.data.type == 'inquiry'
+            && request.resource.data.inquiryId is string
+            && exists(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId))
+            && get(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId)).data.buyerId == request.auth.uid
+            && get(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId)).data.sellerId == request.resource.data.recipientId)
+          ||
+          (request.resource.data.type == 'inquiry_reply'
+            && request.resource.data.inquiryId is string
+            && exists(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId))
+            && get(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId)).data.sellerId == request.auth.uid
+            && get(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId)).data.buyerId == request.resource.data.recipientId
+            && get(/databases/$(database)/documents/inquiries/$(request.resource.data.inquiryId)).data.reply is string)
+          ||
+          (request.resource.data.type == 'rating'
+            && request.resource.data.ratingId is string
+            && exists(/databases/$(database)/documents/sellerRatings/$(request.resource.data.ratingId))
+            && get(/databases/$(database)/documents/sellerRatings/$(request.resource.data.ratingId)).data.raterId == request.auth.uid
+            && get(/databases/$(database)/documents/sellerRatings/$(request.resource.data.ratingId)).data.sellerId == request.resource.data.recipientId)
+        ));
+
+      allow update: if admin()
+        || (activeUser()
+          && resource.data.recipientId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read is bool);
       allow delete: if admin();
     }
+
     match /sellerRatings/{ratingId} {
       allow read: if true;
-      allow create: if activeUser() && request.resource.data.raterId == request.auth.uid && request.resource.data.sellerId is string && request.resource.data.sellerId != request.auth.uid && request.resource.data.rating is number && request.resource.data.rating >= 1 && request.resource.data.rating <= 5;
-      allow update: if admin() || (activeUser() && resource.data.raterId == request.auth.uid && request.resource.data.raterId == resource.data.raterId && request.resource.data.sellerId == resource.data.sellerId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating','updatedAt']) && request.resource.data.rating is number && request.resource.data.rating >= 1 && request.resource.data.rating <= 5);
+      allow create: if activeUser()
+        && request.resource.data.raterId == request.auth.uid
+        && request.resource.data.sellerId is string
+        && request.resource.data.sellerId != request.auth.uid
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+      allow update: if admin()
+        || (activeUser()
+          && resource.data.raterId == request.auth.uid
+          && request.resource.data.raterId == resource.data.raterId
+          && request.resource.data.sellerId == resource.data.sellerId
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['rating', 'updatedAt'])
+          && request.resource.data.rating is number
+          && request.resource.data.rating >= 1
+          && request.resource.data.rating <= 5);
       allow delete: if admin();
     }
   }
