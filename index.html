@@ -148,9 +148,26 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  </div>
 </section>
 <section id="admin" class="screen">
- <h2>لوحة إدارة AD WORLD 🛡️</h2>
- <div class="notice">هذه اللوحة مخصصة لحساب المدير الموثق فقط.</div>
- <div class="card"><b>إدارة الإعلانات</b><div id="adminAdsList" class="muted" style="margin-top:10px">جارٍ التحميل...</div></div>
+ <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+  <h2>مركز المالك والإدارة 🛡️</h2>
+  <button class="btn back" onclick="show('home')">الرئيسية</button>
+ </div>
+ <div class="notice">🔐 مساحة خاصة بمالك AD WORLD فقط. لا تظهر في قائمة التطبيق للحسابات العادية، ويتم التحقق من الصلاحية قبل تحميل بيانات الإدارة.</div>
+ <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-top:12px">
+  <div class="card"><div class="muted">إجمالي الإعلانات</div><strong id="adminTotalAds" style="font-size:25px">—</strong></div>
+  <div class="card"><div class="muted">إعلانات معروضة</div><strong id="adminVisibleAds" style="font-size:25px">—</strong></div>
+ </div>
+ <div class="card">
+  <b>إدارة ومراجعة الإعلانات</b>
+  <input id="adminAdsSearch" placeholder="ابحث بعنوان الإعلان أو المدينة أو القسم..." oninput="filterAdminAds()">
+  <div class="actions"><button class="btn primary" onclick="openAdminPanel()">↻ تحديث البيانات</button></div>
+  <div id="adminAdsList" style="margin-top:10px">جارٍ التحميل...</div>
+ </div>
+ <div class="card">
+  <b>حساب المالك</b>
+  <p class="muted" id="adminOwnerEmail">mgawish027@gmail.com</p>
+  <p class="muted">حالة الدخول: مدير موثّق</p>
+ </div>
 </section>
 <section id="business" class="screen">
  <h2>إعلانات الشركات</h2>
@@ -387,32 +404,62 @@ onAuthStateChanged(auth, async user => {
 });
 
 
+let adminAdsCache = [];
+function isOwnerAdmin(user) {
+  return !!(user && !user.isAnonymous && String(user.email||"").toLowerCase() === "mgawish027@gmail.com" && user.emailVerified === true);
+}
 window.openAdminPanel = async () => {
   const user = auth.currentUser;
-  if (!user || user.isAnonymous || user.email !== "mgawish027@gmail.com" || !user.emailVerified) {
-    alert("لوحة الإدارة متاحة فقط لبريد المدير بعد تأكيد البريد الإلكتروني.");
+  if (!isOwnerAdmin(user)) {
+    alert("هذه المساحة خاصة بمالك التطبيق فقط. تأكد من تسجيل الدخول ببريد المالك وتأكيده.");
+    show("account");
     return;
   }
   show("admin");
   const box = document.getElementById("adminAdsList");
-  box.textContent = "جارٍ تحميل الإعلانات...";
+  box.textContent = "جارٍ تحميل بيانات الإدارة...";
   try {
     const snap = await getDocs(query(collection(db, "ads"), orderBy("createdAt", "desc")));
-    if (snap.empty) { box.textContent = "لا توجد إعلانات حاليًا."; return; }
-    box.innerHTML = snap.docs.map(d => {
-      const a = d.data();
-      return '<div style="border-top:1px solid #e7eaf0;padding:12px 0"><b>' + escapeHtml(a.title || "إعلان") + '</b><div class="muted">' + escapeHtml(a.place || "") + ' · صاحب الإعلان: ' + escapeHtml(a.ownerId || "") + '</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd(' + JSON.stringify(d.id) + ')">حذف الإعلان</button></div>';
-    }).join("");
+    adminAdsCache = snap.docs.map(d => ({id:d.id,...d.data()}));
+    const total = document.getElementById("adminTotalAds");
+    const visible = document.getElementById("adminVisibleAds");
+    if(total) total.textContent = String(adminAdsCache.length);
+    if(visible) visible.textContent = String(adminAdsCache.length);
+    const owner = document.getElementById("adminOwnerEmail");
+    if(owner) owner.textContent = user.email;
+    filterAdminAds();
   } catch (e) {
-    box.textContent = "تعذر تحميل الإعلانات: " + (e.code || e.message);
+    box.textContent = "تعذر تحميل البيانات: " + (e.code || e.message) + " — راجع قواعد Firestore.";
   }
+};
+window.filterAdminAds = () => {
+  const box = document.getElementById("adminAdsList");
+  if(!box) return;
+  const term = (document.getElementById("adminAdsSearch")?.value || "").trim().toLowerCase();
+  const rows = adminAdsCache.filter(a => [a.title,a.place,a.category,a.ownerId].some(v => String(v||"").toLowerCase().includes(term)));
+  if(!rows.length) { box.innerHTML = '<div class="empty">لا توجد إعلانات مطابقة.</div>'; return; }
+  box.innerHTML = rows.map(a => {
+    const title = escapeHtml(a.title || "إعلان بدون عنوان");
+    const details = escapeHtml([a.category,a.place].filter(Boolean).join(" · "));
+    const owner = escapeHtml(a.ownerId || "غير معروف");
+    const price = a.price ? Number(a.price).toLocaleString("en-US") + " جنيه" : "السعر غير محدد";
+    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd('+JSON.stringify(a.id)+')">حذف الإعلان</button></div>';
+  }).join("");
 };
 window.adminDeleteAd = async (id) => {
   const user = auth.currentUser;
-  if (!user || user.email !== "mgawish027@gmail.com" || !user.emailVerified) return alert("غير مصرح.");
-  if (!confirm("تأكيد حذف هذا الإعلان نهائيًا؟")) return;
-  try { await deleteDoc(doc(db, "ads", id)); alert("تم حذف الإعلان."); await openAdminPanel(); }
-  catch (e) { alert("تعذر الحذف: " + (e.code || e.message)); }
+  if (!isOwnerAdmin(user)) return alert("غير مصرح لك بتنفيذ هذا الإجراء.");
+  const ad = adminAdsCache.find(a => a.id === id);
+  if (!ad) return alert("الإعلان غير موجود أو تم تحديث القائمة.");
+  if (!confirm("هل أنت متأكد من حذف الإعلان التالي نهائيًا؟\\n" + (ad.title || "إعلان"))) return;
+  try {
+    await deleteDoc(doc(db, "ads", id));
+    adminAdsCache = adminAdsCache.filter(a => a.id !== id);
+    alert("تم حذف الإعلان بنجاح.");
+    await openAdminPanel();
+  } catch (e) {
+    alert("تعذر الحذف: " + (e.code || e.message) + " — تحقق من صلاحيات Firestore.");
+  }
 };
 
 window.loginAccount = async () => {
