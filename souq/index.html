@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1463d8"><meta name="description" content="سوق - إعلانات مبوبة سهلة وسريعة">
+<title>سوق | بيع واشتري بسهولة</title><link rel="manifest" href="./manifest.json">
+<style>
+:root{--blue:#1463d8;--purple:#6d45d9;--bg:#f4f6fb;--ink:#172033;--muted:#697386;--line:#e7eaf0}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Arial,Tahoma,sans-serif}
+header{background:linear-gradient(120deg,var(--blue),var(--purple));color:#fff;padding:22px 17px 24px;border-radius:0 0 25px 25px}
+.top{max-width:720px;margin:auto}.brand{font-size:29px;font-weight:900}.tag{font-size:13px;opacity:.9;margin-top:5px}
+.wrap{max-width:720px;margin:auto;padding:14px}.search{width:100%;padding:14px;border:0;border-radius:13px;margin-top:18px;font-size:15px}
+h2{font-size:18px;margin:20px 2px 12px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.cat{background:white;border:1px solid var(--line);border-radius:14px;padding:13px 5px;text-align:center;font-size:13px;cursor:pointer}.cat span{display:block;font-size:25px;margin-bottom:6px}
+.card{background:white;border:1px solid var(--line);border-radius:15px;padding:14px;margin:9px 0}.adtitle{font-weight:800;font-size:16px;margin:5px 0}.muted{font-size:12px;color:var(--muted);line-height:1.7}
+.price{font-weight:900;color:var(--blue);margin-top:7px}.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:800;font-size:14px;cursor:pointer}.primary{background:var(--blue);color:white;width:100%}
+input,textarea,select{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;margin:7px 0;font:inherit;background:white}label{font-size:13px;color:var(--muted)}
+.screen{display:none}.screen.active{display:block}.empty{text-align:center;color:var(--muted);padding:25px 10px}
+nav{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px calc(9px + env(safe-area-inset-bottom));max-width:720px;margin:auto}
+nav button{background:none;border:0;color:var(--muted);font-size:12px;padding:4px}nav b{display:block;font-size:20px;margin-bottom:3px}
+.note{background:#fff8e8;border:1px solid #f5e4b8;border-radius:12px;padding:11px;font-size:12px;line-height:1.7;color:#76551a}
+footer{text-align:center;color:var(--muted);font-size:11px;padding:15px}
+</style></head>
+<body>
+<header><div class="top"><div class="brand">🛍️ سوق</div><div class="tag">بيع واشتري بسهولة في مكان واحد</div><input id="search" class="search" placeholder="بتدور على إيه؟ ابحث هنا..." oninput="renderAds()"></div></header>
+<main class="wrap">
+<section id="home" class="screen active">
+<h2>الأقسام</h2><div class="grid">
+<div class="cat" onclick="filterCat('سيارات')"><span>🚗</span>سيارات</div><div class="cat" onclick="filterCat('عقارات')"><span>🏠</span>عقارات</div><div class="cat" onclick="filterCat('موبايلات')"><span>📱</span>موبايلات</div><div class="cat" onclick="filterCat('أجهزة')"><span>💻</span>أجهزة</div><div class="cat" onclick="filterCat('أثاث')"><span>🛋️</span>أثاث</div><div class="cat" onclick="filterCat('أخرى')"><span>📦</span>أخرى</div>
+</div><h2 id="listTitle">أحدث الإعلانات</h2><div id="ads"></div>
+</section>
+<section id="add" class="screen"><h2>أضف إعلانك</h2><div class="card"><label>عنوان الإعلان</label><input id="title" maxlength="70" placeholder="مثال: موبايل للبيع بحالة ممتازة"><label>القسم</label><select id="category"><option>سيارات</option><option>عقارات</option><option>موبايلات</option><option>أجهزة</option><option>أثاث</option><option>أخرى</option></select><label>السعر بالجنيه</label><input id="price" type="number" min="0" placeholder="السعر"><label>المحافظة / المنطقة</label><input id="place" placeholder="مثال: أبو المطامير - البحيرة"><label>رقم التواصل</label><input id="phone" type="tel" placeholder="رقم الموبايل"><label>وصف الإعلان</label><textarea id="desc" rows="4" maxlength="600" placeholder="اكتب تفاصيل الإعلان..."></textarea><button class="btn primary" onclick="addAd()">حفظ الإعلان على هذا الجهاز</button></div><div class="note">دي نسخة تجريبية أولية: الإعلانات محفوظة على نفس الجهاز والمتصفح فقط، ولسه مش ظاهرة لباقي المستخدمين. هنربط قاعدة البيانات والحسابات بعد اختبار النسخة.</div></section>
+<section id="account" class="screen"><h2>حسابي</h2><div class="card"><b>أهلاً بيك في سوق 👋</b><p class="muted">النسخة الأولية لا تحتاج تسجيل دخول. تقدر تتصفح وتجرب إضافة إعلان على جهازك.</p></div></section>
+</main>
+<nav><button onclick="show('home')"><b>⌂</b>الرئيسية</button><button onclick="show('add')"><b>＋</b>أضف إعلان</button><button onclick="show('account')"><b>♙</b>حسابي</button></nav>
+<footer>سوق © 2026</footer>
+<script>
+let ads=JSON.parse(localStorage.getItem('souq_ads')||'[]'), activeCat='';
+function show(id){document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='home')renderAds()}
+function filterCat(c){activeCat=c;document.getElementById('listTitle').textContent='قسم '+c;show('home');renderAds()}
+function renderAds(){let q=(document.getElementById('search')?.value||'').trim().toLowerCase();let list=ads.filter(a=>(!activeCat||a.category===activeCat)&&(!q||(a.title+' '+a.category+' '+a.place+' '+a.desc).toLowerCase().includes(q)));document.getElementById('ads').innerHTML=list.length?list.slice().reverse().map(a=>'<article class="card"><div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><div class="adtitle">'+esc(a.title)+'</div><div class="muted">'+esc(a.desc)+'</div><div class="price">'+(a.price?Number(a.price).toLocaleString('ar-EG')+' جنيه':'السعر عند التواصل')+'</div><div class="muted">للتواصل: '+esc(a.phone)+'</div></article>').join(''):'<div class="empty">مفيش إعلانات هنا لسه. كن أول واحد يضيف إعلانك.</div>'}
+function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function addAd(){let a={title:title.value.trim(),category:category.value,price:price.value,place:place.value.trim(),phone:phone.value.trim(),desc:desc.value.trim(),date:Date.now()};if(!a.title||!a.place||!a.phone){alert('اكتب عنوان الإعلان والمنطقة ورقم التواصل');return}ads.push(a);localStorage.setItem('souq_ads',JSON.stringify(ads));['title','price','place','phone','desc'].forEach(id=>document.getElementById(id).value='');activeCat='';alert('تم حفظ الإعلان على جهازك بنجاح');show('home')}
+if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+renderAds();
+</script></body></html>
