@@ -243,8 +243,8 @@ window.sendAdInquiry=async(sellerId,adId)=>{
  const clean=message.trim();if(!clean)return alert('اكتب رسالة قبل الإرسال.');
  if(clean.length>1000)return alert('الرسالة طويلة. الحد الأقصى 1000 حرف.');
  try{
-  await addDoc(collection(db,'inquiries'),{sellerId:sellerId,buyerId:currentUser.uid,adId:adId,adTitle:String(ad.title||''),message:clean,createdAt:serverTimestamp()});
-  await addDoc(collection(db,'notifications'),{recipientId:sellerId,type:'inquiry',title:'استفسار جديد ✉️',message:'وصلك استفسار جديد بخصوص إعلان: '+String(ad.title||''),adId:adId,read:false,createdAt:serverTimestamp()});
+  const inquiryRef=await addDoc(collection(db,'inquiries'),{sellerId:sellerId,buyerId:currentUser.uid,adId:adId,adTitle:String(ad.title||''),message:clean,createdAt:serverTimestamp()});
+  await addDoc(collection(db,'notifications'),{recipientId:sellerId,type:'inquiry',inquiryId:inquiryRef.id,title:'استفسار جديد ✉️',message:'وصلك استفسار جديد بخصوص إعلان: '+String(ad.title||''),adId:adId,read:false,createdAt:serverTimestamp()});
   alert('تم إرسال استفسارك لصاحب الإعلان.');
  }catch(e){console.error('Inquiry send failed',e);alert('تعذر إرسال الاستفسار. قد تحتاج قواعد Firestore إلى السماح بإنشاء الاستفسارات والإشعارات. ('+(e.code||e.message)+')');}
 };
@@ -259,7 +259,7 @@ window.replyToInquiry=async(id)=>{
  await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous)return alert('سجّل الدخول أولًا.');
  const snap=await getDocs(query(collection(db,'inquiries'),where('sellerId','==',currentUser.uid)));const found=snap.docs.find(d=>d.id===id);if(!found)return alert('هذا الاستفسار غير متاح لحسابك.');
  const data=found.data();const reply=prompt('اكتب ردك للعميل:',data.reply||'');if(reply===null)return;const clean=reply.trim();if(!clean)return alert('اكتب الرد أولًا.');if(clean.length>1000)return alert('الرد طويل. الحد الأقصى 1000 حرف.');
- try{await updateDoc(doc(db,'inquiries',id),{reply:clean,repliedAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:data.buyerId,type:'inquiry_reply',title:'رد جديد من المعلن 💬',message:'رد صاحب الإعلان على استفسارك: '+String(data.adTitle||''),adId:data.adId,read:false,createdAt:serverTimestamp()});alert('تم إرسال الرد للعميل.');await loadSellerInquiries();}
+ try{await updateDoc(doc(db,'inquiries',id),{reply:clean,repliedAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:data.buyerId,type:'inquiry_reply',inquiryId:id,title:'رد جديد من المعلن 💬',message:'رد صاحب الإعلان على استفسارك: '+String(data.adTitle||''),adId:data.adId,read:false,createdAt:serverTimestamp()});alert('تم إرسال الرد للعميل.');await loadSellerInquiries();}
  catch(e){console.error(e);alert('تعذر إرسال الرد. راجع قواعد Firestore. ('+(e.code||e.message)+')');}
 }
 function startNotificationsListener(user){if(!user||user.isAnonymous){if(notificationsUnsubscribe)notificationsUnsubscribe();notificationsUnsubscribe=null;notificationsUserId=null;notificationItems=[];renderNotifications();return;}if(notificationsUserId===user.uid&&notificationsUnsubscribe)return;if(notificationsUnsubscribe)notificationsUnsubscribe();notificationsUserId=user.uid;notificationsUnsubscribe=onSnapshot(query(collection(db,'notifications'),where('recipientId','==',user.uid),orderBy('createdAt','desc')),snap=>{if(notificationsUserId!==user.uid)return;notificationItems=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotifications();},err=>{console.warn('Notifications listener failed',err);const box=document.getElementById('notificationList');if(box)box.textContent='تعذر تحميل الإشعارات حاليًا.';});}
@@ -319,7 +319,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigat
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, EmailAuthProvider, linkWithCredential, sendPasswordResetEmail, sendEmailVerification, reload, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
@@ -653,7 +653,7 @@ async function loadSellerRating(adId,sellerId){
 window.rateSeller=async(sellerId,adId)=>{
  await authReady;currentUser=auth.currentUser||currentUser;if(!currentUser||currentUser.isAnonymous)return alert('سجّل الدخول بحسابك أولًا لتقييم المعلن.');if(currentUser.uid===sellerId)return alert('لا يمكنك تقييم إعلانك.');
  const value=Number(prompt('قيّم المعلن من 1 إلى 5 نجوم:'));if(!Number.isInteger(value)||value<1||value>5)return alert('اكتب رقمًا صحيحًا من 1 إلى 5.');
- try{const existing=await getDocs(query(collection(db,'sellerRatings'),where('sellerId','==',sellerId),where('raterId','==',currentUser.uid)));if(existing.empty){await addDoc(collection(db,'sellerRatings'),{sellerId:sellerId,raterId:currentUser.uid,rating:value,createdAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:sellerId,type:'rating',title:'تقييم جديد ⭐',message:'حصل أحد إعلاناتك على تقييم '+value+' من 5 نجوم.',rating:value,read:false,createdAt:serverTimestamp()});}else{await updateDoc(doc(db,'sellerRatings',existing.docs[0].id),{rating:value,updatedAt:serverTimestamp()});}await loadSellerRating(adId,sellerId);alert('شكرًا لك، تم حفظ تقييمك.');}
+ try{const existing=await getDocs(query(collection(db,'sellerRatings'),where('sellerId','==',sellerId),where('raterId','==',currentUser.uid)));if(existing.empty){const ratingRef=await addDoc(collection(db,'sellerRatings'),{sellerId:sellerId,raterId:currentUser.uid,rating:value,createdAt:serverTimestamp()});await addDoc(collection(db,'notifications'),{recipientId:sellerId,type:'rating',ratingId:ratingRef.id,title:'تقييم جديد ⭐',message:'حصل أحد إعلاناتك على تقييم '+value+' من 5 نجوم.',rating:value,read:false,createdAt:serverTimestamp()});}else{await updateDoc(doc(db,'sellerRatings',existing.docs[0].id),{rating:value,updatedAt:serverTimestamp()});}await loadSellerRating(adId,sellerId);alert('شكرًا لك، تم حفظ تقييمك.');}
  catch(e){console.error('Rating save failed',e);alert('تعذر حفظ التقييم. قد تحتاج قواعد Firestore إلى السماح بقراءة وكتابة تقييمات المعلنين. ('+(e.code||e.message)+')');}
 }
 window.saveAdToCloud = async (ad, editingId = null) => {
