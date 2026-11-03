@@ -305,7 +305,7 @@ async function addAd(){
  const ad={title:String(title),category:String(categoryEl?.value||'عام').trim()||'عام',price:String(document.getElementById('price').value||''),place:String(document.getElementById('place').value||'الموقع غير محدد'),description:String(document.getElementById('description').value||''),contactPhone:String(document.getElementById('contactPhone').value||'').trim()};
  const btn=document.querySelector('#add button.primary');btn.disabled=true;btn.textContent=editingAdId?'جارٍ حفظ التعديلات...':'جارٍ نشر الإعلان...';
  try{if(!window.saveAdToCloud)throw new Error('cloud-not-ready');const imageFile=document.getElementById('adImage')?.files?.[0];if(imageFile){btn.textContent='جارٍ رفع الصورة...';ad.imageFile=imageFile;}await window.saveAdToCloud(ad,editingAdId);['title','price','place','description','contactPhone'].forEach(id=>document.getElementById(id).value='');clearAdImage();editingAdId=null;const heading=document.querySelector('#add h2');if(heading)heading.textContent='أضف إعلانًا جديدًا';currentFilter='';show('home');alert('تم حفظ الإعلان بنجاح.');}
- catch(e){console.error(e);if(e.code==='auth-required'||e.message==='auth-required'){alert('لا يمكن نشر إعلان كزائر. افتح «دخول / اشتراك» وسجّل الدخول بحسابك أولًا، ثم حاول النشر مرة أخرى.');show('account');}else{alert('فشل حفظ الإعلان.\\nرمز الخطأ: '+(e.code||'غير متاح')+'\\nالتفاصيل: '+(e.message||'غير متاحة'));}}
+ catch(e){console.error(e);alert('فشل حفظ الإعلان.\\nرمز الخطأ: '+(e.code||'غير متاح')+'\\nالتفاصيل: '+(e.message||'غير متاحة'));}
  finally{btn.disabled=false;btn.textContent='نشر الإعلان'}
 }
 function editAd(id){const ad=ads.find(x=>x.id===id);if(!ad||ad.ownerId!==window.currentAdUserId)return alert('لا يمكنك تعديل هذا الإعلان.');editingAdId=id;document.getElementById('title').value=ad.title||'';document.getElementById('category').value=ad.category||'عام';document.getElementById('price').value=ad.price||'';document.getElementById('place').value=ad.place||'';document.getElementById('description').value=ad.description||'';document.getElementById('contactPhone').value=ad.contactPhone||'';clearAdImage();const heading=document.querySelector('#add h2');if(heading)heading.textContent='تعديل الإعلان';const btn=document.querySelector('#add button.primary');if(btn)btn.textContent='حفظ التعديلات';show('add')}
@@ -659,11 +659,7 @@ window.rateSeller=async(sellerId,adId)=>{
 window.saveAdToCloud = async (ad, editingId = null) => {
   await authReady;
   currentUser = auth.currentUser || currentUser;
-  if (!currentUser || currentUser.isAnonymous) {
-    const error = new Error("auth-required");
-    error.code = "auth-required";
-    throw error;
-  }
+  if (!currentUser) throw new Error("not-authenticated");
   let imageUrl = "";
   if (ad.imageFile) {
     const imageRef = ref(storage, `ad-images/${currentUser.uid}/${Date.now()}-${ad.imageFile.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
