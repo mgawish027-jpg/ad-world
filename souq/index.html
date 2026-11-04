@@ -116,7 +116,10 @@ function renderAds(){
  document.getElementById('ads').innerHTML=mainList.length?mainList.map(card).join(''):(list.length?'':'<div class="empty"><b>لا توجد إعلانات نشطة حالياً</b>جرّب تغيير البحث أو القسم.</div>');
 }
 function renderFavorites(){const list=ads.filter(a=>favs.includes(a.id));document.getElementById('favoritesList').innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>قائمة المفضلة فارغة</b>اضغط على ♡ في أي إعلان لحفظه هنا.</div>'}
-function renderMine(){document.getElementById('myAds').innerHTML=ads.length?ads.slice().sort((a,b)=>b.date-a.date).map(a=>'<div>'+card(a)+'<div class="actions"><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">تم البيع</button></div><button class="btn secondary" style="width:100%;margin-top:5px" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button><button class="btn danger" style="width:100%;margin-top:5px" onclick="deleteAd(\''+a.id+'\')">حذف الإعلان</button></div>').join(''):'<div class="empty"><b>لم تضف إعلانات بعد</b>إعلاناتك هتظهر هنا.</div>'}
+function renderMine(){
+ const mine=window.souqUserId?ads.filter(a=>a.ownerId===window.souqUserId):[];
+ document.getElementById('myAds').innerHTML=mine.length?mine.slice().sort((a,b)=>b.date-a.date).map(a=>'<div>'+card(a)+'<div class="actions"><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">تم البيع</button></div><button class="btn secondary" style="width:100%;margin-top:5px" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button><button class="btn danger" style="width:100%;margin-top:5px" onclick="deleteAd(\''+a.id+'\')">حذف الإعلان</button></div>').join(''):'<div class="empty"><b>لم تضف إعلانات بعد</b>إعلاناتك هتظهر هنا.</div>';
+}
 function toggleFav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];persist();renderAds();renderFavorites()}
 function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div><div class="actions"><button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button><button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
 function reportAd(id){const a=ads.find(x=>x.id===id);if(!a)return;const reason=prompt('سبب الإبلاغ؟\\n1- إعلان مضلل\\n2- محتوى مخالف\\n3- سعر أو بيانات غير صحيحة\\n4- سبب آخر');if(!reason||!reason.trim())return;reports.push({id:'rep_'+Date.now(),adId:id,title:a.title,reason:reason.trim().slice(0,180),date:Date.now()});try{localStorage.setItem(RKEY,JSON.stringify(reports));alert('تم تسجيل البلاغ على هذا الجهاز للمراجعة التجريبية.')}catch(e){reports.pop();alert('تعذر حفظ البلاغ بسبب مساحة التخزين.')}} 
@@ -375,11 +378,17 @@ window.souqDeleteCloudAd = async function(adId) {
   const isAdmin = roleDoc.exists() && roleDoc.data().role === "admin";
   const isOwner = adSnapshot.data().ownerId === user.uid;
   if (!isAdmin && !isOwner) throw new Error("يمكنك حذف إعلاناتك فقط، والمدير يمكنه حذف أي إعلان.");
+  cloudAdsLoadVersion++;
   await deleteDoc(adRef);
+  const verification = await getDoc(adRef);
+  if (verification.exists()) throw new Error("لم تؤكد قاعدة البيانات حذف الإعلان.");
 };
+let cloudAdsLoadVersion = 0;
 async function loadCloudAds() {
+  const loadVersion = ++cloudAdsLoadVersion;
   try {
     const snapshot = await getDocs(collection(db,"ads"));
+    if (loadVersion !== cloudAdsLoadVersion) return;
     const items = snapshot.docs.map(item=>({id:item.id,...item.data()}))
       .sort((a,b)=>(Number(b.date)||0)-(Number(a.date)||0));
     if (typeof window.souqApplyCloudAds === "function") window.souqApplyCloudAds(items);
