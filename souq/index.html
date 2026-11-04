@@ -212,7 +212,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 // Add your reCAPTCHA Enterprise site key here after registering SouQ in Firebase App Check.
 // Keep this empty until the key is created; never paste a Gemini API key into the web app.
-const SOUQ_APP_CHECK_SITE_KEY = "";
+const SOUQ_APP_CHECK_SITE_KEY = "6LegAg8uAAAAAAT43-OvUr3llGi6_RQYk90jRmv_";
 if (SOUQ_APP_CHECK_SITE_KEY) {
   initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider(SOUQ_APP_CHECK_SITE_KEY),
