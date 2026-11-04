@@ -1,0 +1,11 @@
+{
+  "hosting": {
+    "site": "souq-2db97",
+    "public": "souq",
+    "ignore": [
+      "firebase.souq.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
