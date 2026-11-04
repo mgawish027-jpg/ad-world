@@ -25,6 +25,9 @@ body{background:radial-gradient(ellipse at 8% 0%,#e9efff 0,transparent 35%),var(
 .hero{position:relative;overflow:hidden;padding:26px 17px 30px;border-radius:0 0 30px 30px;background:linear-gradient(120deg,#123eaf,#315fe8 55%,#7846d8);box-shadow:0 16px 38px #274fc52b}
 .hero:after{content:"";position:absolute;width:240px;height:240px;border:1px solid #ffffff20;border-radius:50%;left:-85px;top:-125px;box-shadow:0 0 0 25px #ffffff0b,0 0 0 55px #ffffff08;pointer-events:none}.hero-inner{position:relative;z-index:1}.brand{font-size:31px;letter-spacing:-1px}.tag{font-size:13px}.location{border:1px solid #ffffff26;backdrop-filter:blur(8px)}
 .searchbox{margin-top:22px;border-radius:16px;padding:6px;box-shadow:0 10px 25px #142d7b24}.searchbox input{font-size:14px}.searchbox button{padding:0 17px}.wrap{padding:15px 14px 22px}.section-head h2{font-size:19px}.categories{gap:10px}.cat{border-radius:17px;padding:15px 5px;transition:transform .18s,box-shadow .18s}.cat:active,.btn:active{transform:scale(.98)}.cat span{font-size:27px}.cat.active{box-shadow:0 7px 20px #2563eb18}.ad-grid{gap:12px}.ad{border-radius:18px;box-shadow:0 8px 25px #16254b0a;transition:transform .18s}.ad:active{transform:scale(.985)}.ad-photo{height:132px}.ad-body{padding:12px}.ad-title{font-size:14px;min-height:40px}.ad-price{font-size:16px}.card{border-radius:19px;box-shadow:0 10px 28px #14213d08;padding:17px}.primary{box-shadow:0 8px 20px #315ee82b}.promo-panel{margin:16px 0 8px;padding:18px;border-radius:20px;color:#fff;background:linear-gradient(115deg,#172f76,#315ee8 65%,#7547d6);box-shadow:0 12px 28px #315ee826;position:relative;overflow:hidden}.promo-panel:after{content:"";position:absolute;width:135px;height:135px;border-radius:50%;background:#ffffff12;left:-25px;top:-48px}.promo-panel h3,.promo-panel p,.promo-panel button{position:relative;z-index:1}.promo-panel h3{font-size:17px;margin:0 0 7px}.promo-panel p{font-size:12px;line-height:1.8;margin:0 0 12px;color:#e4eaff}.promo-panel button{background:#fff;color:#244fc6;border:0;border-radius:11px;padding:10px 14px;font-weight:900}.trust-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.trust-item{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 6px;text-align:center;font-size:10px;color:#58647a}.trust-item b{display:block;font-size:17px;margin-bottom:4px;color:#2456c9}.filter-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:9px 0}.filter-row input{padding:10px;font-size:12px}.featured-label{position:absolute;right:8px;top:8px;background:#ffedb5;color:#815400;border-radius:20px;padding:5px 8px;font-size:10px;font-weight:900;z-index:1}.ad.featured{border:1.5px solid #e7b94e}@media(min-width:600px){.ad-photo{height:155px}}
+
+/* SouQ AI assistant */
+.ai-panel{margin:14px 0;padding:15px;border:1px solid #dfe7ff;border-radius:16px;background:linear-gradient(145deg,#f5f8ff,#fbf9ff)}.ai-panel h3{margin:0 0 6px;font-size:16px;color:#244fc6}.ai-panel p{margin:0 0 11px;font-size:12px;line-height:1.8;color:#66718a}.ai-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ai-actions .btn{font-size:12px;padding:11px 8px}.ai-status{font-size:12px;line-height:1.8;margin-top:10px;color:#52617b;white-space:pre-wrap}.ai-result{display:none;margin-top:10px;padding:12px;background:#fff;border:1px solid #e6eaf2;border-radius:12px;font-size:13px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}.ai-result.show{display:block}.ai-result .btn{margin-top:10px;width:100%}.ai-actions .btn:disabled{opacity:.55;cursor:wait}
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand">🛍️ سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location">📍 مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات"><button onclick="clearSearch()">مسح</button></div></div></header>
@@ -44,7 +47,7 @@ body{background:radial-gradient(ellipse at 8% 0%,#e9efff 0,transparent 35%),var(
 <label for="price">السعر بالجنيه المصري</label><input id="price" type="number" min="0" inputmode="numeric" placeholder="اكتب السعر أو اتركه فارغاً">
 <label for="place">المحافظة / المنطقة *</label><input id="place" maxlength="70" placeholder="مثال: أبو المطامير - البحيرة">
 <label for="phone">رقم التواصل *</label><input id="phone" type="tel" inputmode="tel" maxlength="20" placeholder="01xxxxxxxxx">
-<label for="desc">وصف الإعلان</label><textarea id="desc" rows="4" maxlength="600" placeholder="اكتب حالة المنتج والتفاصيل المهمة..."></textarea>
+<div class="ai-panel"><h3>✨ مساعد سوق بالذكاء الاصطناعي</h3><p>يساعدك في كتابة وصف الإعلان وتحسينه وتحليل صورة المنتج واقتراح سعر مبدئي. راجع النتيجة قبل استخدامها.</p><div class="ai-actions"><button class="btn secondary" type="button" id="aiWrite">✍️ اكتب وصفاً</button><button class="btn secondary" type="button" id="aiImprove">🪄 حسّن الوصف</button><button class="btn secondary" type="button" id="aiImage">📸 حلّل الصورة</button><button class="btn secondary" type="button" id="aiPrice">💰 اقترح سعراً</button></div><div id="aiStatus" class="ai-status" role="status" aria-live="polite">سجّل الدخول لاستخدام مساعد الذكاء الاصطناعي.</div><div id="aiResult" class="ai-result"><div id="aiResultText"></div><button class="btn secondary" type="button" id="aiUseDescription">استخدم النص في وصف الإعلان</button></div></div><label for="desc">وصف الإعلان</label><textarea id="desc" rows="4" maxlength="600" placeholder="اكتب حالة المنتج والتفاصيل المهمة..."></textarea>
 <label for="photo">صورة الإعلان (اختياري)</label><input id="photo" type="file" accept="image/*" multiple><div class="muted">يمكنك اختيار حتى 4 صور. سيتم تصغير الصور تلقائياً لتوفير مساحة الهاتف.</div>
 <div class="muted">اختار صورة واضحة، وتجنب نشر أي بيانات شخصية داخل الصورة.</div>
 <button class="btn primary" id="saveBtn" onclick="addAd()">نشر الإعلان</button></div>
@@ -195,6 +198,8 @@ if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWor
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -205,8 +210,119 @@ const firebaseConfig = {
   appId: "1:661913668185:web:9d398b4ffeb4482ddb7f48"
 };
 const app = initializeApp(firebaseConfig);
+// Add your reCAPTCHA Enterprise site key here after registering SouQ in Firebase App Check.
+// Keep this empty until the key is created; never paste a Gemini API key into the web app.
+const SOUQ_APP_CHECK_SITE_KEY = "";
+if (SOUQ_APP_CHECK_SITE_KEY) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaEnterpriseProvider(SOUQ_APP_CHECK_SITE_KEY),
+    isTokenAutoRefreshEnabled: true
+  });
+}
 const auth = getAuth(app);
 const db = getFirestore(app);
+const souqAi = getAI(app, { backend: new GoogleAIBackend() });
+const souqAiModel = getGenerativeModel(souqAi, {
+  model: "gemini-3.8-flash",
+  generationConfig: { temperature: 0.35, maxOutputTokens: 500 }
+});
+
+const aiStatusEl = document.getElementById("aiStatus");
+const aiResultEl = document.getElementById("aiResult");
+const aiResultTextEl = document.getElementById("aiResultText");
+const aiUseDescriptionBtn = document.getElementById("aiUseDescription");
+let latestAiDescription = "";
+function setAiStatus(message, isError=false) {
+  if (!aiStatusEl) return;
+  aiStatusEl.textContent = message;
+  aiStatusEl.style.color = isError ? "#b42318" : "#52617b";
+}
+function aiListingContext() {
+  const value = id => (document.getElementById(id)?.value || "").trim();
+  return {
+    title: value("title"),
+    category: value("category"),
+    price: value("price"),
+    place: value("place"),
+    description: value("desc")
+  };
+}
+async function souqAiRequest(kind) {
+  const user = auth.currentUser;
+  if (!user) {
+    setAiStatus("سجّل الدخول أولاً من صفحة «حسابي» لاستخدام مساعد الذكاء الاصطناعي.", true);
+    return;
+  }
+  const data = aiListingContext();
+  if (!data.title) {
+    setAiStatus("اكتب عنوان المنتج أولاً حتى تكون النتيجة مفيدة.", true);
+    document.getElementById("title")?.focus();
+    return;
+  }
+  const buttons = ["aiWrite","aiImprove","aiImage","aiPrice"].map(id=>document.getElementById(id)).filter(Boolean);
+  buttons.forEach(button=>button.disabled=true);
+  aiResultEl?.classList.remove("show");
+  latestAiDescription = "";
+  setAiStatus("جارٍ تجهيز طلبك وإرسال البيانات إلى Gemini...");
+  try {
+    const context = [
+      "المنتج: "+data.title,
+      "القسم: "+data.category,
+      "السعر الحالي إن وجد: "+(data.price||"غير محدد")+" جنيه مصري",
+      "الموقع: "+(data.place||"غير محدد"),
+      "الوصف الحالي: "+(data.description||"لا يوجد")
+    ].join("\n");
+    let prompt = "";
+    const parts = [];
+    if (kind === "write") {
+      prompt = "اكتب وصف إعلان عربي واضح وجذاب لمنصة إعلانات مبوبة مصرية. استخدم المعلومات المذكورة فقط، ولا تخترع مواصفات أو حالة أو ضماناً أو ملحقات. لا تكرر العنوان. اجعل الوصف من 3 إلى 5 جمل قصيرة، من دون مبالغة أو رموز كثيرة. أعد الوصف فقط.\n"+context;
+    } else if (kind === "improve") {
+      if (!data.description) throw new Error("اكتب وصفاً أولاً حتى أستطيع تحسينه.");
+      prompt = "حسّن صياغة وصف الإعلان التالي بالعربية ليكون واضحاً ومقنعاً ومختصراً. حافظ على كل الحقائق كما هي ولا تضف أي معلومة غير مذكورة. أعد الوصف المحسّن فقط.\n"+context;
+    } else if (kind === "price") {
+      prompt = "قدّم تقديراً استرشادياً غير ملزم لنطاق سعر هذا المنتج في مصر بالجنيه المصري. اذكر أن التقدير تقريبي وقد لا يعكس أسعار السوق الحالية، ووضح العوامل التي قد ترفع أو تخفض السعر. لا تدّع أنك تحققت من أسعار مباشرة ولا تخترع بيانات سوقية. إذا كانت المعلومات غير كافية فاطلب تفاصيل إضافية بدلاً من اختلاق رقم.\n"+context;
+    } else if (kind === "image") {
+      const file = document.getElementById("photo")?.files?.[0];
+      if (!file) throw new Error("اختر صورة للمنتج أولاً من خانة صور الإعلان.");
+      if (!file.type.startsWith("image/")) throw new Error("الملف المختار ليس صورة.");
+      const dataUrl = await window.compressImage(file);
+      const imagePart = { type:"inlineData", inlineData:{ data:dataUrl.split(",")[1], mimeType:"image/jpeg" } };
+      parts.push(imagePart);
+      prompt = "حلّل صورة المنتج الظاهرة فقط. اكتب وصفاً إعلانياً عربياً لما يمكن رؤيته بوضوح. لا تستنتج الماركة أو الموديل أو حالة التشغيل أو العيوب غير الظاهرة. إذا كانت الحالة أو معلومة ما غير مؤكدة فاذكر ذلك. لا تحدد هوية أي شخص في الصورة.\n"+context;
+    }
+    parts.push(prompt);
+    const result = await souqAiModel.generateContent(parts);
+    const answer = (result.response.text() || "").trim();
+    if (!answer) throw new Error("لم يصل رد نصي من Gemini. حاول مرة أخرى.");
+    aiResultTextEl.textContent = answer;
+    aiResultEl?.classList.add("show");
+    if (kind === "price") {
+      aiUseDescriptionBtn.style.display = "none";
+      setAiStatus("هذا تقدير استرشادي فقط، وليس سعراً مؤكداً أو فحصاً لأسعار السوق.");
+    } else {
+      latestAiDescription = answer;
+      aiUseDescriptionBtn.style.display = "block";
+      setAiStatus("تم إعداد النتيجة. راجعها، ثم اضغط «استخدم النص» إذا كانت مناسبة.");
+    }
+  } catch(error) {
+    console.error("SouQ AI error:", error);
+    const message = error?.message || "حدث خطأ غير متوقع.";
+    setAiStatus("تعذر تشغيل مساعد الذكاء الاصطناعي: "+message+" إذا استمرت المشكلة، راجع إعداد Firebase App Check وحصة Gemini.", true);
+  } finally {
+    buttons.forEach(button=>button.disabled=false);
+  }
+}
+document.getElementById("aiWrite")?.addEventListener("click",()=>souqAiRequest("write"));
+document.getElementById("aiImprove")?.addEventListener("click",()=>souqAiRequest("improve"));
+document.getElementById("aiImage")?.addEventListener("click",()=>souqAiRequest("image"));
+document.getElementById("aiPrice")?.addEventListener("click",()=>souqAiRequest("price"));
+aiUseDescriptionBtn?.addEventListener("click",()=>{
+  if (!latestAiDescription) return;
+  const field=document.getElementById("desc");
+  field.value=latestAiDescription.slice(0,600);
+  field.focus();
+  setAiStatus("تم إدراج النص في وصف الإعلان. راجعه قبل نشر الإعلان.");
+});
 window.souqUserId = null;
 window.souqIsAdmin = false;
 window.souqSaveCloudAd = async function(ad) {
