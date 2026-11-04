@@ -188,6 +188,29 @@ footer{color:#9aa9a1}
 .product-report{width:100%;margin-top:13px;font-size:11px}
 @media(max-width:420px){.product-gallery .detail-photo{height:210px}.product-title{font-size:19px!important}.product-price{font-size:21px}}
 
+
+/* Add listing — guided form presentation */
+.add-intro{display:flex;align-items:center;gap:13px;padding:17px 18px;margin:4px 0 13px;border-radius:18px;background:linear-gradient(115deg,#173c35,#176b55);color:#fff;box-shadow:0 10px 24px #176b5520}
+.add-intro-icon{width:43px;height:43px;flex:none;display:grid;place-items:center;border-radius:14px;background:#d8f36a;color:#1b4938;font-size:27px;font-weight:700}
+.add-intro b{font-size:14px;letter-spacing:-.2px}
+.add-intro p{margin:5px 0 0;color:#d9eee5;font-size:11px;line-height:1.7}
+.add-steps{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 2px 14px;padding:12px 8px;border:1px solid #e6eee8;border-radius:15px;background:#fff}
+.add-step{display:flex;align-items:center;gap:6px;color:#65766d;font-size:10px;font-weight:800;white-space:nowrap}
+.add-step i{width:23px;height:23px;display:grid;place-items:center;border-radius:50%;background:#eaf4ed;color:#176b55;font-style:normal;font-size:11px}
+.add-step-line{height:1px;flex:1;max-width:35px;background:#dce8df}
+.add-form-card{padding:18px}
+#add .add-form-card>label{margin:17px 0 7px;font-size:12px;color:#355347}
+#add .add-form-card>label:first-child{margin-top:0}
+#add .add-form-card>input:not([type=file]),#add .add-form-card>select,#add .add-form-card>textarea{background:#fbfdfb;border-color:#e3ebe5;min-height:47px}
+#add .add-form-card>textarea{min-height:112px;line-height:1.9}
+#add #photo{padding:12px;background:#f6faf6;border:1px dashed #a9c7b3;color:#60756a;font-size:11px}
+#add #photo::file-selector-button{border:0;border-radius:9px;padding:9px 12px;margin-left:9px;background:#e4f1e7;color:#176b55;font-weight:800;cursor:pointer}
+#add .add-form-card>.muted{margin-top:8px;line-height:1.8}
+#add #saveBtn{min-height:50px;font-size:14px;letter-spacing:.1px;margin-top:20px}
+#add .note{margin-top:12px}
+@media(max-width:380px){.add-steps{gap:5px;padding:10px 5px}.add-step{font-size:9px;gap:4px}.add-step i{width:21px;height:21px}.add-intro{padding:14px}.add-form-card{padding:14px}}
+@media(min-width:760px){#add{max-width:760px;margin-inline:auto}.add-intro{padding:20px 23px}.add-form-card{padding:24px}}
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand">🛍️ سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location">📍 مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات"><button onclick="clearSearch()">مسح</button></div></div></header>
@@ -202,7 +225,7 @@ footer{color:#9aa9a1}
 <div id="ads" class="ad-grid"></div>
 </section>
 <section id="categoryPage" class="screen"><div class="section-head"><button class="small-link" onclick="show('home')">← رجوع للأقسام</button><span class="count" id="categoryCount"></span></div><div class="section-head" style="margin-top:8px"><h2 id="categoryPageTitle">إعلانات القسم</h2></div><div id="categoryAds" class="ad-grid"></div></section>
-<section id="add" class="screen"><div class="section-head"><h2>أضف إعلانك</h2></div><div class="card">
+<section id="add" class="screen"><div class="section-head"><h2>أضف إعلانك</h2></div><div class="add-intro"><span class="add-intro-icon">＋</span><div><b>خلي إعلانك يلفت الانتباه</b><p>تفاصيل واضحة وصورة جيدة تساعدك توصل للمشتري المناسب.</p></div></div><div class="add-steps"><div class="add-step"><i>١</i><span>بيانات المنتج</span></div><span class="add-step-line"></span><div class="add-step"><i>٢</i><span>الوصف والصور</span></div><span class="add-step-line"></span><div class="add-step"><i>٣</i><span>انشر إعلانك</span></div></div><div class="card add-form-card">
 <label for="title">عنوان الإعلان *</label><input id="title" maxlength="70" placeholder="مثال: موبايل بحالة ممتازة">
 <label for="category">القسم *</label><select id="category"><option>سيارات</option><option>وظائف</option><option>عقارات</option><option>إلكترونيات</option><option>موبايلات</option><option>أجهزة</option><option>أثاث</option><option>أخرى</option></select>
 <label for="price">السعر بالجنيه المصري</label><input id="price" type="number" min="0" inputmode="numeric" placeholder="اكتب السعر أو اتركه فارغاً">
