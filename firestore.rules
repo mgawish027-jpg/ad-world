@@ -19,15 +19,10 @@ service cloud.firestore {
           || get(/databases/$(database)/documents/sellerProfiles/$(request.auth.uid)).data.blocked != true);
     }
 
-    function validAdData(data) {
-      return data.keys().hasAll([
-          'ownerId', 'title', 'category', 'price', 'place', 'phone',
-          'desc', 'date', 'status', 'photos', 'photo', 'photoPaths'
-        ])
-        && data.keys().hasOnly([
-          'ownerId', 'title', 'category', 'price', 'place', 'phone',
-          'desc', 'date', 'status', 'photos', 'photo', 'photoPaths'
-        ])
+    function validAdData(data, adId) {
+      return data.keys().hasAll(['id', 'ownerId', 'title', 'category', 'price', 'place', 'phone', 'desc', 'date', 'status', 'photos', 'photo', 'photoPaths'])
+        && data.keys().hasOnly(['id', 'ownerId', 'title', 'category', 'price', 'place', 'phone', 'desc', 'date', 'status', 'photos', 'photo', 'photoPaths'])
+        && data.id is string && data.id == adId
         && data.ownerId is string
         && data.title is string && data.title.size() > 0 && data.title.size() <= 100
         && data.category is string && data.category.size() > 0 && data.category.size() <= 60
@@ -45,14 +40,14 @@ service cloud.firestore {
     match /ads/{adId} {
       allow read: if true;
       allow create: if activeUser()
-        && validAdData(request.resource.data)
+        && validAdData(request.resource.data, adId)
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.status == 'active';
       allow update: if admin()
         || (activeUser()
           && resource.data.ownerId == request.auth.uid
           && request.resource.data.ownerId == resource.data.ownerId
-          && validAdData(request.resource.data)
+          && validAdData(request.resource.data, adId)
           && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['title', 'category', 'price', 'place', 'phone', 'desc', 'date', 'status', 'photos', 'photo', 'photoPaths']));
       allow delete: if admin()
