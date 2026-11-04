@@ -186,7 +186,7 @@ async function compressImage(file){return new Promise((resolve,reject)=>{const r
 
 function normalizeAdDuplicateValue(value){return String(value??'').toLowerCase().normalize('NFKD').replace(/[\\u064B-\\u065F\\u0670\\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[^\\p{L}\\p{N}]/gu,'')}
 function findPossibleDuplicateAd(candidate,editingAdId){const title=normalizeAdDuplicateValue(candidate.title),phone=String(candidate.phone||'').replace(/\\D/g,''),place=normalizeAdDuplicateValue(candidate.place);if(!title||!phone)return null;return ads.find(existing=>existing.id!==editingAdId&&existing.ownerId===window.souqUserId&&existing.status!=='sold'&&normalizeAdDuplicateValue(existing.title)===title&&String(existing.phone||'').replace(/\\D/g,'')===phone&&normalizeAdDuplicateValue(existing.place)===place&&String(existing.category||'')===String(candidate.category||'')&&String(existing.price??'')===String(candidate.price??''))||null}
-async function addAd(){const el=id=>document.getElementById(id);const old=editingId?ads.find(x=>x.id===editingId):null;const a={id:old?old.id:'ad_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title:el('title').value.trim(),category:el('category').value,price:el('price').value,place:el('place').value.trim(),phone:el('phone').value.trim(),desc:el('desc').value.trim(),date:old?old.date:Date.now(),status:old?(old.status||'active'):'active',photos:old?photosOf(old):[],photoPaths:old?(old.photoPaths||[]):[]};if(!a.title||!a.place||!a.phone){alert('اكتب عنوان الإعلان والمنطقة ورقم التواصل.');return}if(!/^[+0-9\s()-]{7,20}$/.test(a.phone)){alert('راجع رقم التواصل واكتبه بشكل صحيح.');return}if(a.price&&(!Number.isFinite(Number(a.price))||Number(a.price)<0)){alert('اكتب سعراً صحيحاً أو اترك الخانة فارغة.');return}const files=Array.from(el('photo').files||[]);if(files.length>4){alert('الحد الأقصى 4 صور للإعلان.');return}if(files.some(file=>!file.type.startsWith('image/')||file.size>8000000)){alert('تأكد أن الملفات صور، وحجم كل صورة أقل من 8 ميجابايت.');return}if(!window.souqUserId){alert('سجّل الدخول أولاً قبل نشر الإعلان.');return}a.ownerId=window.souqUserId;const possibleDuplicate=findPossibleDuplicateAd(a,old?old.id:null);if(possibleDuplicate&&!confirm('تنبيه: يوجد إعلان مشابه جداً في حسابك بنفس العنوان ورقم التواصل والمنطقة والقسم والسعر. هل تريد نشره على أي حال؟'))return;try{if(files.length){const uploaded=await window.souqUploadCloudPhotos(files,a.id);a.photos=uploaded.photos;a.photoPaths=uploaded.photoPaths}a.photo=a.photos[0]||'';await window.souqSaveCloudAd(a)}catch(cloudError){alert('تعذر حفظ الإعلان أو رفع الصور: '+(cloudError.message||'تحقق من الاتصال والصلاحيات'));return}if(old){const index=ads.findIndex(x=>x.id===old.id);ads[index]=a;if(!persist()){ads[index]=old;return}editingId=null}else{ads.push(a);if(!persist()){ads.pop();return}}['title','price','place','phone','desc','photo'].forEach(id=>el(id).value='');el('saveBtn').textContent='نشر الإعلان';alert(old?'تم حفظ تعديلات إعلانك على سوق.':'تم نشر إعلانك على سوق بنجاح.');activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();show('home')}
+async function addAd(){const el=id=>document.getElementById(id);const old=editingId?ads.find(x=>x.id===editingId):null;const a={id:old?old.id:'ad_'+Date.now()+'_'+Math.random().toString(36).slice(2,7),title:el('title').value.trim(),category:el('category').value,price:el('price').value,place:el('place').value.trim(),phone:el('phone').value.trim(),desc:el('desc').value.trim(),date:old?old.date:Date.now(),status:old?(old.status||'active'):'active',photos:old?photosOf(old):[],photoPaths:old?(old.photoPaths||[]):[]};if(!a.title||!a.place||!a.phone){alert('اكتب عنوان الإعلان والمنطقة ورقم التواصل.');return}if(!/^[+0-9\s()-]{7,20}$/.test(a.phone)){alert('راجع رقم التواصل واكتبه بشكل صحيح.');return}if(a.price&&(!Number.isFinite(Number(a.price))||Number(a.price)<0)){alert('اكتب سعراً صحيحاً أو اترك الخانة فارغة.');return}const files=Array.from(el('photo').files||[]);if(files.length>4){alert('الحد الأقصى 4 صور للإعلان.');return}if(files.some(file=>!file.type.startsWith('image/')||file.size>8000000)){alert('تأكد أن الملفات صور، وحجم كل صورة أقل من 8 ميجابايت.');return}if(!window.souqUserId){alert('سجّل الدخول أولاً قبل نشر الإعلان.');return}a.ownerId=window.souqUserId;const possibleDuplicate=findPossibleDuplicateAd(a,old?old.id:null);if(possibleDuplicate&&!confirm('تنبيه: يوجد إعلان مشابه جداً في حسابك بنفس العنوان ورقم التواصل والمنطقة والقسم والسعر. هل تريد نشره على أي حال؟'))return;let newlyUploadedPaths=[];try{if(files.length){const uploaded=await window.souqUploadCloudPhotos(files,a.id);a.photos=uploaded.photos;a.photoPaths=uploaded.photoPaths;newlyUploadedPaths=uploaded.photoPaths}a.photo=a.photos[0]||'';await window.souqSaveCloudAd(a)}catch(cloudError){if(newlyUploadedPaths.length&&typeof window.souqCleanupCloudPhotos==='function')await window.souqCleanupCloudPhotos(newlyUploadedPaths);alert('تعذر حفظ الإعلان أو رفع الصور: '+(cloudError.message||'تحقق من الاتصال والصلاحيات'));return}if(old){const index=ads.findIndex(x=>x.id===old.id);ads[index]=a;if(!persist()){ads[index]=old;return}editingId=null}else{ads.push(a);if(!persist()){ads.pop();return}}['title','price','place','phone','desc','photo'].forEach(id=>el(id).value='');el('saveBtn').textContent='نشر الإعلان';alert(old?'تم حفظ تعديلات إعلانك على سوق.':'تم نشر إعلانك على سوق بنجاح.');activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();show('home')}
 
 window.addAd=addAd;
 window.souqApplyCloudAds=function(items){
@@ -372,20 +372,32 @@ window.souqUploadCloudPhotos = async function(files, adId) {
   if (!Array.isArray(files) || files.length > 4) throw new Error("يمكن رفع 4 صور كحد أقصى.");
   const photos = [];
   const photoPaths = [];
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    if (!file.type.startsWith("image/") || file.size > 8 * 1024 * 1024) {
-      throw new Error("كل ملف يجب أن يكون صورة وأقل من 8 ميجابايت.");
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size <= 0 || file.size > 8 * 1024 * 1024) {
+        throw new Error("كل ملف يجب أن يكون JPG أو PNG أو WebP وأقل من 8 ميجابايت.");
+      }
+      const dataUrl = await window.compressImage(file);
+      const blob = await (await fetch(dataUrl)).blob();
+      const path = "ad-images/" + user.uid + "/" + adId + "_" + Date.now() + "_" + i + ".jpg";
+      const objectRef = storageRef(storage, path);
+      await uploadBytes(objectRef, blob, { contentType: "image/jpeg" });
+      photoPaths.push(path);
+      photos.push(await getDownloadURL(objectRef));
     }
-    const dataUrl = await window.compressImage(file);
-    const blob = await (await fetch(dataUrl)).blob();
-    const path = "ad-images/" + user.uid + "/" + adId + "_" + Date.now() + "_" + i + ".jpg";
-    const objectRef = storageRef(storage, path);
-    await uploadBytes(objectRef, blob, { contentType: "image/jpeg" });
-    photos.push(await getDownloadURL(objectRef));
-    photoPaths.push(path);
+    return { photos, photoPaths };
+  } catch (error) {
+    await Promise.all(photoPaths.map(path => deleteObject(storageRef(storage, path)).catch(() => {})));
+    throw error;
   }
-  return { photos, photoPaths };
+};
+window.souqCleanupCloudPhotos = async function(paths) {
+  if (!Array.isArray(paths)) return;
+  await Promise.all(paths.map(path => {
+    if (typeof path !== "string" || !path.startsWith("ad-images/" + (auth.currentUser?.uid || "") + "/")) return Promise.resolve();
+    return deleteObject(storageRef(storage, path)).catch(error => console.warn("SouQ upload rollback skipped:", error));
+  }));
 };
 window.souqWriteAdminAudit = async function(entry) {
   const user = auth.currentUser;
