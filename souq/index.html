@@ -141,11 +141,31 @@ footer{color:#9aa9a1}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
 /* ===== end SOUQ NEO ===== */
 
+
+/* SOUQ NEO — home discovery composition */
+.home-intro{position:relative;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:166px;margin:5px 0 22px;padding:22px 20px;border-radius:23px;overflow:hidden;background:linear-gradient(115deg,#e7f1e9 0%,#f1f5e8 52%,#e4efe9 100%);border:1px solid #dce9df}
+.home-intro-copy{position:relative;z-index:2;max-width:72%}
+.home-kicker{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:30px;background:#fff;color:#176b55;font-size:10px;font-weight:900;letter-spacing:.2px;box-shadow:0 3px 12px #183b2b0b}
+.home-intro h1{font-size:23px;line-height:1.45;letter-spacing:-.8px;margin:11px 0 5px;color:#183b30;font-weight:900}
+.home-intro h1 em{font-style:normal;color:#21805f}
+.home-intro p{font-size:11px;line-height:1.9;color:#60756a;margin:0;max-width:310px}
+.home-intro-art{position:absolute;left:9px;top:0;bottom:0;width:34%;min-width:105px;display:flex;align-items:center;justify-content:center}
+.art-circle{position:absolute;border-radius:50%;display:block}
+.art-one{width:112px;height:112px;background:#c6dfcb;left:0;top:29px}
+.art-two{width:79px;height:79px;background:#d8e8a0;left:24px;top:54px;box-shadow:0 8px 20px #426d3c18}
+.art-bag{position:relative;z-index:1;font-size:48px;filter:drop-shadow(0 9px 7px #315d3a26);transform:rotate(-9deg)}
+.art-spark{position:absolute;z-index:2;top:25px;left:18px;color:#6e983b;font-size:25px}
+#home>.section-head:first-of-type{margin-top:0}
+#home>.section-head:first-of-type h2:before{content:"";display:inline-block;width:5px;height:19px;border-radius:8px;background:#83ad54;margin-left:9px;vertical-align:-3px}
+@media(min-width:600px){.home-intro{min-height:190px;padding:27px 30px}.home-intro h1{font-size:29px}.home-intro p{font-size:12px}.home-intro-art{width:30%}.art-one{width:140px;height:140px;top:25px}.art-two{width:100px;height:100px;top:47px;left:36px}.art-bag{font-size:59px}}
+@media(max-width:380px){.home-intro{min-height:150px;padding:17px 14px}.home-intro-copy{max-width:76%}.home-intro h1{font-size:19px}.home-intro p{font-size:10px}.home-intro-art{left:0;width:31%;min-width:88px}.art-one{width:90px;height:90px;top:30px}.art-two{width:64px;height:64px;top:49px;left:19px}.art-bag{font-size:39px}}
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand">🛍️ سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location">📍 مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات"><button onclick="clearSearch()">مسح</button></div></div></header>
 <main class="wrap">
 <section id="home" class="screen active">
+<div class="home-intro"><div class="home-intro-copy"><span class="home-kicker">اكتشف • قارن • اختار</span><h1>كل اللي نفسك تلاقيه<br><em>في سوق واحد.</em></h1><p>منتجات وخدمات وفرص قريبة منك — اكتشف الجديد وابدأ رحلتك.</p></div><div class="home-intro-art" aria-hidden="true"><span class="art-circle art-one"></span><span class="art-circle art-two"></span><span class="art-bag">🛍️</span><span class="art-spark">✦</span></div></div>
 <div class="section-head"><h2>تصفح الأقسام</h2><button class="small-link" onclick="resetFilter()">عرض الكل</button></div>
 <div class="categories" id="categories"></div>
 <div class="promo-panel"><h3>بيع أسرع.. ووصل لمشتري أكتر</h3><p>اعرض منتجك بصورة واضحة وتفاصيل كاملة، وخلي المشتري يتواصل معاك مباشرة.</p><button onclick="show('add')">＋ أضف إعلانك الآن</button></div><div class="trust-row"><div class="trust-item"><b>🔎</b>بحث سهل وسريع</div><div class="trust-item"><b>📞</b>تواصل مباشر</div><div class="trust-item"><b>♡</b>احفظ المفضلة</div></div><div id="featuredWrap" style="display:none"><div class="section-head"><h2>⭐ إعلانات مميزة</h2><span class="count">اختيارات بارزة</span></div><div id="featuredAds" class="ad-grid"></div></div>
