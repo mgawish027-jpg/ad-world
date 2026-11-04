@@ -231,23 +231,32 @@ const souqAiFallbackModel = getGenerativeModel(souqAi, {
   model: "gemini-3.5-flash-lite",
   generationConfig: { maxOutputTokens: 500 }
 });
+function souqAiWithTimeout(requestPromise, label) {
+  return Promise.race([
+    requestPromise,
+    new Promise((_, reject) => setTimeout(
+      () => reject(new Error(label + " timeout after 15000ms")),
+      15000
+    ))
+  ]);
+}
 async function generateSouqAiContent(parts) {
   try {
-    return await souqAiModel.generateContent(parts);
+    return await souqAiWithTimeout(souqAiModel.generateContent(parts), "Primary Gemini");
   } catch (primaryError) {
     const errorText = String(primaryError?.message || primaryError || "");
-    const isTemporary = /high demand|temporar|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(errorText);
+    const isTemporary = /high demand|temporar|timeout|\\b429\\b|\\b500\\b|\\b503\\b|overload|unavailable|fetch-error/i.test(errorText);
     if (!isTemporary) throw primaryError;
-    // محاولة إضافية قصيرة على الموديل الأساسي قبل التحويل للاحتياطي.
+    setAiStatus("تأخر رد Gemini؛ جارٍ إعادة المحاولة...");
     await new Promise(resolve => setTimeout(resolve, 1000));
     try {
-      return await souqAiModel.generateContent(parts);
+      return await souqAiWithTimeout(souqAiModel.generateContent(parts), "Primary Gemini retry");
     } catch (retryError) {
       const retryText = String(retryError?.message || retryError || "");
-      const retryIsTemporary = /high demand|temporar|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(retryText);
+      const retryIsTemporary = /high demand|temporar|timeout|\\b429\\b|\\b500\\b|\\b503\\b|overload|unavailable|fetch-error/i.test(retryText);
       if (!retryIsTemporary) throw retryError;
-      setAiStatus("الموديل الأساسي مزدحم؛ جارٍ التحويل تلقائياً للموديل الاحتياطي...");
-      return await souqAiFallbackModel.generateContent(parts);
+      setAiStatus("الموديل الأساسي لم يستجب؛ جارٍ التحويل تلقائياً للموديل الاحتياطي...");
+      return await souqAiWithTimeout(souqAiFallbackModel.generateContent(parts), "Fallback Gemini");
     }
   }
 }
