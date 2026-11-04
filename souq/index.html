@@ -160,6 +160,34 @@ footer{color:#9aa9a1}
 @media(min-width:600px){.home-intro{min-height:190px;padding:27px 30px}.home-intro h1{font-size:29px}.home-intro p{font-size:12px}.home-intro-art{width:30%}.art-one{width:140px;height:140px;top:25px}.art-two{width:100px;height:100px;top:47px;left:36px}.art-bag{font-size:59px}}
 @media(max-width:380px){.home-intro{min-height:150px;padding:17px 14px}.home-intro-copy{max-width:76%}.home-intro h1{font-size:19px}.home-intro p{font-size:10px}.home-intro-art{left:0;width:31%;min-width:88px}.art-one{width:90px;height:90px;top:30px}.art-two{width:64px;height:64px;top:49px;left:19px}.art-bag{font-size:39px}}
 
+
+/* Product detail — editorial commerce layout */
+.product-detail{color:#20372f}
+.product-gallery{margin:-1px -1px 16px}
+.product-gallery .detail-photo{height:250px;margin:0;border-radius:16px;background:linear-gradient(145deg,#e9f2eb,#f4f6ef);overflow:hidden}
+.product-gallery .detail-photo img{object-fit:contain;background:#f4f7f4}
+.product-gallery .gallery{padding:2px 1px 5px;margin:10px 0 0;gap:9px}
+.product-gallery .gallery img{width:68px;height:62px;border:2px solid transparent;border-radius:12px;cursor:pointer}
+.product-gallery .gallery img:active{border-color:#65a486}
+.detail-placeholder{height:190px;border-radius:16px;background:linear-gradient(145deg,#e8f1e9,#f4f6ef);color:#7da18c}
+.product-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:13px 0 8px}
+.product-category{font-size:10px;font-weight:900;color:#176b55;background:#eaf4ed;padding:6px 10px;border-radius:30px}
+.product-location{font-size:11px;color:#7a8981}
+.product-title{font-size:21px!important;line-height:1.6;margin:7px 0 5px!important;color:#1d342b}
+.product-price{font-size:23px;font-weight:900;color:#176b55;margin:5px 0 10px}
+.product-facts{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #edf1ed;border-bottom:1px solid #edf1ed;color:#89968f;font-size:11px}
+.product-description{margin:17px 0;padding:15px;border-radius:15px;background:#f5f8f5;border:1px solid #e9f0ea}
+.product-description h3{font-size:13px;margin:0 0 8px;color:#345448}
+.product-description p{font-size:13px;line-height:2;color:#5e7066;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.product-contact{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.product-contact .btn{display:flex;align-items:center;justify-content:center;text-decoration:none;margin:0;min-height:47px}
+.product-tools{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:9px}
+.product-tools .btn,.product-owner-actions .btn{font-size:11px;padding:11px 8px}
+.product-owner-actions{margin-top:9px}
+.product-owner-actions .btn{width:100%}
+.product-report{width:100%;margin-top:13px;font-size:11px}
+@media(max-width:420px){.product-gallery .detail-photo{height:210px}.product-title{font-size:19px!important}.product-price{font-size:21px}}
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand">🛍️ سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location">📍 مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات"><button onclick="clearSearch()">مسح</button></div></div></header>
@@ -254,7 +282,25 @@ function renderMine(){
  document.getElementById('myAds').innerHTML=mine.length?mine.slice().sort((a,b)=>b.date-a.date).map(a=>'<div>'+card(a)+'<div class="actions"><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">تم البيع</button></div><button class="btn secondary" style="width:100%;margin-top:5px" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button><button class="btn danger" style="width:100%;margin-top:5px" onclick="deleteAd(\''+a.id+'\')">حذف الإعلان</button></div>').join(''):'<div class="empty"><b>لم تضف إعلانات بعد</b>إعلاناتك هتظهر هنا.</div>';
 }
 function toggleFav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];persist();renderAds();renderFavorites()}
-function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div><div class="actions"><button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button><button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
+function details(id){
+ const a=ads.find(x=>x.id===id);if(!a)return;
+ const pics=photosOf(a);
+ const photoBlock=pics.length
+  ?'<div class="product-gallery"><div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt="'+esc(a.title)+'"></div>'+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'</div>'
+  :'<div class="detail-photo detail-placeholder">'+categoryIcon(a.category)+'</div>';
+ document.getElementById('modalContent').innerHTML=
+  '<div class="product-detail">'+photoBlock+
+  '<div class="product-meta"><span class="product-category">'+esc(a.category)+'</span><span class="product-location">📍 '+esc(a.place)+'</span></div>'+
+  '<h2 class="product-title">'+esc(a.title)+'</h2>'+
+  '<div class="product-price">'+money(a.price)+'</div>'+
+  '<div class="product-facts"><span>◷ '+new Date(a.date).toLocaleDateString('ar-EG')+'</span><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span></div>'+
+  '<section class="product-description"><h3>تفاصيل الإعلان</h3><p>'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p></section>'+
+  '<div class="product-contact"><a class="btn primary" href="tel:'+esc(a.phone)+'">☎ اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div>'+
+  '<div class="product-tools"><button class="btn secondary" onclick="toggleFav(\''+a.id+'\')">♡ حفظ في المفضلة</button><button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة الإعلان</button></div>'+
+  '<div class="product-owner-actions"><button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button></div>'+
+  '<button class="btn danger product-report" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button></div>';
+ document.getElementById('modal').classList.add('show');
+}
 async function reportAd(id){const a=ads.find(x=>x.id===id);if(!a)return;if(!window.souqUserId){alert('سجّل الدخول أولاً حتى نتمكن من مراجعة البلاغ.');return}const reason=prompt('سبب الإبلاغ؟\\n1- إعلان مضلل\\n2- محتوى مخالف\\n3- سعر أو بيانات غير صحيحة\\n4- سبب آخر');if(!reason||!reason.trim())return;try{if(typeof window.souqSubmitReport!=='function')throw new Error('خدمة البلاغات غير جاهزة');await window.souqSubmitReport(id,reason.trim().slice(0,180));alert('تم إرسال البلاغ إلى سوق للمراجعة. شكراً لمساعدتنا في حماية المنصة.')}catch(error){console.error('SouQ report submit failed:',error);alert('تعذر إرسال البلاغ حالياً. حاول مرة أخرى.')}} 
 
 function renderAdminCategories(){
