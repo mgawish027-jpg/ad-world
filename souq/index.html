@@ -286,7 +286,7 @@ async function souqAiRequest(kind) {
       if (!file) throw new Error("اختر صورة للمنتج أولاً من خانة صور الإعلان.");
       if (!file.type.startsWith("image/")) throw new Error("الملف المختار ليس صورة.");
       const dataUrl = await window.compressImage(file);
-      const imagePart = { type:"inlineData", inlineData:{ data:dataUrl.split(",")[1], mimeType:"image/jpeg" } };
+      const imagePart = { inlineData:{ data:dataUrl.split(",")[1], mimeType:"image/jpeg" } };
       parts.push(imagePart);
       prompt = "حلّل صورة المنتج الظاهرة فقط. اكتب وصفاً إعلانياً عربياً لما يمكن رؤيته بوضوح. لا تستنتج الماركة أو الموديل أو حالة التشغيل أو العيوب غير الظاهرة. إذا كانت الحالة أو معلومة ما غير مؤكدة فاذكر ذلك. لا تحدد هوية أي شخص في الصورة.\n"+context;
     }
