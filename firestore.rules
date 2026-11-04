@@ -26,7 +26,11 @@ service cloud.firestore {
       allow update: if admin()
         || (activeUser()
           && resource.data.ownerId == request.auth.uid
-          && request.resource.data.ownerId == resource.data.ownerId);
+          && request.resource.data.ownerId == resource.data.ownerId
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['title', 'category', 'price', 'place', 'phone', 'desc', 'date', 'status', 'photos', 'photo', 'photoPaths'])
+          && (!('status' in request.resource.data)
+            || request.resource.data.status in ['active', 'paused', 'sold']));
       allow delete: if admin()
         || (activeUser() && resource.data.ownerId == request.auth.uid);
     }
