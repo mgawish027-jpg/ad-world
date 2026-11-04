@@ -195,7 +195,13 @@ async function addAd(){const el=id=>document.getElementById(id);const old=editin
 window.addAd=addAd;
 window.souqApplyCloudAds=function(items){
  const previous=new Map(ads.map(a=>[a.id,a]));
- ads=items.map(item=>{const old=previous.get(item.id)||{};return {...old,...item,photos:old.photos||[],photo:(old.photos&&old.photos[0])||''}});
+ ads=items.map(item=>{
+  const old=previous.get(item.id)||{};
+  const cloudPhotos=Array.isArray(item.photos)?item.photos.filter(Boolean):[];
+  const localPhotos=Array.isArray(old.photos)?old.photos.filter(Boolean):[];
+  const photos=cloudPhotos.length?cloudPhotos:localPhotos;
+  return {...old,...item,photos,photo:item.photo||photos[0]||old.photo||''};
+ });
  persist();renderAds();renderMine();renderFavorites();openSharedAdFromUrl();
 };
 document.getElementById('saveBtn').addEventListener('click',()=>addAd().catch(e=>alert('تعذر نشر الإعلان: '+(e.message||'خطأ غير متوقع'))));
