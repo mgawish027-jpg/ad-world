@@ -1,0 +1,42 @@
+name: Deploy SouQ NEO preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - souq-development
+    paths:
+      - 'souq/**'
+      - '.github/workflows/souq-preview.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: souq-neo-preview
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Prepare SouQ preview
+        run: |
+          mkdir -p _site
+          cp -R souq/. _site/
+      - name: Upload preview artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Publish preview
+        id: deployment
+        uses: actions/deploy-pages@v4
