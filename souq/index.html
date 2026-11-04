@@ -398,7 +398,6 @@ async function loadCloudAds() {
     const items = snapshot.docs.map(item=>({id:item.id,...item.data()}))
       .sort((a,b)=>(Number(b.date)||0)-(Number(a.date)||0));
     if (typeof window.souqApplyCloudAds === "function") window.souqApplyCloudAds(items);
-    openSharedAdFromUrl();
   } catch(error) {
     console.error("Souq Firestore load error:",error);
     authMessage("تعذر تحميل الإعلانات السحابية. راجع اتصال الإنترنت وقواعد Firestore.",true);
