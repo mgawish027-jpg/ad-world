@@ -195,7 +195,13 @@ async function addAd(){const el=id=>document.getElementById(id);const old=editin
 window.addAd=addAd;
 window.souqApplyCloudAds=function(items){
  const previous=new Map(ads.map(a=>[a.id,a]));
- ads=items.map(item=>{const old=previous.get(item.id)||{};return {...old,...item,photos:old.photos||[],photo:(old.photos&&old.photos[0])||''}});
+ ads=items.map(item=>{
+  const old=previous.get(item.id)||{};
+  const cloudPhotos=Array.isArray(item.photos)?item.photos.filter(Boolean):[];
+  const localPhotos=Array.isArray(old.photos)?old.photos.filter(Boolean):[];
+  const photos=cloudPhotos.length?cloudPhotos:localPhotos;
+  return {...old,...item,photos,photo:item.photo||photos[0]||old.photo||''};
+ });
  persist();renderAds();renderMine();renderFavorites();openSharedAdFromUrl();
 };
 document.getElementById('saveBtn').addEventListener('click',()=>addAd().catch(e=>alert('تعذر نشر الإعلان: '+(e.message||'خطأ غير متوقع'))));
@@ -207,6 +213,7 @@ if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWor
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js";
 
@@ -230,6 +237,7 @@ if (SOUQ_APP_CHECK_SITE_KEY) {
 }
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
   model: "gemini-3.5-flash-lite",
@@ -371,7 +379,25 @@ window.souqIsAdmin = false;
 window.souqSaveCloudAd = async function(ad) {
   const user = auth.currentUser;
   if (!user) throw new Error("يجب تسجيل الدخول أولاً.");
-  const cloudAd = {...ad, ownerId:user.uid, photos:[], photo:""};
+  const sourcePhotos = Array.isArray(ad.photos) ? ad.photos.filter(Boolean).slice(0,4) : [];
+  const cloudPhotos = [];
+  for (let index = 0; index < sourcePhotos.length; index++) {
+    const photo = sourcePhotos[index];
+    if (/^https?:\/\//i.test(photo)) {
+      cloudPhotos.push(photo);
+      continue;
+    }
+    if (!photo.startsWith("data:image/")) {
+      throw new Error("إحدى الصور غير صالحة. اختر الصور مرة أخرى.");
+    }
+    const imageRef = storageRef(storage, `souq-ad-images/${user.uid}/${ad.id}/${index}.jpg`);
+    await uploadString(imageRef, photo, "data_url", {
+      contentType: "image/jpeg",
+      cacheControl: "public,max-age=31536000"
+    });
+    cloudPhotos.push(await getDownloadURL(imageRef));
+  }
+  const cloudAd = {...ad, ownerId:user.uid, photos:cloudPhotos, photo:cloudPhotos[0] || ""};
   await setDoc(doc(db,"ads",ad.id),cloudAd,{merge:true});
 };
 window.souqDeleteCloudAd = async function(adId) {
