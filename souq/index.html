@@ -406,7 +406,8 @@ window.souqSaveCloudAd = async function(ad) {
 window.souqSubmitReport = async function(adId, reason) {
   const user=auth.currentUser;
   if(!user)throw new Error("يجب تسجيل الدخول أولاً.");
-  await addDoc(collection(db,"reports"),{adId,reporterId:user.uid,reason,createdAt:Date.now()});
+  const reportId=user.uid+"__"+adId;
+  await setDoc(doc(db,"reports",reportId),{adId,reporterId:user.uid,reason,createdAt:Date.now()});
 };
 window.souqDeleteReport = async function(reportId) {
   if(!window.souqIsAdmin)throw new Error("صلاحية المدير مطلوبة.");
