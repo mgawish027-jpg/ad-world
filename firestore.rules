@@ -117,6 +117,7 @@ service cloud.firestore {
         && request.resource.data.reason.size() >= 3
         && request.resource.data.reason.size() <= 180
         && request.resource.data.createdAt is number
+        && reportId == request.auth.uid + "__" + request.resource.data.adId
         && exists(/databases/$(database)/documents/ads/$(request.resource.data.adId))
         && get(/databases/$(database)/documents/ads/$(request.resource.data.adId)).data.ownerId != request.auth.uid;
       allow read, delete: if admin();
