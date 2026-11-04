@@ -223,12 +223,12 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
-  model: "gemini-3.8-flash",
+  model: "gemini-3.5-flash-lite",
   generationConfig: { maxOutputTokens: 500 }
 });
 // موديل احتياطي رسمي ومدعوم، ويقبل النصوص والصور.
 const souqAiFallbackModel = getGenerativeModel(souqAi, {
-  model: "gemini-3.5-flash-lite",
+  model: "gemini-3.1-flash-lite",
   generationConfig: { maxOutputTokens: 500 }
 });
 function souqAiWithTimeout(requestPromise, label) {
@@ -245,7 +245,7 @@ async function generateSouqAiContent(parts) {
     return await souqAiWithTimeout(souqAiModel.generateContent(parts), "Primary Gemini");
   } catch (primaryError) {
     const errorText = String(primaryError?.message || primaryError || "");
-    const isTemporary = /high demand|temporar|timeout|\\b429\\b|\\b500\\b|\\b503\\b|overload|unavailable|fetch-error/i.test(errorText);
+    const isTemporary = /high demand|temporar|timeout|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(errorText);
     if (!isTemporary) throw primaryError;
     setAiStatus("تأخر رد Gemini؛ جارٍ إعادة المحاولة...");
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -253,7 +253,7 @@ async function generateSouqAiContent(parts) {
       return await souqAiWithTimeout(souqAiModel.generateContent(parts), "Primary Gemini retry");
     } catch (retryError) {
       const retryText = String(retryError?.message || retryError || "");
-      const retryIsTemporary = /high demand|temporar|timeout|\\b429\\b|\\b500\\b|\\b503\\b|overload|unavailable|fetch-error/i.test(retryText);
+      const retryIsTemporary = /high demand|temporar|timeout|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(retryText);
       if (!retryIsTemporary) throw retryError;
       setAiStatus("الموديل الأساسي لم يستجب؛ جارٍ التحويل تلقائياً للموديل الاحتياطي...");
       return await souqAiWithTimeout(souqAiFallbackModel.generateContent(parts), "Fallback Gemini");
