@@ -128,5 +128,13 @@ service cloud.firestore {
           && request.resource.data.rating <= 5);
       allow delete: if admin();
     }
+    
+    // User role/profile document: users can read only their own record.
+    // Only the verified administrator may create or change role records.
+    match /users/{userId} {
+      allow read: if admin() || (signedIn() && request.auth.uid == userId);
+      allow create, update, delete: if admin();
+    }
+
   }
 }
