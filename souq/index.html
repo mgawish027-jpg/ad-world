@@ -224,8 +224,33 @@ const db = getFirestore(app);
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
   model: "gemini-3.8-flash",
-  generationConfig: { temperature: 0.35, maxOutputTokens: 500 }
+  generationConfig: { maxOutputTokens: 500 }
 });
+// موديل احتياطي رسمي ومدعوم، ويقبل النصوص والصور.
+const souqAiFallbackModel = getGenerativeModel(souqAi, {
+  model: "gemini-3.5-flash-lite",
+  generationConfig: { maxOutputTokens: 500 }
+});
+async function generateSouqAiContent(parts) {
+  try {
+    return await souqAiModel.generateContent(parts);
+  } catch (primaryError) {
+    const errorText = String(primaryError?.message || primaryError || "");
+    const isTemporary = /high demand|temporar|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(errorText);
+    if (!isTemporary) throw primaryError;
+    // محاولة إضافية قصيرة على الموديل الأساسي قبل التحويل للاحتياطي.
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      return await souqAiModel.generateContent(parts);
+    } catch (retryError) {
+      const retryText = String(retryError?.message || retryError || "");
+      const retryIsTemporary = /high demand|temporar|\b429\b|\b500\b|\b503\b|overload|unavailable|fetch-error/i.test(retryText);
+      if (!retryIsTemporary) throw retryError;
+      setAiStatus("الموديل الأساسي مزدحم؛ جارٍ التحويل تلقائياً للموديل الاحتياطي...");
+      return await souqAiFallbackModel.generateContent(parts);
+    }
+  }
+}
 
 const aiStatusEl = document.getElementById("aiStatus");
 const aiResultEl = document.getElementById("aiResult");
@@ -291,7 +316,7 @@ async function souqAiRequest(kind) {
       prompt = "حلّل صورة المنتج الظاهرة فقط. اكتب وصفاً إعلانياً عربياً لما يمكن رؤيته بوضوح. لا تستنتج الماركة أو الموديل أو حالة التشغيل أو العيوب غير الظاهرة. إذا كانت الحالة أو معلومة ما غير مؤكدة فاذكر ذلك. لا تحدد هوية أي شخص في الصورة.\n"+context;
     }
     parts.push(prompt);
-    const result = await souqAiModel.generateContent(parts);
+    const result = await generateSouqAiContent(parts);
     const answer = (result.response.text() || "").trim();
     if (!answer) throw new Error("لم يصل رد نصي من Gemini. حاول مرة أخرى.");
     aiResultTextEl.textContent = answer;
@@ -307,7 +332,7 @@ async function souqAiRequest(kind) {
   } catch(error) {
     console.error("SouQ AI error:", error);
     const message = error?.message || "حدث خطأ غير متوقع.";
-    setAiStatus("تعذر تشغيل مساعد الذكاء الاصطناعي: "+message+" إذا استمرت المشكلة، راجع إعداد Firebase App Check وحصة Gemini.", true);
+    setAiStatus("تعذر تشغيل مساعد سوق حالياً: "+message+" حاول مرة أخرى بعد قليل.", true);
   } finally {
     buttons.forEach(button=>button.disabled=false);
   }
