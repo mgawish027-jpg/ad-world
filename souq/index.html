@@ -28,6 +28,119 @@ body{background:radial-gradient(ellipse at 8% 0%,#e9efff 0,transparent 35%),var(
 
 /* SouQ AI assistant */
 .ai-panel{margin:14px 0;padding:15px;border:1px solid #dfe7ff;border-radius:16px;background:linear-gradient(145deg,#f5f8ff,#fbf9ff)}.ai-panel h3{margin:0 0 6px;font-size:16px;color:#244fc6}.ai-panel p{margin:0 0 11px;font-size:12px;line-height:1.8;color:#66718a}.ai-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.ai-actions .btn{font-size:12px;padding:11px 8px}.ai-status{font-size:12px;line-height:1.8;margin-top:10px;color:#52617b;white-space:pre-wrap}.ai-result{display:none;margin-top:10px;padding:12px;background:#fff;border:1px solid #e6eaf2;border-radius:12px;font-size:13px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}.ai-result.show{display:block}.ai-result .btn{margin-top:10px;width:100%}.ai-actions .btn:disabled{opacity:.55;cursor:wait}
+
+/* ===== SOUQ NEO / visual identity refresh (presentation only) ===== */
+:root{
+ --blue:#176b55;--purple:#173c35;--ink:#172b27;--muted:#71817c;
+ --line:#e5ece8;--bg:#f4f7f4;--white:#fff;--green:#16835f;
+ --shadow:0 14px 38px rgba(20,55,43,.075);
+}
+html{scroll-behavior:smooth}
+body{font-family:Tahoma,Arial,sans-serif;background:#f4f7f4;color:#172b27;letter-spacing:0}
+.hero{
+ background:linear-gradient(132deg,#102d28 0%,#164b3e 54%,#23765b 100%);
+ border-radius:0 0 30px 30px;padding:24px 18px 28px;
+ box-shadow:0 18px 42px rgba(15,55,43,.18);isolation:isolate
+}
+.hero:before{content:"";position:absolute;z-index:-1;width:260px;height:260px;border-radius:50%;right:-100px;bottom:-175px;border:1px solid #ffffff20;box-shadow:0 0 0 28px #ffffff08,0 0 0 58px #ffffff06}
+.hero:after{content:"";position:absolute;z-index:-1;width:130px;height:130px;border-radius:38px;transform:rotate(32deg);left:-55px;top:32px;background:linear-gradient(145deg,#ffffff12,#ffffff02)}
+.hero-inner,.wrap{max-width:1080px}
+.topline{gap:12px}
+.brand{font-size:30px;font-weight:900;letter-spacing:-1.2px;display:flex;align-items:center;gap:8px}
+.tag{font-size:12px;color:#d0e4dc;letter-spacing:.1px;margin-top:5px}
+.location{font-size:11px;padding:9px 13px;background:#ffffff12;border:1px solid #ffffff2b;color:#f3fff9;backdrop-filter:blur(12px)}
+.searchbox{margin-top:23px;border-radius:17px;padding:6px;background:#fff;box-shadow:0 12px 30px #071f183d;gap:5px}
+.searchbox input{padding:13px 14px;font-size:14px}
+.searchbox input::placeholder{color:#9aa9a2}
+.searchbox button{background:#e8f3ed;color:#176b55;border-radius:12px;padding:0 17px}
+.wrap{padding:18px 16px 34px}
+.section-head{margin:25px 2px 13px;gap:10px}
+.section-head h2,h2{font-size:19px;font-weight:900;letter-spacing:-.3px}
+.small-link{color:#176b55;font-weight:800}
+.categories{gap:11px}
+.cat{border:1px solid #e7eee9;border-radius:19px;padding:16px 7px;background:#fff;box-shadow:0 5px 18px #173c3509;transition:transform .2s,border-color .2s,box-shadow .2s}
+.cat span{font-size:27px;margin-bottom:9px}
+.cat small{font-size:11px;color:#344b43}
+.cat.active{background:#eaf5ef;border:1px solid #83b9a1;color:#176b55;box-shadow:0 7px 22px #176b5517}
+.cat:active{transform:translateY(1px) scale(.98)}
+.promo-panel{margin:20px 0 12px;padding:22px 19px;border-radius:22px;background:linear-gradient(115deg,#173c35,#176b55 68%,#2a8b68);box-shadow:0 15px 30px #174b3c24}
+.promo-panel:after{width:175px;height:175px;left:-35px;top:-70px;background:#ffffff0c;border:1px solid #ffffff16}
+.promo-panel h3{font-size:19px;letter-spacing:-.3px}
+.promo-panel p{max-width:440px;color:#d9eee5;font-size:12px}
+.promo-panel button{background:#d8f36a;color:#18392e;border-radius:12px;padding:11px 16px;box-shadow:0 5px 14px #071f1824}
+.trust-row{gap:9px;margin:13px 0 17px}
+.trust-item{border:1px solid #e7eee9;border-radius:15px;padding:12px 5px;background:#fff;color:#60716a;font-size:10px}
+.trust-item b{color:#176b55;font-size:18px}
+.toolbar select,.filter-row input{border-radius:12px;border-color:#e3ebe6}
+.ad-grid{gap:14px}
+.ad{border:1px solid #e8eee9;border-radius:19px;box-shadow:0 7px 24px rgba(19,49,39,.055);transition:transform .2s,box-shadow .2s;overflow:hidden}
+.ad:active{transform:scale(.985)}
+.ad-photo{height:165px;background:linear-gradient(145deg,#e7f0e9,#f4f6ef);color:#7a9d8b;font-size:38px}
+.ad-photo img{transition:transform .35s}
+.ad:hover .ad-photo img{transform:scale(1.035)}
+.ad-body{padding:12px 13px 14px}
+.ad-cat{font-size:10px;color:#82928b;font-weight:700}
+.ad-title{font-size:13px;line-height:1.65;min-height:42px;color:#20372f;margin:7px 0}
+.ad-price{font-size:16px;color:#176b55;margin:8px 0;font-weight:900}
+.ad-place{font-size:10px;color:#75867e}
+.ad-date{font-size:10px;color:#a0aca6}
+.fav{width:34px;height:34px;top:9px;left:9px;background:#ffffffed;box-shadow:0 3px 10px #14271c18}
+.featured-label{background:#e4f18a;color:#30471d;right:9px;top:9px;padding:6px 9px}
+.ad.featured{border:1px solid #b8d58c;box-shadow:0 8px 24px #789b3c18}
+.card{border:1px solid #e7eee9;border-radius:20px;padding:18px;box-shadow:0 8px 26px rgba(19,49,39,.045)}
+label{color:#435b50;font-size:12px}
+input,textarea,select{border:1px solid #e2eae5;border-radius:12px;padding:13px;background:#fff}
+input:focus,textarea:focus,select:focus{border-color:#75ad91;box-shadow:0 0 0 3px #176b5512}
+.btn{border-radius:13px;padding:13px 16px;transition:transform .16s,filter .16s}
+.primary{background:linear-gradient(120deg,#176b55,#238565);box-shadow:0 8px 18px #176b5525}
+.secondary{background:#eaf3ed;color:#176b55}
+.danger{background:#fff0ed;color:#bd5143}
+.empty{border:1px dashed #cbd9d0;border-radius:18px;background:#fff}
+.note{border-radius:13px}
+.ai-panel{border:1px solid #dcebe1;border-radius:18px;background:linear-gradient(145deg,#f0f7f1,#f8faf5);padding:16px}
+.ai-panel h3{color:#176b55}
+.ai-actions .btn{border:1px solid #dce9df}
+.ai-result{border-radius:14px}
+.gallery img{border-radius:12px}
+.modal{background:#0d211bcc;backdrop-filter:blur(5px)}
+.modalbox{border-radius:23px;padding:19px;box-shadow:0 24px 70px #061b143d}
+.close{background:#edf3ef;color:#345348}
+.detail-photo{border-radius:17px}
+nav{background:#ffffffed;border-top:1px solid #e5ece8;box-shadow:0 -8px 28px #19392b0a;padding:9px 8px calc(9px + env(safe-area-inset-bottom))}
+nav .navin{max-width:650px}
+nav button{border-radius:13px;min-width:58px;padding:5px 8px;color:#82918a;font-size:10px}
+nav button b{font-size:20px;margin-bottom:2px}
+nav button.active{color:#176b55;background:#eaf4ed}
+footer{color:#9aa9a1}
+@media(min-width:600px){
+ .hero{padding:30px 22px 34px}
+ .wrap{padding:22px 22px 40px}
+ .categories{grid-template-columns:repeat(6,minmax(0,1fr))}
+ .ad-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:17px}
+ .ad-photo{height:190px}
+ .ad-body{padding:14px}
+ .ad-title{font-size:14px}
+}
+@media(min-width:900px){
+ .hero{border-radius:0 0 36px 36px}
+ .ad-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .ad-photo{height:185px}
+ .screen{max-width:1080px;margin-inline:auto}
+ .categories{gap:14px}
+}
+@media(max-width:380px){
+ .wrap{padding-inline:11px}
+ .categories{gap:7px}
+ .cat{padding:12px 3px}
+ .ad-grid{gap:9px}
+ .ad-photo{height:125px}
+ .ad-body{padding:9px}
+ .ad-price{font-size:14px}
+ .trust-item{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+/* ===== end SOUQ NEO ===== */
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand">🛍️ سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location">📍 مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات"><button onclick="clearSearch()">مسح</button></div></div></header>
