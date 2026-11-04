@@ -128,7 +128,7 @@ function renderAdminCategories(){
  const box=document.getElementById('adminCategories');if(!box)return;
  box.innerHTML=cats.map((item,i)=>'<div class="actions" style="align-items:center"><span style="flex:1">'+esc(item[1])+' '+esc(item[0])+'</span><button class="btn danger" onclick="adminRemoveCategory('+i+')">حذف القسم</button></div>').join('');
 }
-function toggleFeatured(id){const a=ads.find(x=>x.id===id);if(!a)return;const before=!!a.featured;a.featured=!before;audit(a.featured?'تمييز إعلان':'إلغاء تمييز إعلان',a.title);if(!persist()){a.featured=before;return}renderAdmin();renderAds();renderMine()}
+async function toggleFeatured(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}const a=ads.find(x=>x.id===id);if(!a)return;const before=!!a.featured;try{if(typeof window.souqUpdateCloudAdFields!=='function')throw new Error('خدمة الإدارة السحابية غير جاهزة.');await window.souqUpdateCloudAdFields(id,{featured:!before});a.featured=!before;audit(a.featured?'تمييز إعلان':'إلغاء تمييز إعلان',a.title);persist();renderAdmin();renderAds();renderMine()}catch(error){console.error('SouQ featured update failed:',error);alert('لم يتم تغيير تمييز الإعلان على الخادم: '+(error.message||'تحقق من الصلاحيات والاتصال.'))}}
 function audit(action,details){let log=read('souq_audit_v1',[]);log.unshift({action,details,date:Date.now()});try{localStorage.setItem('souq_audit_v1',JSON.stringify(log.slice(0,100)))}catch(e){}}
 function renderAudit(){const box=document.getElementById('adminAudit');if(!box)return;const log=read('souq_audit_v1',[]);box.innerHTML=log.length?log.slice(0,30).map(x=>'<div class="card"><b>'+esc(x.action)+'</b><div class="muted">'+esc(x.details||'')+'<br>'+new Date(x.date).toLocaleString('ar-EG')+'</div></div>').join(''):'<div class="empty">لا توجد عمليات مسجلة بعد.</div>'}
 function adminAddCategory(){const name=prompt('اسم القسم الجديد:');if(!name||!name.trim())return;const clean=name.trim().slice(0,30);if(cats.some(x=>x[0]===clean)){alert('القسم موجود بالفعل.');return}cats.push([clean,'📁']);try{localStorage.setItem('souq_categories_v1',JSON.stringify(cats));audit('إضافة قسم',clean);renderCats();renderAdminCategories();renderAudit();const select=document.getElementById('category');select.innerHTML=cats.map(x=>'<option>'+esc(x[0])+'</option>').join('')}catch(e){alert('تعذر حفظ الأقسام.')}}
@@ -171,7 +171,7 @@ function renderAdmin(){
  renderAdminCategories();renderAudit();
  document.getElementById('adminReports').innerHTML=reports.length?reports.slice().sort((a,b)=>b.date-a.date).map(r=>'<div class="card"><b>'+esc(r.title)+'</b><p class="muted">السبب: '+esc(r.reason)+'<br>التاريخ: '+new Date(r.date).toLocaleString('ar-EG')+'</p><div class="actions"><button class="btn secondary" onclick="adminViewReported(\''+r.adId+'\')">عرض الإعلان</button><button class="btn danger" onclick="dismissReport(\''+r.id+'\')">إغلاق البلاغ</button></div></div>').join(''):'<div class="empty">لا توجد بلاغات مسجلة.</div>';
 }
-function changeStatus(id,status){const a=ads.find(x=>x.id===id);if(!a)return;const old=a.status;a.status=status;audit('تغيير حالة إعلان',a.title+' ← '+statusText(a));if(!persist()){a.status=old;return}renderAds();renderMine();renderAdmin();renderFavorites();if(document.getElementById('modal').classList.contains('show'))details(id)}
+async function changeStatus(id,status){if(!['active','paused','sold'].includes(status)){alert('حالة الإعلان غير صحيحة.');return}const a=ads.find(x=>x.id===id);if(!a)return;if(!window.souqUserId){alert('سجّل الدخول أولاً.');return}const old=a.status;try{if(typeof window.souqUpdateCloudAdFields!=='function')throw new Error('خدمة تحديث الإعلانات غير جاهزة.');await window.souqUpdateCloudAdFields(id,{status});a.status=status;audit('تغيير حالة إعلان',a.title+' ← '+statusText(a));persist();renderAds();renderMine();renderAdmin();renderFavorites();if(document.getElementById('modal').classList.contains('show'))details(id)}catch(error){console.error('SouQ status update failed:',error);alert('لم يتم تحديث حالة الإعلان على الخادم: '+(error.message||'تحقق من الملكية والاتصال.'))}}
 
 async function adminDeleteAd(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}if(!confirm('حذف الإعلان نهائياً من قاعدة البيانات ومن التطبيق كله؟'))return;const deleted=ads.find(a=>a.id===id);try{if(typeof window.souqDeleteCloudAd!=='function')throw new Error('خدمة الحذف السحابي غير جاهزة. حدّث الصفحة وحاول مرة أخرى.');await window.souqDeleteCloudAd(id)}catch(error){alert('لم يتم حذف الإعلان من قاعدة البيانات: '+(error.message||'تحقق من الاتصال والصلاحيات.'));return}ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان من قاعدة البيانات',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine();renderFavorites();alert('تم حذف الإعلان من قاعدة البيانات ومن التطبيق كله.')}
 function adminViewReported(id){if(!ads.some(a=>a.id===id)){alert('الإعلان لم يعد موجوداً.');return}details(id)}
@@ -384,6 +384,21 @@ window.souqUploadCloudPhotos = async function(files, adId) {
     photoPaths.push(path);
   }
   return { photos, photoPaths };
+};
+window.souqUpdateCloudAdFields = async function(adId, fields) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("يجب تسجيل الدخول أولاً.");
+  if (!fields || typeof fields !== "object") throw new Error("بيانات التحديث غير صالحة.");
+  const keys = Object.keys(fields);
+  if (!keys.length || keys.some(key => !["status", "featured"].includes(key))) throw new Error("نوع التحديث غير مسموح.");
+  if ("status" in fields && !["active", "paused", "sold"].includes(fields.status)) throw new Error("حالة الإعلان غير صحيحة.");
+  if ("featured" in fields && (typeof fields.featured !== "boolean" || !window.souqIsAdmin)) throw new Error("تمييز الإعلانات متاح للمدير فقط.");
+  const adRef = doc(db, "ads", adId);
+  const snapshot = await getDoc(adRef);
+  if (!snapshot.exists()) throw new Error("الإعلان غير موجود.");
+  const isAdmin = window.souqIsAdmin === true;
+  if (!isAdmin && snapshot.data().ownerId !== user.uid) throw new Error("يمكنك تعديل إعلاناتك فقط.");
+  await setDoc(adRef, fields, { merge: true });
 };
 window.souqSaveCloudAd = async function(ad) {
   const user = auth.currentUser;
