@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "",
-  "buildCommand": "node scripts/deploy-firestore-rules.cjs && echo Static SOUQ site ready",
+  "buildCommand": "echo Static SOUQ site ready",
   "outputDirectory": "souq",
   "headers": [
     {
