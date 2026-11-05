@@ -121,6 +121,14 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 .ad-photo>svg{width:66px;height:66px;filter:drop-shadow(0 4px 5px #1e3a5f18)}
 @media(max-width:380px){.cat-icon{width:46px;height:46px}.cat-icon svg{width:37px;height:37px}}
 
+
+/* Buyer-facing SouQ AI assistant */
+.souq-ai-launch{position:fixed;right:16px;bottom:88px;z-index:8;border:0;border-radius:28px;padding:12px 16px;background:linear-gradient(120deg,#1765d8,#5946bd);color:#fff;font-weight:900;box-shadow:0 8px 24px #173d7b40}
+.souq-ai-box{display:none;position:fixed;z-index:12;right:12px;bottom:145px;width:min(390px,calc(100vw - 24px));height:min(540px,calc(100dvh - 180px));background:#fff;border:1px solid #e1e8f2;border-radius:20px;box-shadow:0 20px 60px #10294d35;overflow:hidden;flex-direction:column}
+.souq-ai-box.open{display:flex}.souq-ai-head{padding:14px;background:linear-gradient(120deg,#123e79,#315fae);color:#fff;display:flex;justify-content:space-between;align-items:center}.souq-ai-head small{display:block;color:#dce9ff;font-size:11px;margin-top:3px}.souq-ai-close{border:0;border-radius:50%;width:32px;height:32px;background:#ffffff25;color:#fff;font-size:20px}
+.souq-ai-log{flex:1;overflow:auto;padding:12px;background:#f6f8fc;display:flex;flex-direction:column;gap:9px}.souq-ai-msg{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}.souq-ai-msg.bot{align-self:flex-start;background:#fff;border:1px solid #e5eaf2;color:#26364d;border-bottom-right-radius:4px}.souq-ai-msg.user{align-self:flex-end;background:#e8f0ff;color:#174b91;border-bottom-left-radius:4px}.souq-ai-form{display:flex;gap:7px;padding:10px;border-top:1px solid #e8edf4}.souq-ai-form input{min-width:0;flex:1;padding:11px}.souq-ai-form button{border:0;border-radius:11px;padding:0 14px;background:#1765d8;color:white;font-weight:800}.souq-ai-hint{font-size:10px;color:#8490a3;padding:0 12px 8px}
+@media(max-width:380px){.souq-ai-launch{right:10px;bottom:82px;padding:10px 13px}.souq-ai-box{bottom:135px;height:min(520px,calc(100dvh - 165px))}}
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 11h22l-2 16H7L5 11zm6 0a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location"><span aria-hidden="true">⌖</span> مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات" onkeydown="searchOnEnter(event)"><button type="button" class="search-action" onclick="runSearch()">🔍 بحث</button><button type="button" onclick="clearSearch()">مسح</button></div></div></header>
@@ -169,6 +177,14 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="messages" onclick="show('messages',this)"><b>✉</b>المحادثات</button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modalbox"><div class="modal-head"><b>تفاصيل الإعلان</b><button class="close" onclick="closeModal()">×</button></div><div id="modalContent"></div></div></div>
 <footer>سوق © 2026</footer>
+
+<button type="button" class="souq-ai-launch" id="souqAiLaunch" aria-label="افتح مساعد سوق الذكي">✨ اسأل مساعد سوق</button>
+<section class="souq-ai-box" id="souqAiBox" aria-label="مساعد سوق الذكي">
+  <div class="souq-ai-head"><div><b>✨ مساعد سوق الذكي</b><small>اسأل عن منتج أو اطلب مساعدة في البحث</small></div><button type="button" class="souq-ai-close" id="souqAiClose" aria-label="إغلاق">×</button></div>
+  <div class="souq-ai-log" id="souqAiLog" aria-live="polite"><div class="souq-ai-msg bot">أهلاً بيك! 👋 أنا مساعد سوق. قولّي بتدور على إيه، زي: موبايل سامسونج في حدود ٥٠٠٠ جنيه.</div></div>
+  <form class="souq-ai-form" id="souqAiForm"><input id="souqAiInput" maxlength="500" autocomplete="off" placeholder="اكتب سؤالك هنا..." aria-label="اكتب سؤالك"><button id="souqAiSend" type="submit">إرسال</button></form>
+  <div class="souq-ai-hint">راجع تفاصيل الإعلان وتواصل مع البائع قبل الشراء.</div>
+</section>
 <script>
 const KEY='souq_ads_v2',FKEY='souq_favs_v1',RKEY='souq_reports_v1';
 let reports=read(RKEY,[]);
@@ -346,6 +362,50 @@ window.souqApplyCloudAds=function(items){
 document.getElementById('search').addEventListener('input',renderAds);document.getElementById('sort').addEventListener('change',renderAds);document.getElementById('minPrice').addEventListener('input',renderAds);document.getElementById('maxPrice').addEventListener('input',renderAds);
 renderCats();renderAds();
 if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))}
+
+const souqAiLaunch = document.getElementById("souqAiLaunch");
+const souqAiBox = document.getElementById("souqAiBox");
+const souqAiLog = document.getElementById("souqAiLog");
+const souqAiInput = document.getElementById("souqAiInput");
+const souqAiSend = document.getElementById("souqAiSend");
+function souqAiBubble(message, who="bot") {
+  const bubble=document.createElement("div");
+  bubble.className="souq-ai-msg "+who;
+  bubble.textContent=message;
+  souqAiLog.appendChild(bubble);
+  souqAiLog.scrollTop=souqAiLog.scrollHeight;
+}
+souqAiLaunch.addEventListener("click",()=>{souqAiBox.classList.add("open");souqAiInput.focus()});
+document.getElementById("souqAiClose").addEventListener("click",()=>souqAiBox.classList.remove("open"));
+document.getElementById("souqAiForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const question=souqAiInput.value.trim();
+  if(!question)return;
+  souqAiBubble(question,"user");souqAiInput.value="";souqAiSend.disabled=true;souqAiSend.textContent="...";
+  const availableAds=(Array.isArray(ads)?ads:[]).filter(ad=>ad&&ad.title).slice(0,60).map(ad=>({
+    title:ad.title,category:ad.category||"",price:ad.price||"",place:ad.place||"",description:(ad.description||ad.desc||"").slice(0,180)
+  }));
+  const inventory=availableAds.length?JSON.stringify(availableAds):"لا توجد إعلانات محملة حالياً.";
+  const prompt=[
+    "أنت مساعد التسوق الذكي داخل تطبيق سوق المصري للإعلانات المبوبة.",
+    "أجب بالعربية المصرية الودودة وباختصار ووضوح. ساعد المستخدم في فهم الأقسام وصياغة البحث والمقارنة بين الإعلانات.",
+    "إذا سأل عن منتجات متاحة، اعتمد حصراً على قائمة الإعلانات المرفقة ولا تخترع إعلاناً أو سعراً أو بائعاً. إذا لم تجد نتيجة، قل له ذلك واقترح كلمات بحث أو أقساماً مناسبة.",
+    "لا تطلب بيانات شخصية أو كلمات مرور أو رموز تحقق. لا تؤكد أن منتجاً أصلي أو مضمون دون دليل. ذكّر المستخدم بمعاينة المنتج والتواصل الآمن عند الحاجة.",
+    "سؤال المستخدم: "+question,
+    "الإعلانات المتاحة حالياً: "+inventory
+  ].join("\n\n");
+  try {
+    const response=await generateSouqAiContent(prompt);
+    const answer=response?.response?.text?.()||"معلش، مش قادر أجهز الرد دلوقتي. جرّب مرة تانية.";
+    souqAiBubble(answer);
+  } catch(error) {
+    console.error("SouQ buyer AI error",error);
+    souqAiBubble("حصلت مشكلة في الاتصال بمساعد الذكاء الاصطناعي. جرّب تاني بعد شوية.");
+  } finally {
+    souqAiSend.disabled=false;souqAiSend.textContent="إرسال";souqAiInput.focus();
+  }
+});
+
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
