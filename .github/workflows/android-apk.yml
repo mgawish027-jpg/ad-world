@@ -4,10 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'index.html'
-      - 'manifest.json'
-      - 'sw.js'
-      - 'icon.svg'
+      - 'souq/**'
       - 'package.json'
       - 'capacitor.config.json'
       - '.github/workflows/android-apk.yml'
@@ -30,7 +27,7 @@ jobs:
       - name: Prepare web assets
         run: |
           mkdir -p www
-          cp index.html manifest.json sw.js icon.svg www/
+          cp souq/index.html souq/manifest.json souq/sw.js souq/icon.svg www/
       - name: Install dependencies
         run: npm install
       - name: Add Android platform
