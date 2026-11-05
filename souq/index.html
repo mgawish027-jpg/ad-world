@@ -101,7 +101,7 @@ input:focus,textarea:focus,select:focus{border-color:#7ea5dc;box-shadow:0 0 0 3p
 .gallery img{border:2px solid transparent;cursor:pointer}
 .gallery img:active{border-color:#24558e}
 nav button{font-weight:700;min-width:58px}
-nav button b{font-size:20px}
+nav button b{font-size:20px}.souq-messages-badge{display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;margin-inline-start:3px;border-radius:10px;background:#e34b55;color:#fff;font-size:9px;font-weight:900}
 nav button.active{position:relative}
 nav button.active:before{content:"";display:block;width:22px;height:3px;border-radius:4px;background:#24558e;margin:0 auto 4px}
 .empty{border-style:solid;border-color:#e6ebf2;line-height:1.9}
@@ -141,6 +141,17 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 .souq-assistant-widget .ai-panel{display:none;position:absolute;right:0;bottom:66px;width:min(350px,calc(100vw - 28px));max-height:min(70vh,540px);overflow:auto;margin:0;padding:14px;background:#fff;box-shadow:0 16px 45px #10284b35;border:1px solid #dce5f4;border-radius:18px}
 .souq-assistant-widget.open .ai-panel{display:block}
 .souq-assistant-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.support-thread{display:grid;gap:9px}.support-message{padding:10px 12px;border-radius:13px;background:#f1f5fb;max-width:92%;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.support-message.mine{margin-inline-start:auto;background:#e5efff}.support-ticket{cursor:pointer;text-align:start;width:100%;border:1px solid #e1e8f2;background:#fff;border-radius:12px;padding:12px;margin:6px 0}.support-ticket.active{border-color:#2458a6;background:#f2f7ff}
+.souq-chat-messages{display:grid;gap:9px;max-height:48vh;overflow:auto;padding:10px 2px;margin:10px 0}
+.souq-chat-bubble{max-width:88%;padding:10px 12px;border-radius:14px;background:#eef3fa;line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap}
+.souq-chat-bubble.mine{margin-inline-start:auto;background:#e4efff}
+.souq-chat-meta{font-size:10px;color:#718096;margin-top:5px}
+.souq-chat-form{display:flex;gap:8px;align-items:center}
+.souq-chat-form input{flex:1;min-width:0;margin:0}
+.souq-chat-form button{width:auto;white-space:nowrap;margin:0}
+.souq-conversation-item{width:100%;text-align:start;display:block;border:1px solid #e5eaf2;background:#fff;border-radius:14px;padding:13px;margin:8px 0}
+.souq-conversation-item b{display:block;margin-bottom:5px}
+.souq-conversation-item .muted{font-size:12px;line-height:1.7}
+.souq-notification-item{border-top:1px solid #edf0f5;padding:9px 0;font-size:12px;line-height:1.7}
 .souq-assistant-heading h3{margin:0 0 6px}
 .souq-assistant-close{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:#eef2f8;color:#34445c;font-size:21px;line-height:1}
 @media(min-width:700px){.souq-assistant-widget{right:max(22px,calc((100vw - 820px)/2))}}
@@ -170,7 +181,20 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="muted">اختار صورة واضحة، وتجنب نشر أي بيانات شخصية داخل الصورة.</div>
 <button class="btn primary" id="saveBtn" type="button" onclick="addAd()">نشر الإعلان</button></div>
 <div class="note">الإعلانات النصية تُحفظ على قاعدة بيانات سوق وتظهر للمستخدمين. تنبيه: صور الإعلانات لا تُرفع إلى التخزين السحابي حالياً، لذلك قد لا تظهر للمستخدمين على أجهزة أخرى. نعمل على تجهيز تخزين آمن للصور قبل تفعيل الميزة.</div></section>
-<section id="messages" class="screen"><div class="section-head"><h2>المحادثات</h2></div><div class="empty"><b>💬 محادثاتك هتظهر هنا</b>تقدر تتابع رسائلك مع البائعين والمشترين من الصفحة دي قريباً.</div></section>
+<section id="messages" class="screen">
+<div class="section-head"><h2>💬 المحادثات</h2><button class="small-link" type="button" onclick="loadSouqConversations()">تحديث</button></div>
+<div id="souqChatSignedOut" class="empty" style="display:none"><b>سجّل الدخول أولاً</b>سجّل الدخول لبدء المحادثات مع البائعين والمشترين.<button class="btn primary" style="margin-top:12px" onclick="show('account')">تسجيل الدخول</button></div>
+<div id="souqChatWorkspace" style="display:none">
+<div id="souqNotificationArea" class="card" style="display:none"><b>🔔 إشعارات جديدة</b><div id="souqNotificationList"></div></div>
+<div id="souqConversationList"></div>
+<div id="souqChatThread" class="card" style="display:none">
+<div class="section-head"><button class="small-link" type="button" onclick="closeSouqConversation()">← كل المحادثات</button><b id="souqChatTitle">المحادثة</b></div>
+<div id="souqChatAdTitle" class="muted"></div>
+<div id="souqChatMessages" class="souq-chat-messages" aria-live="polite"></div>
+<form id="souqChatForm" class="souq-chat-form"><input id="souqChatInput" maxlength="5000" autocomplete="off" placeholder="اكتب رسالتك..." required><button class="btn primary" id="souqChatSend" type="submit">إرسال</button></form>
+</div>
+</div>
+</section>
 <section id="favorites" class="screen"><div class="section-head"><h2>إعلانات أعجبتك ❤️</h2></div><div id="favoritesList" class="ad-grid"></div></section>
 <section id="mine" class="screen"><div class="section-head"><h2>إعلاناتي</h2></div><div id="myAds" class="ad-grid"></div></section>
 <section id="account" class="screen"><div class="section-head"><h2>حسابي</h2></div>
@@ -211,7 +235,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
   <div id="souqAskResults" class="ad-grid" style="margin-top:10px"></div>
  </div>
 </div>
-<nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="messages" onclick="show('messages',this)"><b>✉</b>المحادثات</button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
+<nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="messages" onclick="show('messages',this)"><b>✉</b>المحادثات<span id="souqMessagesBadge" class="souq-messages-badge" style="display:none"></span></button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modalbox"><div class="modal-head"><b>تفاصيل الإعلان</b><button class="close" onclick="closeModal()">×</button></div><div id="modalContent"></div></div></div>
 <footer>سوق © 2026</footer>
 <script>
@@ -243,7 +267,7 @@ function categoryIcon(c){
  return art[normalizeCategory(c)]||art['أخرى'];
 }
 function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c])=>'<button type="button" class="cat" data-category="'+esc(c)+'" onclick="openCategory(this.dataset.category)"><span class="cat-icon">'+categoryIcon(c)+'</span><small>'+esc(c)+'</small></button>').join('')}
-function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));document.getElementById('topSettingsButton')?.classList.toggle('active',id==='settings');window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
+function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));document.getElementById('topSettingsButton')?.classList.toggle('active',id==='settings');window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='messages')window.loadSouqConversations?.();if(id==='admin')renderAdmin()}
 function openCategory(c){currentCategoryPage=c;activeCat='';renderCats();document.getElementById('categoryPageTitle').textContent='إعلانات '+c;show('categoryPage')}
 function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&categoryMatches(a.category,c));const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
@@ -371,7 +395,7 @@ function renderMine(){
  document.getElementById('myAds').innerHTML=mine.length?mine.slice().sort((a,b)=>b.date-a.date).map(a=>'<div>'+card(a)+'<div class="actions"><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">تم البيع</button></div>'+ (window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" style="width:100%;margin-top:5px" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn danger" style="width:100%;margin-top:5px" onclick="deleteAd(\''+a.id+'\')">حذف الإعلان</button></div>').join(''):'<div class="empty"><b>لم تضف إعلانات بعد</b>إعلاناتك هتظهر هنا.</div>';
 }
 function toggleFav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];persist();renderAds();renderFavorites()}
-function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div><div class="actions">'+(window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
+function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div>'+(a.ownerId&&a.ownerId!==window.souqUserId?'<button class="btn secondary" style="width:100%;margin-top:8px" type="button" onclick="startSouqConversation(\''+esc(a.id)+'\')">💬 مراسلة البائع داخل سوق</button>':'')+'<div class="actions">'+(window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
 function reportAd(id){const a=ads.find(x=>x.id===id);if(!a)return;const reason=prompt('سبب الإبلاغ؟\\n1- إعلان مضلل\\n2- محتوى مخالف\\n3- سعر أو بيانات غير صحيحة\\n4- سبب آخر');if(!reason||!reason.trim())return;reports.push({id:'rep_'+Date.now(),adId:id,title:a.title,reason:reason.trim().slice(0,180),date:Date.now()});try{localStorage.setItem(RKEY,JSON.stringify(reports));alert('تم تسجيل البلاغ على هذا الجهاز للمراجعة التجريبية.')}catch(e){reports.pop();alert('تعذر حفظ البلاغ بسبب مساحة التخزين.')}} 
 
 function renderAdminCategories(){
@@ -453,6 +477,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, se
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc, addDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -474,6 +499,11 @@ if (SOUQ_APP_CHECK_SITE_KEY) {
 }
 const auth = getAuth(app);
 const db = getFirestore(app);
+const SOUQ_SUPABASE_URL = "https://pvsjqjmfzjhfhhwgcjww.supabase.co";
+const SOUQ_SUPABASE_KEY = "sb_publishable_uDrFEFzJxsTQ_mz43chDyQ_jsFUQUut";
+const souqSupabase = createClient(SOUQ_SUPABASE_URL, SOUQ_SUPABASE_KEY, {
+  accessToken: async () => auth.currentUser ? await auth.currentUser.getIdToken() : null
+});
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
   model: "gemini-3.5-flash-lite",
@@ -653,6 +683,259 @@ window.sendSupportMessage=async function(){const u=auth.currentUser,t=activeSupp
 window.setSupportTicketStatus=async function(status){if(!window.souqIsAdmin||!activeSupportTicket)return;try{await updateDoc(doc(db,"supportTickets",activeSupportTicket.id),{status,updatedAt:Date.now()});await openSupportTicket(activeSupportTicket.id);await loadSupportTickets()}catch(e){console.error(e);alert("تعذر تحديث حالة الطلب.")}};
 window.closeSupportConversation=function(){activeSupportTicketId=null;activeSupportTicket=null;$("supportConversation").style.display="none"};
 
+
+let souqActiveChatId = null;
+let souqChatRealtime = null;
+let souqNotificationRealtime = null;
+let souqChatLoading = false;
+
+async function ensureSouqFirebaseRole(user) {
+  const token = await user.getIdToken();
+  const response = await fetch("/api/souq-role", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "تعذر تجهيز صلاحية الحساب للمحادثات.");
+  if (payload.refreshToken) await user.getIdToken(true);
+}
+
+function souqChatMessageTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return date.toLocaleString("ar-EG", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+}
+
+function closeSouqRealtimeChannels() {
+  if (souqChatRealtime) souqSupabase.removeChannel(souqChatRealtime);
+  souqChatRealtime = null;
+}
+
+window.closeSouqConversation = function() {
+  closeSouqRealtimeChannels();
+  souqActiveChatId = null;
+  $("souqChatThread").style.display = "none";
+  $("souqConversationList").style.display = "block";
+}
+
+async function loadSouqNotifications() {
+  const user = auth.currentUser;
+  if (!user || !window.souqSupabaseAuthReady) return;
+  const { data, error } = await souqSupabase
+    .from("souq_notifications")
+    .select("id,title,body,created_at,data")
+    .eq("recipient_firebase_uid", user.uid)
+    .is("read_at", null)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error) throw error;
+  const rows = data || [];
+  const area = $("souqNotificationArea");
+  const list = $("souqNotificationList");
+  area.style.display = rows.length ? "block" : "none";
+  list.innerHTML = rows.map(n =>
+    '<button class="souq-notification-item" type="button" style="width:100%;text-align:start;background:transparent;border:0" onclick="openSouqNotification(\''+esc(n.id)+'\',\''+esc(n.data?.conversationId||'')+'\')"><b>'+esc(n.title)+'</b><div>'+esc(n.body||"")+'</div><span class="muted">'+souqChatMessageTime(n.created_at)+'</span></button>'
+  ).join("");
+  const nav = $("souqMessagesBadge");
+  if (nav) {
+    nav.textContent = rows.length > 9 ? "9+" : String(rows.length);
+    nav.style.display = rows.length ? "inline-flex" : "none";
+  }
+}
+
+window.openSouqNotification = async function(notificationId, conversationId) {
+  try {
+    await souqSupabase.from("souq_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId);
+    await loadSouqNotifications();
+    if (conversationId) await openSouqConversation(conversationId);
+  } catch (error) {
+    console.error("SouQ notification error:", error);
+    alert("تعذر فتح الإشعار. حاول تحديث المحادثات.");
+  }
+};
+
+window.loadSouqConversations = async function() {
+  const user = auth.currentUser;
+  $("souqChatSignedOut").style.display = user ? "none" : "block";
+  $("souqChatWorkspace").style.display = user ? "block" : "none";
+  if (!user) return;
+  if (!window.souqSupabaseAuthReady) {
+    $("souqConversationList").innerHTML = '<div class="empty">جارٍ تجهيز الاتصال الآمن بالمحادثات...</div>';
+    return;
+  }
+  if (souqChatLoading) return;
+  souqChatLoading = true;
+  $("souqConversationList").innerHTML = '<div class="empty">جارٍ تحميل محادثاتك...</div>';
+  try {
+    const { data: memberships, error: memberError } = await souqSupabase
+      .from("souq_conversation_members")
+      .select("conversation_id,last_read_at")
+      .eq("firebase_uid", user.uid);
+    if (memberError) throw memberError;
+    const ids = (memberships || []).map(row => row.conversation_id);
+    if (!ids.length) {
+      $("souqConversationList").innerHTML = '<div class="empty"><b>لسه مفيش محادثات</b>افتح أي إعلان واضغط «مراسلة البائع داخل سوق» لبدء أول محادثة.</div>';
+      await loadSouqNotifications();
+      return;
+    }
+    const [{ data: conversations, error: conversationError }, { data: members, error: membersError }, { data: messages, error: messagesError }] = await Promise.all([
+      souqSupabase.from("souq_conversations").select("*").in("id", ids).order("last_message_at", { ascending: false, nullsFirst: false }),
+      souqSupabase.from("souq_conversation_members").select("conversation_id,firebase_uid,display_name").in("conversation_id", ids),
+      souqSupabase.from("souq_messages").select("conversation_id,body,sender_firebase_uid,created_at").in("conversation_id", ids).is("deleted_at", null).order("created_at", { ascending: false }).limit(250)
+    ]);
+    if (conversationError) throw conversationError;
+    if (membersError) throw membersError;
+    if (messagesError) throw messagesError;
+    const ownRead = new Map((memberships || []).map(row => [row.conversation_id, row.last_read_at]));
+    const otherNames = new Map();
+    (members || []).forEach(row => {
+      if (row.firebase_uid !== user.uid) otherNames.set(row.conversation_id, row.display_name || "مستخدم سوق");
+    });
+    const latest = new Map();
+    (messages || []).forEach(row => { if (!latest.has(row.conversation_id)) latest.set(row.conversation_id, row); });
+    $("souqConversationList").innerHTML = (conversations || []).map(conversation => {
+      const last = latest.get(conversation.id);
+      const readAt = ownRead.get(conversation.id);
+      const unread = !!(last && last.sender_firebase_uid !== user.uid && (!readAt || new Date(last.created_at) > new Date(readAt)));
+      return '<button class="souq-conversation-item" type="button" onclick="openSouqConversation(\''+esc(conversation.id)+'\')"><b>'+esc(otherNames.get(conversation.id)||"مستخدم سوق")+(unread?' <span class="status-badge">جديد</span>':'')+'</b><div class="muted">'+esc(conversation.ad_title||"محادثة حول إعلان")+'</div><div class="muted">'+esc(last?.body||"ابدأ المحادثة الآن")+' · '+souqChatMessageTime(last?.created_at||conversation.created_at)+'</div></button>';
+    }).join("") || '<div class="empty">لا توجد محادثات حتى الآن.</div>';
+    await loadSouqNotifications();
+  } catch (error) {
+    console.error("SouQ conversation list error:", error);
+    $("souqConversationList").innerHTML = '<div class="empty">تعذر تحميل المحادثات. '+esc(error.message||"تحقق من إعداد ربط Firebase في Supabase.")+'</div>';
+  } finally {
+    souqChatLoading = false;
+  }
+};
+
+window.startSouqConversation = async function(adId) {
+  const user = auth.currentUser;
+  if (!user) {
+    closeModal();
+    show("account");
+    authMessage("سجّل الدخول أولاً لمراسلة البائع.");
+    return;
+  }
+  const ad = ads.find(item => String(item.id) === String(adId));
+  if (!ad || !ad.ownerId) { alert("لا يمكن بدء محادثة لأن الإعلان لا يحتوي على حساب بائع مرتبط."); return; }
+  if (ad.ownerId === user.uid) { alert("ده إعلانك أنت. لا يمكنك مراسلة نفسك."); return; }
+  if (!window.souqSupabaseAuthReady) { alert("المحادثات لم تجهز بعد. حدّث الصفحة بعد إكمال ربط Firebase داخل Supabase."); return; }
+  try {
+    let { data: conversation, error } = await souqSupabase.from("souq_conversations")
+      .select("*").eq("ad_id", String(ad.id))
+      .eq("buyer_firebase_uid", user.uid)
+      .eq("ad_owner_firebase_uid", ad.ownerId).maybeSingle();
+    if (error) throw error;
+    if (!conversation) {
+      const created = await souqSupabase.from("souq_conversations").insert({
+        created_by_firebase_uid: user.uid,
+        ad_id: String(ad.id),
+        ad_title: String(ad.title||"إعلان سوق").slice(0,160),
+        ad_owner_firebase_uid: ad.ownerId,
+        buyer_firebase_uid: user.uid
+      }).select("*").single();
+      if (created.error) throw created.error;
+      conversation = created.data;
+      const buyerName = user.displayName || user.email || "مشتري";
+      const sellerName = ad.ownerName || "البائع";
+      const added = await souqSupabase.from("souq_conversation_members").insert([
+        { conversation_id: conversation.id, firebase_uid: user.uid, display_name: buyerName },
+        { conversation_id: conversation.id, firebase_uid: ad.ownerId, display_name: sellerName }
+      ]);
+      if (added.error) throw added.error;
+    }
+    closeModal();
+    show("messages");
+    await openSouqConversation(conversation.id);
+  } catch (error) {
+    console.error("SouQ start conversation error:", error);
+    alert("تعذر بدء المحادثة: "+(error.message||"تحقق من ربط Firebase مع Supabase."));
+  }
+};
+
+window.openSouqConversation = async function(conversationId) {
+  const user = auth.currentUser;
+  if (!user || !window.souqSupabaseAuthReady) return;
+  try {
+    const [{ data: conversation, error: conversationError }, { data: members, error: membersError }] = await Promise.all([
+      souqSupabase.from("souq_conversations").select("*").eq("id", conversationId).single(),
+      souqSupabase.from("souq_conversation_members").select("firebase_uid,display_name").eq("conversation_id", conversationId)
+    ]);
+    if (conversationError) throw conversationError;
+    if (membersError) throw membersError;
+    const other = (members||[]).find(row => row.firebase_uid !== user.uid);
+    souqActiveChatId = conversationId;
+    $("souqConversationList").style.display = "none";
+    $("souqChatThread").style.display = "block";
+    $("souqChatTitle").textContent = other?.display_name || "مستخدم سوق";
+    $("souqChatAdTitle").textContent = conversation.ad_title || "محادثة حول إعلان";
+    await loadSouqChatMessages();
+    await souqSupabase.from("souq_conversation_members")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId).eq("firebase_uid", user.uid);
+    await loadSouqNotifications();
+    closeSouqRealtimeChannels();
+    souqChatRealtime = souqSupabase.channel("souq-chat-"+conversationId)
+      .on("postgres_changes", { event:"INSERT", schema:"public", table:"souq_messages", filter:"conversation_id=eq."+conversationId }, () => loadSouqChatMessages())
+      .subscribe();
+  } catch (error) {
+    console.error("SouQ open conversation error:", error);
+    alert("تعذر فتح المحادثة. "+(error.message||""));
+  }
+};
+
+async function loadSouqChatMessages() {
+  if (!souqActiveChatId) return;
+  const { data, error } = await souqSupabase.from("souq_messages")
+    .select("id,sender_firebase_uid,body,created_at")
+    .eq("conversation_id", souqActiveChatId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true })
+    .limit(300);
+  if (error) throw error;
+  $("souqChatMessages").innerHTML = (data||[]).map(message =>
+    '<div class="souq-chat-bubble '+(message.sender_firebase_uid===auth.currentUser?.uid?"mine":"")+'">'+esc(message.body)+'<div class="souq-chat-meta">'+souqChatMessageTime(message.created_at)+'</div></div>'
+  ).join("") || '<div class="empty">ابدأ أول رسالة في المحادثة.</div>';
+  $("souqChatMessages").scrollTop = $("souqChatMessages").scrollHeight;
+}
+
+$("souqChatForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const user = auth.currentUser, body = $("souqChatInput").value.trim();
+  if (!user || !souqActiveChatId || !body || !window.souqSupabaseAuthReady) return;
+  const button = $("souqChatSend");
+  button.disabled = true;
+  try {
+    const { error } = await souqSupabase.from("souq_messages").insert({
+      conversation_id: souqActiveChatId,
+      sender_firebase_uid: user.uid,
+      body: body.slice(0,5000)
+    });
+    if (error) throw error;
+    $("souqChatInput").value = "";
+    await loadSouqChatMessages();
+    await loadSouqConversations();
+  } catch (error) {
+    console.error("SouQ send message error:", error);
+    alert("تعذر إرسال الرسالة: "+(error.message||""));
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function subscribeSouqNotifications(user) {
+  if (souqNotificationRealtime) souqSupabase.removeChannel(souqNotificationRealtime);
+  souqNotificationRealtime = souqSupabase.channel("souq-notifications-"+user.uid)
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"souq_notifications", filter:"recipient_firebase_uid=eq."+user.uid }, () => {
+      loadSouqNotifications().catch(error => console.warn("SouQ notification refresh:", error));
+      if (document.getElementById("messages")?.classList.contains("active")) window.loadSouqConversations();
+    })
+    .subscribe();
+}
+
 let cloudAdsLoadVersion = 0;
 async function loadCloudAds() {
   const loadVersion = ++cloudAdsLoadVersion;
@@ -737,12 +1020,29 @@ $("signOutBtn").addEventListener("click",async()=>{
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
 onAuthStateChanged(auth,async user=>{
-  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false;
+  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false; window.souqSupabaseAuthReady=false;
   $("adminAccess").style.display="none";
   $("authLoggedOut").style.display=user?"none":"block"; $("authLoggedIn").style.display=user?"block":"none";
-  if(user){ $("profileName").textContent=user.displayName||"أهلاً بيك في سوق"; $("profileEmail").textContent=user.email||"";
+  if(user){
+    $("profileName").textContent=user.displayName||"أهلاً بيك في سوق";
+    $("profileEmail").textContent=user.email||"";
     window.souqIsAdmin = user.email === "mgawish027@gmail.com" && user.emailVerified === true;
     $("adminAccess").style.display=window.souqIsAdmin?"block":"none";
+    ensureSouqFirebaseRole(user).then(()=>{
+      window.souqSupabaseAuthReady=true;
+      subscribeSouqNotifications(user);
+      loadSouqConversations();
+    }).catch(error=>{
+      console.error("SouQ Firebase/Supabase auth bridge:",error);
+      authMessage("تم تسجيل الدخول، لكن إعداد المحادثات يحتاج إكمال ربط Firebase داخل Supabase.",true);
+    });
+  } else {
+    if(souqNotificationRealtime) souqSupabase.removeChannel(souqNotificationRealtime);
+    souqNotificationRealtime=null;
+    closeSouqRealtimeChannels();
+    $("souqConversationList").innerHTML="";
+    $("souqNotificationArea").style.display="none";
+    $("souqChatThread").style.display="none";
   }
   loadCloudAds();
 });
@@ -751,7 +1051,7 @@ onAuthStateChanged(auth,async user=>{
 <script>
 (function(){
 const dict={
-"كل اللي بتدور عليه.. في مكان واحد":"Everything you need, in one place","مصر":"Egypt","بتدور على إيه؟":"What are you looking for?","ابحث في الإعلانات":"Search listings","بحث":"Search","مسح":"Clear","تصفح الأقسام":"Browse categories","عرض الكل":"View all","بيع أسرع.. ووصل لمشتري أكتر":"Sell faster. Reach more buyers","اعرض منتجك بصورة واضحة وتفاصيل كاملة، وخلي المشتري يتواصل معاك مباشرة.":"Post clear photos and details so buyers can contact you directly.","＋ أضف إعلانك الآن":"＋ Post your ad","بحث سهل وسريع":"Easy, fast search","تواصل مباشر":"Direct contact","احفظ المفضلة":"Save favorites","⭐ إعلانات مميزة":"⭐ Featured listings","اختيارات بارزة":"Featured picks","أحدث الإعلانات":"Latest listings","الأحدث أولاً":"Newest first","السعر: الأقل":"Price: low to high","السعر: الأعلى":"Price: high to low","أقل سعر":"Minimum price","أعلى سعر":"Maximum price","← رجوع للأقسام":"← Back to categories","إعلانات القسم":"Category listings","أضف إعلانك":"Post an ad","عنوان الإعلان *":"Ad title *","القسم *":"Category *","السعر بالجنيه المصري":"Price in EGP","المحافظة / المنطقة *":"Area *","رقم التواصل *":"Contact number *","وصف الإعلان":"Description","صورة الإعلان (اختياري)":"Photos (optional)","نشر الإعلان":"Post listing","✨ مساعد سوق بالذكاء الاصطناعي":"✨ SouQ AI assistant","✍️ اكتب وصفاً":"✍️ Write description","🪄 حسّن الوصف":"🪄 Improve description","📸 حلّل الصورة":"📸 Analyze photo","💰 اقترح سعراً":"💰 Suggest a price","استخدم النص في وصف الإعلان":"Use in description","المحادثات":"Messages","إعلانات أعجبتك ❤️":"❤️ Favorites","إعلاناتي":"My listings","حسابي":"My account","تسجيل الدخول إلى سوق":"Sign in to SouQ","أنشئ حساباً أو سجّل الدخول بالبريد الإلكتروني وكلمة المرور.":"Create an account or sign in with email and password.","الاسم":"Name","البريد الإلكتروني":"Email","كلمة المرور":"Password","تسجيل الدخول":"Sign in","إنشاء حساب جديد":"Create account","لدي حساب بالفعل":"I already have an account","نسيت كلمة المرور؟":"Forgot password?","عرض إعلاناتي":"View my listings","تسجيل الخروج":"Sign out","لوحة الإدارة":"Admin panel","فتح لوحة الإدارة":"Open admin panel","عن سوق":"About SouQ","المفضلة":"Favorites","سيارات":"Cars","وظائف":"Jobs","عقارات":"Real estate","إلكترونيات":"Electronics","موبايلات":"Mobile phones","أجهزة":"Appliances","أثاث":"Furniture","ملابس":"Clothing","أخرى":"Other","السعر عند التواصل":"Contact for price","اتصال بالبائع":"Call seller","واتساب":"WhatsApp","مشاركة":"Share","تعديل الإعلان":"Edit listing","حذف الإعلان":"Delete listing","تفاصيل الإعلان":"Listing details","🤖 اسأل مساعد سوق":"🤖 Ask SouQ","اكتب اللي بتدور عليه، وهبحث لك في إعلانات سوق والأقسام الموجودة.":"Tell me what you need and I'll search SouQ listings and categories.","اسأل":"Ask","إغلاق":"Close","كل الإعلانات":"All listings","البلاغات":"Reports","إدارة الإعلانات":"Manage listings","مراجعة البلاغات":"Review reports","إدارة الأقسام":"Manage categories","النسخ الاحتياطي":"Backup","إضافة قسم":"Add category","استعادة الأقسام الأساسية":"Restore default categories","تصدير نسخة احتياطية":"Export backup","استيراد نسخة":"Import backup","سجل عمليات الإدارة":"Admin activity log","مسح السجل":"Clear log","إدارة الحسابات والصلاحيات":"Accounts and permissions","رجوع":"Back","⚙️ الإعدادات":"⚙️ Settings","لغة التطبيق":"App language","اختار اللغة اللي تحب تستخدم سوق بيها.":"Choose the language you want to use SouQ in.","العربية":"Arabic","اللغة الحالية: العربية":"Current language: Arabic","الحساب والأمان":"Account & security","إدارة ملفك الشخصي وتسجيل الدخول وكلمة المرور.":"Manage your profile, sign-in and password.","فتح الملف الشخصي":"Open profile","المساعدة والدعم":"Help & support","تواصل مع فريق سوق لو عندك استفسار أو مشكلة.":"Contact the SouQ team if you have a question or issue.","التواصل مع الدعم":"Contact support","الأمان عند البيع والشراء":"Buying and selling safely","عاين المنتج بنفسك قبل الدفع، ولا تشارك كلمة المرور أو رموز التحقق أو بياناتك البنكية مع أي شخص.":"Inspect the item before paying. Never share your password, verification codes or banking details.","عن تطبيق سوق":"About SouQ","منصة للبيع والشراء والإعلانات المبوبة.":"A marketplace for buying, selling and classified ads.","الإصدار 1.4":"Version 1.4","الرئيسية":"Home"
+"كل اللي بتدور عليه.. في مكان واحد":"Everything you need, in one place","مصر":"Egypt","بتدور على إيه؟":"What are you looking for?","ابحث في الإعلانات":"Search listings","بحث":"Search","مسح":"Clear","تصفح الأقسام":"Browse categories","عرض الكل":"View all","بيع أسرع.. ووصل لمشتري أكتر":"Sell faster. Reach more buyers","اعرض منتجك بصورة واضحة وتفاصيل كاملة، وخلي المشتري يتواصل معاك مباشرة.":"Post clear photos and details so buyers can contact you directly.","＋ أضف إعلانك الآن":"＋ Post your ad","بحث سهل وسريع":"Easy, fast search","تواصل مباشر":"Direct contact","احفظ المفضلة":"Save favorites","⭐ إعلانات مميزة":"⭐ Featured listings","اختيارات بارزة":"Featured picks","أحدث الإعلانات":"Latest listings","الأحدث أولاً":"Newest first","السعر: الأقل":"Price: low to high","السعر: الأعلى":"Price: high to low","أقل سعر":"Minimum price","أعلى سعر":"Maximum price","← رجوع للأقسام":"← Back to categories","إعلانات القسم":"Category listings","أضف إعلانك":"Post an ad","عنوان الإعلان *":"Ad title *","القسم *":"Category *","السعر بالجنيه المصري":"Price in EGP","المحافظة / المنطقة *":"Area *","رقم التواصل *":"Contact number *","وصف الإعلان":"Description","صورة الإعلان (اختياري)":"Photos (optional)","نشر الإعلان":"Post listing","✨ مساعد سوق بالذكاء الاصطناعي":"✨ SouQ AI assistant","✍️ اكتب وصفاً":"✍️ Write description","🪄 حسّن الوصف":"🪄 Improve description","📸 حلّل الصورة":"📸 Analyze photo","💰 اقترح سعراً":"💰 Suggest a price","استخدم النص في وصف الإعلان":"Use in description","المحادثات":"Messages","إعلانات أعجبتك ❤️":"❤️ Favorites","إعلاناتي":"My listings","حسابي":"My account","تسجيل الدخول إلى سوق":"Sign in to SouQ","أنشئ حساباً أو سجّل الدخول بالبريد الإلكتروني وكلمة المرور.":"Create an account or sign in with email and password.","الاسم":"Name","البريد الإلكتروني":"Email","كلمة المرور":"Password","تسجيل الدخول":"Sign in","إنشاء حساب جديد":"Create account","لدي حساب بالفعل":"I already have an account","نسيت كلمة المرور؟":"Forgot password?","عرض إعلاناتي":"View my listings","تسجيل الخروج":"Sign out","لوحة الإدارة":"Admin panel","فتح لوحة الإدارة":"Open admin panel","عن سوق":"About SouQ","المفضلة":"Favorites","سيارات":"Cars","وظائف":"Jobs","عقارات":"Real estate","إلكترونيات":"Electronics","موبايلات":"Mobile phones","أجهزة":"Appliances","أثاث":"Furniture","ملابس":"Clothing","أخرى":"Other","السعر عند التواصل":"Contact for price","اتصال بالبائع":"Call seller","واتساب":"WhatsApp","مشاركة":"Share","تعديل الإعلان":"Edit listing","حذف الإعلان":"Delete listing","تفاصيل الإعلان":"Listing details","🤖 اسأل مساعد سوق":"🤖 Ask SouQ","اكتب اللي بتدور عليه، وهبحث لك في إعلانات سوق والأقسام الموجودة.":"Tell me what you need and I'll search SouQ listings and categories.","اسأل":"Ask","إغلاق":"Close","كل الإعلانات":"All listings","البلاغات":"Reports","إدارة الإعلانات":"Manage listings","مراجعة البلاغات":"Review reports","إدارة الأقسام":"Manage categories","النسخ الاحتياطي":"Backup","إضافة قسم":"Add category","استعادة الأقسام الأساسية":"Restore default categories","تصدير نسخة احتياطية":"Export backup","استيراد نسخة":"Import backup","سجل عمليات الإدارة":"Admin activity log","مسح السجل":"Clear log","إدارة الحسابات والصلاحيات":"Accounts and permissions","رجوع":"Back","⚙️ الإعدادات":"⚙️ Settings","لغة التطبيق":"App language","اختار اللغة اللي تحب تستخدم سوق بيها.":"Choose the language you want to use SouQ in.","العربية":"Arabic","اللغة الحالية: العربية":"Current language: Arabic","الحساب والأمان":"Account & security","إدارة ملفك الشخصي وتسجيل الدخول وكلمة المرور.":"Manage your profile, sign-in and password.","فتح الملف الشخصي":"Open profile","المساعدة والدعم":"Help & support","تواصل مع فريق سوق لو عندك استفسار أو مشكلة.":"Contact the SouQ team if you have a question or issue.","التواصل مع الدعم":"Contact support","الأمان عند البيع والشراء":"Buying and selling safely","عاين المنتج بنفسك قبل الدفع، ولا تشارك كلمة المرور أو رموز التحقق أو بياناتك البنكية مع أي شخص.":"Inspect the item before paying. Never share your password, verification codes or banking details.","عن تطبيق سوق":"About SouQ","منصة للبيع والشراء والإعلانات المبوبة.":"A marketplace for buying, selling and classified ads.","الإصدار 1.4":"Version 1.4","المحادثات":"Messages","تحديث":"Refresh","سجّل الدخول أولاً":"Please sign in first","مراسلة البائع داخل سوق":"Message seller on SouQ","المحادثة":"Conversation","كل المحادثات":"All conversations","اكتب رسالتك...":"Write a message...","إرسال":"Send","🔔 إشعارات جديدة":"🔔 New notifications","مستخدم سوق":"SouQ user","محادثة حول إعلان":"Conversation about a listing","الرئيسية":"Home"
 };
 const originals=new WeakMap(),attrs=new WeakMap();let lang="ar";
 function tr(v){if(dict[v])return dict[v];let x=v;for(const k of Object.keys(dict).sort((a,b)=>b.length-a.length))if(k.length>2&&x.includes(k))x=x.split(k).join(dict[k]);return x}
