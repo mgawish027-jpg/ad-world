@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#2563eb">
-<title>AD WORLD</title>
+<title>سوق</title>
 <link rel="manifest" href="manifest.json">
 <style>
 :root{--blue:#2563eb;--purple:#7c3aed;--ink:#172033;--muted:#667085;--line:#e7eaf0;--bg:#f5f7fb}
@@ -54,7 +54,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 </head>
 <body>
 <header>
- <div class="brand">🌍 AD WORLD</div>
+ <div class="brand">🌍 سوق</div>
  <div class="tag">سوقك وإعلاناتك في مكان واحد</div>
  <input class="search" id="search" placeholder="ابحث عن منتج أو خدمة أو إعلان..." oninput="renderAds()">
  <div class="actions"><button class="btn light" onclick="show('add')">＋ أضف إعلانًا</button><button class="btn light" onclick="show('account')">دخول / اشتراك</button></div>
@@ -119,7 +119,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 </section>
 <section id="account" class="screen">
  <div class="auth-wrap">
-  <div class="auth-brand"><div class="auth-logo">AW</div><div><strong>AD WORLD</strong><span>إعلاناتك وفرصك في مكان واحد</span></div></div>
+  <div class="auth-brand"><div class="auth-logo">AW</div><div><strong>سوق</strong><span>إعلاناتك وفرصك في مكان واحد</span></div></div>
   <div class="auth-card">
    <div class="auth-welcome-icon">👋</div>
    <h2 class="auth-title">أهلاً بعودتك</h2>
@@ -137,7 +137,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
    <div id="sellerProfileEditor" class="auth-profile" style="display:none"><label for="sellerDisplayName">اسم المعلن الظاهر</label><input id="sellerDisplayName" maxlength="50" placeholder="اسمك أو اسم نشاطك"><button class="btn primary auth-login" onclick="saveSellerDisplayName()">حفظ الاسم</button></div>
    <button id="logoutButton" class="auth-logout" style="display:none" onclick="logoutAccount()">تسجيل الخروج</button>
   </div>
-  <p class="auth-footnote">🔒 بياناتك محفوظة بأمان مع AD WORLD</p>
+  <p class="auth-footnote">🔒 بياناتك محفوظة بأمان مع سوق</p>
  </div>
 </section>
 <section id="rewards" class="screen">
@@ -153,7 +153,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <h2>مركز المالك والإدارة 🛡️</h2>
   <button class="btn back" onclick="show('home')">الرئيسية</button>
  </div>
- <div class="notice">🔐 مساحة خاصة بمالك AD WORLD فقط. لا تظهر في قائمة التطبيق للحسابات العادية، ويتم التحقق من الصلاحية قبل تحميل بيانات الإدارة.</div>
+ <div class="notice">🔐 مساحة خاصة بمالك سوق فقط. لا تظهر في قائمة التطبيق للحسابات العادية، ويتم التحقق من الصلاحية قبل تحميل بيانات الإدارة.</div>
  <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-top:12px">
   <div class="card"><div class="muted">إجمالي الإعلانات</div><strong id="adminTotalAds" style="font-size:25px">—</strong></div>
   <div class="card"><div class="muted">إعلانات معروضة</div><strong id="adminVisibleAds" style="font-size:25px">—</strong></div>
@@ -181,7 +181,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  </div>
  <div class="card">
   <b>إرسال إشعار عام 📢</b>
-  <label>عنوان الإشعار</label><input id="adminBroadcastTitle" maxlength="80" placeholder="مثال: تحديث جديد في AD WORLD">
+  <label>عنوان الإشعار</label><input id="adminBroadcastTitle" maxlength="80" placeholder="مثال: تحديث جديد في سوق">
   <label>نص الرسالة</label><textarea id="adminBroadcastMessage" rows="3" maxlength="500" placeholder="اكتب الرسالة التي ستصل للمستخدمين"></textarea>
   <button class="btn primary" style="width:100%" onclick="adminBroadcast()">إرسال لجميع المستخدمين</button>
   <div id="adminBroadcastStatus" class="muted" style="margin-top:8px"></div>
@@ -208,7 +208,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <button onclick="show('account')"><b>♙</b>حسابي</button>
  <button id="adminNavButton" style="display:none" onclick="openAdminPanel()"><b>🛡️</b>الإدارة</button>
 </nav>
-<footer>AD WORLD · نموذج أولي تجريبي</footer>
+<footer>سوق · نموذج أولي تجريبي</footer>
 <script>
 let sample=[
  {title:'هاتف ذكي بحالة ممتازة',category:'إلكترونيات',price:'8500',place:'مصر - الغردقة',description:'إعلان تجريبي لعرض شكل الإعلانات.'},
@@ -325,13 +325,12 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDlWVwB--j3Lu2Ye1je_hRT7Dzw6ndHV2I",
-  authDomain: "ad-world-37f9b.firebaseapp.com",
-  projectId: "ad-world-37f9b",
-  storageBucket: "ad-world-37f9b.firebasestorage.app",
-  messagingSenderId: "303076490229",
-  appId: "1:303076490229:web:a834808fda33dac8fe7ebc",
-  measurementId: "G-FFDQK0868B"
+  apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
+  authDomain: "souq-2db97.firebaseapp.com",
+  projectId: "souq-2db97",
+  storageBucket: "souq-2db97.firebasestorage.app",
+  messagingSenderId: "661913668185",
+  appId: "1:661913668185:web:9d398b4ffeb4482ddb7f48"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -389,7 +388,7 @@ window.saveSellerDisplayName=async()=>{
 };
 window.openSellerProfile=async(uid)=>{
  show("sellerProfile");const box=document.getElementById("sellerProfileContent");box.textContent="جارٍ التحميل...";
- try{const s=await getDoc(doc(db,"sellerProfiles",uid));const p=s.exists()?s.data():{};const count=ads.filter(a=>a.ownerId===uid).length;box.innerHTML='<div class="card"><h2>'+escapeHtml(p.name||"معلن على AD WORLD")+'</h2><p>عدد الإعلانات الظاهرة: '+count+'</p></div>';}
+ try{const s=await getDoc(doc(db,"sellerProfiles",uid));const p=s.exists()?s.data():{};const count=ads.filter(a=>a.ownerId===uid).length;box.innerHTML='<div class="card"><h2>'+escapeHtml(p.name||"معلن على سوق")+'</h2><p>عدد الإعلانات الظاهرة: '+count+'</p></div>';}
  catch(e){box.textContent="تعذر تحميل الملف الشخصي: "+(e.code||e.message);}
 };
 
@@ -629,7 +628,7 @@ window.generateAdWithAI = async () => {
   button.textContent = "الذكاء الاصطناعي يجهّز إعلانك...";
   status.textContent = "جارٍ إعداد عنوان ووصف احترافي واقتراح سعر تقريبي...";
   try {
-    const prompt = `أنت مساعد كتابة إعلانات لتطبيق سوق مصري اسمه AD WORLD. اكتب إعلانًا عربيًا واضحًا وجذابًا دون مبالغة أو اختلاق أي مواصفات. القسم: ${category}. تفاصيل المستخدم: ${details}. السعر الذي أدخله المستخدم إن وجد: ${priceNow || "لم يحدد"}. أعد النتيجة فقط بصيغة JSON صحيحة بهذه المفاتيح: {"title":"عنوان قصير","description":"وصف احترافي أمين للتفاصيل","suggestedPrice":"سعر رقمي تقريبي بالجنيه المصري أو فارغ إذا لم تتوفر معلومات كافية","priceNote":"تنبيه مختصر يوضح أن السعر تقديري ويتغير حسب الحالة والسوق"}. لا تخترع ماركة أو حالة أو ضمانًا أو مواصفات غير مذكورة.`;
+    const prompt = `أنت مساعد كتابة إعلانات لتطبيق سوق مصري اسمه سوق. اكتب إعلانًا عربيًا واضحًا وجذابًا دون مبالغة أو اختلاق أي مواصفات. القسم: ${category}. تفاصيل المستخدم: ${details}. السعر الذي أدخله المستخدم إن وجد: ${priceNow || "لم يحدد"}. أعد النتيجة فقط بصيغة JSON صحيحة بهذه المفاتيح: {"title":"عنوان قصير","description":"وصف احترافي أمين للتفاصيل","suggestedPrice":"سعر رقمي تقريبي بالجنيه المصري أو فارغ إذا لم تتوفر معلومات كافية","priceNote":"تنبيه مختصر يوضح أن السعر تقديري ويتغير حسب الحالة والسوق"}. لا تخترع ماركة أو حالة أو ضمانًا أو مواصفات غير مذكورة.`;
     const result = await adWriterModel.generateContent(prompt);
     const raw = result.response.text().trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
     const data = JSON.parse(raw);
@@ -638,7 +637,7 @@ window.generateAdWithAI = async () => {
     if (!priceNow && data.suggestedPrice) document.getElementById("price").value = String(data.suggestedPrice).replace(/[^0-9.]/g, "");
     status.textContent = "تم تجهيز إعلانك بالذكاء الاصطناعي. راجع التفاصيل والسعر قبل النشر. " + (data.priceNote || "");
   } catch (error) {
-    console.error("AD WORLD AI error:", error);
+    console.error("سوق AI error:", error);
     status.textContent = "لم يعمل الذكاء الاصطناعي بعد. تأكد من تفعيل Firebase AI Logic في مشروع Firebase ثم جرّب مرة أخرى. (" + (error.code || error.message || "خطأ غير معروف") + ")";
   } finally {
     button.disabled = false;
