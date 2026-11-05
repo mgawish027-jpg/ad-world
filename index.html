@@ -91,6 +91,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 </section>
 <section id="sellerProfile" class="screen"><button class="btn back" onclick="show('home')">رجوع</button><div id="sellerProfileContent"></div></section>
 <section id="inbox" class="screen"><h2>استفسارات العملاء ✉️</h2><button class="btn back" onclick="loadSellerInquiries()">↻ تحديث الاستفسارات</button><div id="inquiryList"></div></section>
+<section id="chats" class="screen"><h2>المحادثات 💬</h2><button class="btn back" onclick="loadChats()">↻ تحديث المحادثات</button><div id="chatList"></div><div id="chatRoom" style="display:none"></div></section>
 <section id="notifications" class="screen"><h2>الإشعارات 🔔</h2><div id="notificationList"></div></section>
 <section id="favorites" class="screen"><h2>إعلاناتي المفضلة ❤️</h2><div id="favoriteAds"></div></section>
 <section id="category" class="screen">
@@ -202,6 +203,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <button onclick="show('business')"><b>▣</b>الشركات</button>
  <button onclick="showNotifications()"><b>🔔</b><span id="notificationNavLabel">الإشعارات</span></button>
  <button onclick="loadSellerInquiries()"><b>✉️</b>استفساراتي</button>
+ <button onclick="loadChats()"><b>💬</b>المحادثات</button>
   <button onclick="renderFavorites();show('favorites')"><b>♥</b>المفضلة</button>
  <button onclick="show('add')"><b>＋</b>أضف إعلان</button>
  <button onclick="show('rewards')"><b>🎁</b>المكافآت</button>
@@ -224,7 +226,7 @@ function contactButtons(ad){
  const raw=String(ad.contactPhone||'').trim();let phoneHtml='';
  if(raw){let digits=raw.replace(/\D/g,'');if(digits.startsWith('00'))digits=digits.slice(2);if(digits.startsWith('0'))digits='20'+digits.slice(1);const encoded=encodeURIComponent('مرحبًا، أتواصل معك بخصوص إعلانك: '+String(ad.title||''));phoneHtml='<a class="btn primary" style="text-decoration:none" href="tel:'+digits+'">📞 اتصال</a><a class="btn" style="background:#dcfce7;color:#166534;text-decoration:none" href="https://wa.me/'+digits+'?text='+encoded+'" target="_blank" rel="noopener noreferrer">واتساب</a>';}
  const inquiryCall='sendAdInquiry('+JSON.stringify(String(ad.ownerId||''))+','+JSON.stringify(String(ad.id||''))+')';
- const inquiryHtml=ad.ownerId&&ad.ownerId!==window.currentAdUserId?'<button class="btn light" onclick="'+escapeHtml(inquiryCall)+'">✉️ أرسل استفسارًا</button>':'';
+ const inquiryHtml=ad.ownerId&&ad.ownerId!==window.currentAdUserId?'<button class="btn light" onclick="'+escapeHtml(inquiryCall)+'">✉️ أرسل استفسارًا</button><button class="btn primary" onclick="openChatWithSeller(\'+JSON.stringify(String(ad.ownerId||\'\'))+\',\'+JSON.stringify(String(ad.title||\'إعلان\'))+\')">💬 مراسلة مباشرة</button>':'';
  return phoneHtml+inquiryHtml?'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+phoneHtml+inquiryHtml+'</div>':'';
 }
 function favoriteButton(ad){const key=adFavoriteKey(ad);return '<button class="btn light" style="margin-top:8px;color:#be123c" onclick="toggleFavorite('+JSON.stringify(key)+')">'+(isFavorite(ad)?'♥ إزالة من المفضلة':'♡ أضف للمفضلة')+'</button>';}
@@ -235,6 +237,36 @@ function renderNotifications(){
  const unread=notificationItems.filter(n=>!n.read).length;const label=document.getElementById('notificationNavLabel');if(label)label.textContent=unread?'الإشعارات ('+unread+')':'الإشعارات';
 }
 function showNotifications(){show('notifications');renderNotifications();if(!currentUser||currentUser.isAnonymous)return;const unread=notificationItems.filter(n=>!n.read);Promise.all(unread.map(n=>updateDoc(doc(db,'notifications',n.id),{read:true}))).catch(e=>console.warn('Could not mark notifications read',e));}
+window.loadChats=async()=>{
+ const list=document.getElementById("chatList"),room=document.getElementById("chatRoom");if(room)room.style.display="none";if(list)list.style.display="block";list.innerHTML='<p class="muted">جارٍ تحميل المحادثات...</p>';
+ await authReady;const user=auth.currentUser;if(!user||user.isAnonymous){list.innerHTML='<div class="card empty">سجّل الدخول لعرض محادثاتك.</div>';return;}
+ try{const client=getSupabaseClient();const {data:members,error:me}=await client.from("souq_conversation_members").select("conversation_id,joined_at").eq("firebase_uid",user.uid).order("joined_at",{ascending:false});if(me)throw me;
+ const ids=[...new Set((members||[]).map(x=>x.conversation_id))];if(!ids.length){list.innerHTML='<div class="card empty">لا توجد محادثات بعد. افتح إعلانًا واضغط «مراسلة مباشرة» لبدء محادثة.</div>';return;}
+ const [{data:conversations,error:ce},{data:messages,error:msg}]=await Promise.all([client.from("souq_conversations").select("id,last_message_at").in("id",ids).order("last_message_at",{ascending:false}),client.from("souq_messages").select("conversation_id,body,created_at").in("conversation_id",ids).order("created_at",{ascending:false})]);if(ce)throw ce;if(msg)throw msg;
+ const latest={};(messages||[]).forEach(m=>{if(!latest[m.conversation_id])latest[m.conversation_id]=m;});
+ list.innerHTML=(conversations||[]).map(c=>'<button class="card" style="display:block;width:100%;text-align:right;margin:8px 0" onclick="openConversation('+JSON.stringify(c.id)+')"><b>محادثة سوق</b><div class="muted">'+escapeHtml((latest[c.id]?.body||"ابدأ المحادثة").slice(0,100))+'</div><small class="muted">'+(latest[c.id]?.created_at?new Date(latest[c.id].created_at).toLocaleString("ar-EG"):"")+'</small></button>').join("")||'<div class="card empty">لا توجد محادثات.</div>';
+ }catch(e){console.error("Chat list failed",e);list.innerHTML='<div class="card empty">تعذر تحميل المحادثات: '+escapeHtml(e.message||e.code||"خطأ")+'</div>';}
+};
+window.openChatWithSeller=async(sellerId,adTitle)=>{
+ await authReady;const user=auth.currentUser;if(!user||user.isAnonymous)return alert("سجّل الدخول أولًا لبدء المحادثة.");if(!sellerId||sellerId===user.uid)return alert("لا يمكنك مراسلة نفسك.");
+ const first=prompt("اكتب رسالتك بخصوص: "+String(adTitle||"الإعلان"));if(first===null)return;const body=first.trim();if(!body)return alert("اكتب رسالة قبل الإرسال.");if(body.length>5000)return alert("الرسالة طويلة؛ الحد الأقصى 5000 حرف.");
+ try{const client=getSupabaseClient();const {data:conversation,error:ce}=await client.from("souq_conversations").insert({created_by_firebase_uid:user.uid}).select("id").single();if(ce)throw ce;
+ const {error:me}=await client.from("souq_conversation_members").insert([{conversation_id:conversation.id,firebase_uid:user.uid},{conversation_id:conversation.id,firebase_uid:sellerId}]);if(me)throw me;
+ const {error:msg}=await client.from("souq_messages").insert({conversation_id:conversation.id,sender_firebase_uid:user.uid,body:"بخصوص "+String(adTitle||"الإعلان")+": "+body});if(msg)throw msg;
+ await client.from("souq_conversations").update({last_message_at:new Date().toISOString()}).eq("id",conversation.id);show("chats");await loadChats();await openConversation(conversation.id);
+ }catch(e){console.error("Create chat failed",e);alert("تعذر بدء المحادثة: "+(e.message||e.code||"تحقق من الاتصال والصلاحيات"));}
+};
+window.openConversation=async(id)=>{
+ const list=document.getElementById("chatList"),room=document.getElementById("chatRoom");list.style.display="none";room.style.display="block";room.innerHTML='<p class="muted">جارٍ تحميل الرسائل...</p>';
+ try{const {data:messages,error}=await getSupabaseClient().from("souq_messages").select("id,sender_firebase_uid,body,created_at").eq("conversation_id",id).order("created_at",{ascending:true}).limit(200);if(error)throw error;
+ room.innerHTML='<button class="btn back" onclick="loadChats()">→ كل المحادثات</button><h3>محادثة سوق</h3><div id="chatMessages">'+(messages||[]).map(m=>'<div class="card" style="margin:7px 0;max-width:90%;'+(m.sender_firebase_uid===auth.currentUser?.uid?'margin-right:auto;background:#eaf1ff':'')+'"><div>'+escapeHtml(m.body)+'</div><small class="muted">'+(m.created_at?new Date(m.created_at).toLocaleString("ar-EG"):"")+'</small></div>').join("")+'</div><textarea id="chatMessageInput" rows="3" maxlength="5000" placeholder="اكتب رسالتك..."></textarea><button class="btn primary" style="width:100%;margin-top:8px" onclick="sendChatMessage('+JSON.stringify(id)+')">إرسال الرسالة</button>';
+ }catch(e){console.error("Open chat failed",e);room.innerHTML='<div class="card empty">تعذر فتح المحادثة: '+escapeHtml(e.message||e.code||"خطأ")+'</div><button class="btn" onclick="loadChats()">رجوع</button>';}
+};
+window.sendChatMessage=async(id)=>{
+ const input=document.getElementById("chatMessageInput"),body=(input?.value||"").trim();if(!body)return alert("اكتب رسالة أولًا.");if(body.length>5000)return alert("الرسالة طويلة.");
+ try{const user=auth.currentUser;if(!user||user.isAnonymous)return alert("سجّل الدخول أولًا.");const client=getSupabaseClient();const {error}=await client.from("souq_messages").insert({conversation_id:id,sender_firebase_uid:user.uid,body});if(error)throw error;const {error:ue}=await client.from("souq_conversations").update({last_message_at:new Date().toISOString()}).eq("id",id);if(ue)console.warn("Conversation timestamp update failed",ue);await openConversation(id);
+ }catch(e){console.error("Send chat failed",e);alert("تعذر إرسال الرسالة: "+(e.message||e.code||"خطأ"));}
+};
 window.sendAdInquiry=async(sellerId,adId)=>{
  await authReady;currentUser=auth.currentUser||currentUser;
  if(!currentUser||currentUser.isAnonymous)return alert('لإرسال استفسار، سجّل الدخول أو أنشئ حسابًا أولًا من صفحة حسابي.');
@@ -323,6 +355,7 @@ import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithE
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, enableNetwork } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -336,6 +369,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const SUPABASE_URL = "https://pvsjqjmfzjhfhhwgcjww.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_uDrFEFzJxsTQ_mz43chDyQ_jsFUQUut";
+let supabaseClient = null;
+function getSupabaseClient() {
+  if (!supabaseClient) supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, { accessToken: async () => { const user = auth.currentUser; return user && !user.isAnonymous ? await user.getIdToken() : null; } });
+  return supabaseClient;
+}
+async function verifySupabaseConnection() { const { error } = await getSupabaseClient().from("souq_conversations").select("id").limit(1); if (error) throw error; return true; }
 const storage = getStorage(app);
 const aiService = getAI(app, { backend: new GoogleAIBackend() });
 const adWriterModel = getGenerativeModel(aiService, { model: "gemini-3.8-flash" });
@@ -427,7 +468,9 @@ onAuthStateChanged(auth, async user => {
   }
   window.currentAdUserId = user.uid;
   if (!user.isAnonymous) {
-    syncSupabaseRoleClaim(user);
+    await syncSupabaseRoleClaim(user);
+    try { await verifySupabaseConnection(); console.info("Supabase connection verified for signed-in Firebase user."); }
+    catch (error) { console.warn("Supabase connection check failed:", error.message); }
     setDoc(doc(db, "sellerProfiles", user.uid), { lastSeenAt: serverTimestamp() }, { merge: true })
       .catch(error => console.warn("User directory update failed:", error));
   }
