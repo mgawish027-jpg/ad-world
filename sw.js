@@ -1,4 +1,4 @@
-const CACHE="souq-v15";
+const CACHE="souq-v16";
 const ASSETS=["./","./index.html","./manifest.json","./icon.svg"];
 self.addEventListener("install",event=>{
   event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(ASSETS)));
