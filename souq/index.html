@@ -190,13 +190,12 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="card settings-card"><div class="settings-card-icon">🎧</div><div><h3>المساعدة والدعم</h3><p class="muted">تواصل مع فريق سوق لو عندك استفسار أو مشكلة.</p></div><button class="btn secondary settings-action" onclick="openCustomerSupport()">التواصل مع الدعم</button></div>
 <div class="card settings-card"><div class="settings-card-icon">🛡️</div><div><h3>الأمان عند البيع والشراء</h3><p class="muted">عاين المنتج بنفسك قبل الدفع، ولا تشارك كلمة المرور أو رموز التحقق أو بياناتك البنكية مع أي شخص.</p></div></div>
 <div class="card settings-card"><div class="settings-card-icon">ℹ️</div><div><h3>عن تطبيق سوق</h3><p class="muted">منصة للبيع والشراء والإعلانات المبوبة.</p><span class="settings-version">الإصدار 1.4</span></div></div>
-</section><section id="support" class="screen"><div class="section-head"><h2>🎧 دعم العملاء</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div id="supportSignedOut" class="empty" style="display:none">سجّل الدخول أولاً للتواصل مع فريق دعم سوق.</div><div id="supportWorkspace" style="display:none"><div class="card"><h3>إرسال استفسار أو شكوى</h3><label for="supportSubject">عنوان الطلب</label><input id="supportSubject" maxlength="90" placeholder="مثلاً: مشكلة في إعلان أو الحساب"><label for="supportFirstMessage">اكتب رسالتك</label><textarea id="supportFirstMessage" rows="4" maxlength="2000" placeholder="اشرح لنا المشكلة بالتفصيل..."></textarea><button class="btn primary" id="supportCreateBtn" type="button" onclick="createSupportTicket()">إرسال إلى الدعم</button></div><div class="section-head"><h3 id="supportListTitle">طلباتي</h3><button class="small-link" type="button" onclick="loadSupportTickets()">تحديث</button></div><div id="supportTicketList"></div><div class="card" id="supportConversation" style="display:none"><div class="section-head"><h3 id="supportConversationTitle">المحادثة</h3><button class="small-link" onclick="closeSupportConversation()">إغلاق</button></div><div id="supportMessages" class="support-thread"></div><label for="supportReply">اكتب ردك</label><textarea id="supportReply" rows="3" maxlength="2000" placeholder="اكتب رسالتك هنا..."></textarea><div class="actions"><button class="btn primary" id="supportSendBtn" type="button" onclick="sendSupportMessage()">إرسال</button><button class="btn secondary" id="supportCloseTicketBtn" type="button" onclick="setSupportTicketStatus('closed')" style="display:none">إغلاق الطلب</button><button class="btn secondary" id="supportReopenTicketBtn" type="button" onclick="setSupportTicketStatus('open')" style="display:none">إعادة فتح الطلب</button></div></div></div></section><section id="admin" class="screen"><div class="section-head"><h2>لوحة الإدارة التجريبية</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div class="note">تنبيه أمني: هذه البيانات محلية ويمكن لأي شخص يستخدم نفس الجهاز فتح هذه اللوحة. لا تستخدمها لإدارة منصة عامة قبل ربط تسجيل دخول وصلاحيات مدير من الخادم.</div><div class="categories" style="margin-top:12px"><div class="card"><div class="muted">كل الإعلانات</div><h2 id="statAds">0</h2></div><div class="card"><div class="muted">البلاغات</div><h2 id="statReports">0</h2></div><div class="card"><div class="muted">الأقسام</div><h2>6</h2></div></div><div class="section-head"><h2>إدارة الإعلانات</h2></div><div id="adminAds"></div><div class="section-head"><h2>مراجعة البلاغات</h2></div><div id="adminReports"></div>
-<div class="section-head"><h2>إدارة الأقسام</h2></div>
-<div class="card"><div id="adminCategories"></div><div class="actions"><button class="btn secondary" onclick="adminAddCategory()">إضافة قسم</button><button class="btn secondary" onclick="adminResetCategories()">استعادة الأقسام الأساسية</button></div></div>
-<div class="section-head"><h2>النسخ الاحتياطي</h2></div>
-<div class="card"><p class="muted">احفظ نسخة من الإعلانات والأقسام والبلاغات والإعدادات الموجودة على هذا الجهاز، أو استعد نسخة سابقة.</p><div class="actions"><button class="btn secondary" onclick="exportBackup()">تصدير نسخة احتياطية</button><button class="btn secondary" onclick="document.getElementById('backupFile').click()">استيراد نسخة</button><input id="backupFile" type="file" accept="application/json,.json" style="display:none" onchange="importBackup(event)"></div></div>
-<div class="section-head"><h2>سجل عمليات الإدارة</h2><button class="small-link" onclick="clearAuditLog()">مسح السجل</button></div><div id="adminAudit"></div>
-<div class="section-head"><h2>إدارة الحسابات والصلاحيات</h2></div><div class="card"><b>غير مفعّلة في النسخة الحالية</b><p class="muted">لا يوجد تسجيل حسابات أو خادم مستخدمين حتى الآن. بعد ربط Firebase سنضيف التحقق من هوية المالك، أدوار المديرين، الحظر، وسجل الصلاحيات من الخادم. لن نعرض تحكمًا وهميًا في حسابات غير موجودة.</p></div></section>
+</section><section id="support" class="screen"><div class="section-head"><h2>🎧 دعم العملاء</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div id="supportSignedOut" class="empty" style="display:none">سجّل الدخول أولاً للتواصل مع فريق دعم سوق.</div><div id="supportWorkspace" style="display:none"><div class="card"><h3>إرسال استفسار أو شكوى</h3><label for="supportSubject">عنوان الطلب</label><input id="supportSubject" maxlength="90" placeholder="مثلاً: مشكلة في إعلان أو الحساب"><label for="supportFirstMessage">اكتب رسالتك</label><textarea id="supportFirstMessage" rows="4" maxlength="2000" placeholder="اشرح لنا المشكلة بالتفصيل..."></textarea><button class="btn primary" id="supportCreateBtn" type="button" onclick="createSupportTicket()">إرسال إلى الدعم</button></div><div class="section-head"><h3 id="supportListTitle">طلباتي</h3><button class="small-link" type="button" onclick="loadSupportTickets()">تحديث</button></div><div id="supportTicketList"></div><div class="card" id="supportConversation" style="display:none"><div class="section-head"><h3 id="supportConversationTitle">المحادثة</h3><button class="small-link" onclick="closeSupportConversation()">إغلاق</button></div><div id="supportMessages" class="support-thread"></div><label for="supportReply">اكتب ردك</label><textarea id="supportReply" rows="3" maxlength="2000" placeholder="اكتب رسالتك هنا..."></textarea><div class="actions"><button class="btn primary" id="supportSendBtn" type="button" onclick="sendSupportMessage()">إرسال</button><button class="btn secondary" id="supportCloseTicketBtn" type="button" onclick="setSupportTicketStatus('closed')" style="display:none">إغلاق الطلب</button><button class="btn secondary" id="supportReopenTicketBtn" type="button" onclick="setSupportTicketStatus('open')" style="display:none">إعادة فتح الطلب</button></div></div></div></section><section id="admin" class="screen">
+<div class="section-head"><h2>🛡️ لوحة تحكم المدير</h2><button class="small-link" onclick="show('account')">رجوع</button></div>
+<div class="note">لوحة إدارة مباشرة متصلة بقاعدة بيانات سوق. الحظر يوقف المستخدم من استخدام وظائف التطبيق، ويمكنك إعادة تفعيله.</div>
+<div class="card"><div class="section-head"><h3>إدارة المستخدمين</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudUsers" class="muted">جارٍ تحميل المستخدمين...</div></div>
+<div class="card"><div class="section-head"><h3>إدارة الإعلانات</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudAds" class="muted">جارٍ تحميل الإعلانات...</div></div>
+</section>
 </main>
 <div class="souq-assistant-widget" id="souqAssistantWidget">
  <button class="souq-assistant-launcher" id="souqAssistantToggle" type="button" onclick="toggleSouqAssistant()" aria-label="افتح مساعد سوق" aria-expanded="false">🤖</button>
@@ -742,6 +741,38 @@ $("signOutBtn").addEventListener("click",async()=>{
   try { await signOut(auth);authMessage("تم تسجيل الخروج."); }
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
+window.openAdminPanel = async function(){
+  if(!window.souqIsAdmin){alert("الدخول متاح لحساب المدير الموثّق فقط.");show("account");return;}
+  show("admin");await loadAdminCloudData();
+};
+window.loadAdminCloudData = async function(){
+  if(!window.souqIsAdmin || !auth.currentUser)return;
+  const usersBox=$("adminCloudUsers"),adsBox=$("adminCloudAds");
+  usersBox.textContent="جارٍ تحميل المستخدمين...";adsBox.textContent="جارٍ تحميل الإعلانات...";
+  try{
+    const [usersSnap,adsSnap]=await Promise.all([getDocs(collection(db,"sellerProfiles")),getDocs(collection(db,"ads"))]);
+    usersBox.innerHTML=usersSnap.docs.map(d=>{
+      const u=d.data(),blocked=u.blocked===true;
+      return '<div class="card"><b>'+escapeHtml(u.name||"مستخدم")+'</b><p class="muted">'+escapeHtml(d.id)+'</p><p class="muted">الحالة: '+(blocked?"موقوف":"نشط")+'</p><button class="btn '+(blocked?"secondary":"danger")+'" onclick="adminSetUserBlocked('+JSON.stringify(d.id)+','+(!blocked)+')">'+(blocked?"إلغاء الحظر":"حظر المستخدم")+'</button></div>';
+    }).join("")||'<p class="empty">لا توجد ملفات مستخدمين بعد.</p>';
+    adsBox.innerHTML=adsSnap.docs.map(d=>{
+      const a=d.data();
+      return '<div class="card"><b>'+escapeHtml(a.title||"إعلان بدون عنوان")+'</b><p class="muted">'+escapeHtml(a.category||"")+' · '+escapeHtml(a.place||"")+'</p><button class="btn danger" onclick="adminDeleteCloudAd('+JSON.stringify(d.id)+')">حذف الإعلان</button></div>';
+    }).join("")||'<p class="empty">لا توجد إعلانات منشورة.</p>';
+  }catch(e){usersBox.textContent="تعذر تحميل البيانات: "+(e.message||e);adsBox.textContent="تحقق من صلاحيات المدير واتصال الإنترنت."}
+};
+window.adminSetUserBlocked = async function(uid,blocked){
+  if(!window.souqIsAdmin)return alert("غير مصرح.");
+  if(!confirm(blocked?"تأكيد حظر هذا المستخدم؟":"تأكيد إلغاء حظر هذا المستخدم؟"))return;
+  try{await updateDoc(doc(db,"sellerProfiles",uid),{blocked,updatedAt:Date.now()});await loadAdminCloudData();alert(blocked?"تم حظر المستخدم.":"تم إلغاء الحظر.");}
+  catch(e){alert("تعذر تنفيذ العملية: "+(e.message||e));}
+};
+window.adminDeleteCloudAd = async function(adId){
+  if(!window.souqIsAdmin)return alert("غير مصرح.");
+  if(!confirm("هل تريد حذف هذا الإعلان نهائياً؟"))return;
+  try{await deleteDoc(doc(db,"ads",adId));await loadAdminCloudData();await loadCloudAds();alert("تم حذف الإعلان.");}
+  catch(e){alert("تعذر حذف الإعلان: "+(e.message||e));}
+};
 function renderAuthState(user) {
   window.souqUserId = user ? user.uid : null;
   window.souqIsAdmin = !!(user && user.email === "mgawish027@gmail.com" && user.emailVerified === true);
