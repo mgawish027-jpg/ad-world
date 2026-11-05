@@ -392,6 +392,26 @@ window.openSellerProfile=async(uid)=>{
  catch(e){box.textContent="تعذر تحميل الملف الشخصي: "+(e.code||e.message);}
 };
 
+async function syncSupabaseRoleClaim(user) {
+  if (!user || user.isAnonymous) return;
+  try {
+    const idToken = await user.getIdToken();
+    const response = await fetch("/api/sync-supabase-role", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + idToken }
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.error || ("HTTP " + response.status));
+    }
+    const result = await response.json();
+    if (result.changed) await user.getIdToken(true);
+    console.info("Supabase Firebase role sync:", result);
+  } catch (error) {
+    console.warn("Supabase role sync is not ready yet:", error.message);
+  }
+}
+
 onAuthStateChanged(auth, async user => {
   currentUser = user;
   updateAccountUI(user);
@@ -407,6 +427,7 @@ onAuthStateChanged(auth, async user => {
   }
   window.currentAdUserId = user.uid;
   if (!user.isAnonymous) {
+    syncSupabaseRoleClaim(user);
     setDoc(doc(db, "sellerProfiles", user.uid), { lastSeenAt: serverTimestamp() }, { merge: true })
       .catch(error => console.warn("User directory update failed:", error));
   }
