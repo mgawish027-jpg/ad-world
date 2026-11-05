@@ -91,7 +91,7 @@ function read(k,f){try{const x=JSON.parse(localStorage.getItem(k));return Array.
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(ads));localStorage.setItem(FKEY,JSON.stringify(favs));return true}catch(e){alert('مساحة التخزين على الهاتف غير كافية. جرّب صورة أصغر أو احذف بعض الإعلانات.');return false}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(v){return v?Number(v).toLocaleString('ar-EG')+' جنيه':'السعر عند التواصل'}
-function normalizeCategory(value){return String(value??'').normalize('NFC').replace(/[\\u200B-\\u200D\\uFEFF]/g,'').trim().replace(/\\s+/g,' ')}
+function normalizeCategory(value){return String(value??'').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,' ')}
 function categoryMatches(adCategory,selectedCategory){return normalizeCategory(adCategory)===normalizeCategory(selectedCategory)}
 function categoryIcon(c){const key=normalizeCategory(c);return (cats.find(x=>normalizeCategory(x[0])===key)||['','📦'])[1]}
 function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c,i])=>'<button type="button" class="cat" data-category="'+esc(c)+'" onclick="openCategory(this.dataset.category)"><span>'+esc(i)+'</span><small>'+esc(c)+'</small></button>').join('')}
