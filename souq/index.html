@@ -128,6 +128,16 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <section id="home" class="screen active">
 <div class="section-head"><h2>تصفح الأقسام</h2><button class="small-link" onclick="resetFilter()">عرض الكل</button></div>
 <div class="categories" id="categories"></div>
+<div class="ai-panel" id="souqAskPanel">
+ <h3>🤖 اسأل مساعد سوق</h3>
+ <p>اكتب اللي بتدور عليه، وهبحث لك في إعلانات سوق والأقسام الموجودة.</p>
+ <div style="display:flex;gap:8px">
+  <input id="souqAskInput" type="search" placeholder="مثلاً: عايز موبايل سامسونج" aria-label="اسأل مساعد سوق" onkeydown="if(event.key==='Enter')askSouqAssistant()">
+  <button class="btn primary" type="button" style="width:auto;white-space:nowrap;margin:0" onclick="askSouqAssistant()">اسأل</button>
+ </div>
+ <div id="souqAskStatus" class="ai-status" role="status" aria-live="polite">هبحث داخل الإعلانات المنشورة في سوق فقط.</div>
+ <div id="souqAskResults" class="ad-grid" style="margin-top:10px"></div>
+</div>
 <div class="promo-panel"><h3>بيع أسرع.. ووصل لمشتري أكتر</h3><p>اعرض منتجك بصورة واضحة وتفاصيل كاملة، وخلي المشتري يتواصل معاك مباشرة.</p><button onclick="show('add')">＋ أضف إعلانك الآن</button></div><div class="trust-row"><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></b>بحث سهل وسريع</div><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2 1.5a15 15 0 0 0 5.5 5.5L15 14l5 2v3a2 2 0 0 1-2 2C10 20 4 14 3 6a2 2 0 0 1 2-2z"/></svg></b>تواصل مباشر</div><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 8.8c0 5.1-8.5 11-8.5 11s-8.5-5.9-8.5-11A4.8 4.8 0 0 1 12 6a4.8 4.8 0 0 1 8.5 2.8z"/></svg></b>احفظ المفضلة</div></div><div id="featuredWrap" style="display:none"><div class="section-head"><h2>⭐ إعلانات مميزة</h2><span class="count">اختيارات بارزة</span></div><div id="featuredAds" class="ad-grid"></div></div>
 <div id="homeAdListing" style="display:none"><div class="section-head"><h2 id="listTitle">أحدث الإعلانات</h2><span class="count" id="adCount"></span></div>
 <div class="toolbar"><select id="sort" aria-label="ترتيب الإعلانات"><option value="new">الأحدث أولاً</option><option value="low">السعر: الأقل</option><option value="high">السعر: الأعلى</option></select></div><div class="filter-row"><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="أقل سعر"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="أعلى سعر"></div>
@@ -245,6 +255,53 @@ function clearSearch(){
  if(listing)listing.style.display='none';
  renderAds();
 }
+function askSouqAssistant(){
+ const input=document.getElementById('souqAskInput');
+ const status=document.getElementById('souqAskStatus');
+ const results=document.getElementById('souqAskResults');
+ const raw=(input?.value||'').trim();
+ if(!raw){status.textContent='اكتب اسم المنتج أو القسم اللي بتدور عليه.';results.innerHTML='';input?.focus();return}
+ const q=normalizeSearchText(raw);
+ const aliases=[
+  {category:'موبايلات',words:['موبايل','موبايلات','جوال','تليفون','هاتف','سامسونج','ايفون','اى فون']},
+  {category:'سيارات',words:['سيارة','سيارات','عربية','عربيات','عربيه']},
+  {category:'وظائف',words:['وظيفة','وظائف','شغل','عمل','فرصة عمل']},
+  {category:'عقارات',words:['عقار','عقارات','شقة','شقق','فيلا','أرض','اراضي']},
+  {category:'إلكترونيات',words:['إلكترونيات','الكترونيات','تلفزيون','شاشة']},
+  {category:'أجهزة',words:['أجهزة','اجهزه','جهاز','لابتوب','كمبيوتر','تابلت']},
+  {category:'أثاث',words:['أثاث','اثاث','موبيليا','كنبة','كنب']},
+  {category:'ملابس',words:['ملابس','لبس','قميص','بنطلون']}
+ ];
+ const categoryMatch=aliases.find(x=>x.words.some(w=>q.includes(normalizeSearchText(w))));
+ const stopWords=['عايز','عاوزه','عاوز','ابحث','دور','لي','عن','في','من','على','شراء','للبيع','محتاج','محتاجه','اريد','مطلوب','موجود'];
+ const categoryWords=aliases.flatMap(x=>x.words).map(normalizeSearchText);
+ const terms=q.split(' ').filter(w=>w.length>1&&!stopWords.includes(w)&&!categoryWords.includes(w));
+ const active=ads.filter(a=>(!a.status||a.status==='active'));
+ let matches=active.map(a=>{
+  const title=normalizeSearchText(a.title),cat=normalizeSearchText(a.category),desc=normalizeSearchText(a.desc),place=normalizeSearchText(a.place);
+  if(categoryMatch&&cat!==normalizeSearchText(categoryMatch.category))return null;
+  const haystack=title+' '+cat+' '+desc+' '+place;
+  let score=0;
+  for(const term of terms){
+   if(title.includes(term))score+=5;
+   if(cat.includes(term))score+=4;
+   if(desc.includes(term))score+=2;
+   if(place.includes(term))score+=1;
+  }
+  if(categoryMatch)score+=3;
+  return {ad:a,score};
+ }).filter(x=>x&&(x.score>0||(!terms.length&&categoryMatch))).sort((a,b)=>b.score-a.score||Number(b.ad.date||0)-Number(a.ad.date||0));
+ const found=matches.slice(0,12).map(x=>x.ad);
+ if(found.length){
+  status.textContent='لقيت '+found.length+' إعلان مطابق داخل سوق:';
+  results.innerHTML=found.map(card).join('');
+  return;
+ }
+ const suggestions=cats.map(([name])=>'<button class="btn secondary" type="button" onclick="openCategory(this.dataset.category)" data-category="'+esc(name)+'">'+esc(name)+'</button>').join(' ');
+ status.textContent='ملقتش إعلان مطابق لطلبك حالياً. دي الأقسام الموجودة في سوق، جرب تدخل القسم المناسب:';
+ results.innerHTML='<div class="empty" style="grid-column:1/-1"><b>مفيش إعلان مطابق حالياً</b>المساعد بيبحث في إعلانات سوق فقط، ومش بيجيب نتائج من جوجل.</div><div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:7px">'+suggestions+'</div>';
+}
+window.askSouqAssistant=askSouqAssistant;
 function statusText(a){return a.status==='sold'?'مباع':a.status==='paused'?'موقوف':'نشط'}
 function statusClass(a){return a.status==='sold'?'status-sold':a.status==='paused'?'status-paused':''}
 function photosOf(a){return Array.isArray(a.photos)&&a.photos.length?a.photos:(a.photo?[a.photo]:[])}
