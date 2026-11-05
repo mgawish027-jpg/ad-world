@@ -357,6 +357,7 @@ import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithE
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, getDocs, getDoc, setDoc, onSnapshot, query, where, orderBy, serverTimestamp, writeBatch, enableNetwork } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-storage.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-ai.js";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app-check.js";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
 
 const firebaseConfig = {
@@ -369,6 +370,11 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+// App Check: required because Firebase AI Logic enforcement is enabled.
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider("6LegAg8uAAAAAAT43-OvUr3llGi6_RQYk90jRmv_"),
+  isTokenAutoRefreshEnabled: true
+});
 const auth = getAuth(app);
 const db = getFirestore(app);
 const SUPABASE_URL = "https://pvsjqjmfzjhfhhwgcjww.supabase.co";
