@@ -449,7 +449,7 @@ if('serviceWorker'in navigator){addEventListener('load',()=>navigator.serviceWor
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, updateProfile, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc, addDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js";
@@ -473,6 +473,9 @@ if (SOUQ_APP_CHECK_SITE_KEY) {
   });
 }
 const auth = getAuth(app);
+// ثبّت جلسة المستخدم محلياً حتى تظل مسجلة بعد إغلاق التطبيق وفتحه.
+const authPersistenceReady = setPersistence(auth, browserLocalPersistence);
+authPersistenceReady.catch(error => console.error("SouQ auth persistence error:", error));
 const db = getFirestore(app);
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
@@ -710,12 +713,15 @@ $("authForm").addEventListener("submit",async event=>{
   if(password.length<6){authMessage("كلمة المرور يجب ألا تقل عن 6 أحرف.",true);return}
   submit.disabled=true;submit.textContent="جارٍ التنفيذ...";
   try {
+    await authPersistenceReady;
     if(authMode==="register") {
       const credential=await createUserWithEmailAndPassword(auth,email,password);
       if(name) await updateProfile(credential.user,{displayName:name});
+      renderAuthState(auth.currentUser || credential.user);
       authMessage("تم إنشاء حسابك بنجاح.");
     } else {
-      await signInWithEmailAndPassword(auth,email,password);
+      const credential=await signInWithEmailAndPassword(auth,email,password);
+      renderAuthState(credential.user);
       authMessage("تم تسجيل الدخول بنجاح.");
     }
     $("authPassword").value="";
@@ -736,14 +742,19 @@ $("signOutBtn").addEventListener("click",async()=>{
   try { await signOut(auth);authMessage("تم تسجيل الخروج."); }
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
-onAuthStateChanged(auth,async user=>{
-  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false;
-  $("adminAccess").style.display="none";
-  $("authLoggedOut").style.display=user?"none":"block"; $("authLoggedIn").style.display=user?"block":"none";
-  if(user){ $("profileName").textContent=user.displayName||"أهلاً بيك في سوق"; $("profileEmail").textContent=user.email||"";
-    window.souqIsAdmin = user.email === "mgawish027@gmail.com" && user.emailVerified === true;
-    $("adminAccess").style.display=window.souqIsAdmin?"block":"none";
+function renderAuthState(user) {
+  window.souqUserId = user ? user.uid : null;
+  window.souqIsAdmin = !!(user && user.email === "mgawish027@gmail.com" && user.emailVerified === true);
+  $("adminAccess").style.display = window.souqIsAdmin ? "block" : "none";
+  $("authLoggedOut").style.display = user ? "none" : "block";
+  $("authLoggedIn").style.display = user ? "block" : "none";
+  if (user) {
+    $("profileName").textContent = user.displayName || "أهلاً بيك في سوق";
+    $("profileEmail").textContent = user.email || "";
   }
+}
+onAuthStateChanged(auth, user => {
+  renderAuthState(user);
   loadCloudAds();
 });
 </script>
