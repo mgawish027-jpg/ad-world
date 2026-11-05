@@ -1,6 +1,6 @@
 {
-  "appId": "com.adworld.app",
-  "appName": "AD WORLD",
+  "appId": "com.souq.app",
+  "appName": "سوق",
   "webDir": "www",
   "android": {
     "allowMixedContent": false
