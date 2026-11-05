@@ -297,7 +297,7 @@ window.addAd=addAd;
 window.souqApplyCloudAds=function(items){
  const previous=new Map(ads.map(a=>[a.id,a]));
  ads=items.map(item=>{const old=previous.get(item.id)||{};return {...old,...item,photos:old.photos||[],photo:(old.photos&&old.photos[0])||''}});
- persist();renderAds();renderMine();renderFavorites();
+ persist();renderAds();renderMine();renderFavorites();if(currentCategoryPage)renderCategoryAds(currentCategoryPage);
 };
 // addAd is triggered by the button inline handler; avoid duplicate click submissions.
 document.getElementById('search').addEventListener('input',renderAds);document.getElementById('sort').addEventListener('change',renderAds);document.getElementById('minPrice').addEventListener('input',renderAds);document.getElementById('maxPrice').addEventListener('input',renderAds);
