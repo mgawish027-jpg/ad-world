@@ -69,11 +69,12 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
   <button class="cat" onclick="openCategory('أثاث')"><span>🛋️</span>أثاث</button>
   <button class="cat" onclick="openCategory('وظائف')"><span>💼</span>وظائف</button>
   <button class="cat" onclick="openCategory('خدمات')"><span>🧰</span>خدمات</button>
+  <button class="cat" onclick="openCategory('ملابس')"><span>👕</span>ملابس</button>
  </div>
  <h2>ابحث وصفّي الإعلانات</h2>
  <div class="card" style="margin-top:8px">
   <label>القسم</label>
-  <select id="filterCategory" onchange="renderAds()"><option value="">كل الأقسام</option><option>سيارات</option><option>عقارات</option><option>إلكترونيات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option></select>
+  <select id="filterCategory" onchange="renderAds()"><option value="">كل الأقسام</option><option>سيارات</option><option>عقارات</option><option>إلكترونيات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option><option>ملابس</option></select>
   <label>المدينة أو المنطقة</label>
   <input id="filterCity" placeholder="مثال: الغردقة أو القاهرة" oninput="renderAds()">
   <div style="display:flex;gap:8px">
@@ -102,7 +103,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <h2>إضافة إعلان</h2>
  <div class="card">
   <label>عنوان الإعلان</label><input id="title" placeholder="مثال: هاتف بحالة ممتازة">
-  <label>القسم</label><select id="category"><option>إلكترونيات</option><option>سيارات</option><option>عقارات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option></select>
+  <label>القسم</label><select id="category"><option>إلكترونيات</option><option>سيارات</option><option>عقارات</option><option>أثاث</option><option>وظائف</option><option>خدمات</option><option>ملابس</option></select>
   <label>السعر</label><input id="price" type="number" placeholder="السعر">
   <label>الدولة / المدينة</label><input id="place" placeholder="مثال: مصر - الغردقة">
    <label>رقم التواصل (اختياري — سيظهر في الإعلان)</label><input id="contactPhone" type="tel" inputmode="tel" placeholder="مثال: 01012345678 أو +201012345678">
