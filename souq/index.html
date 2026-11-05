@@ -141,6 +141,17 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 .souq-assistant-widget .ai-panel{display:none;position:absolute;right:0;bottom:66px;width:min(350px,calc(100vw - 28px));max-height:min(70vh,540px);overflow:auto;margin:0;padding:14px;background:#fff;box-shadow:0 16px 45px #10284b35;border:1px solid #dce5f4;border-radius:18px}
 .souq-assistant-widget.open .ai-panel{display:block}
 .souq-assistant-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.support-thread{display:grid;gap:9px}.support-message{padding:10px 12px;border-radius:13px;background:#f1f5fb;max-width:92%;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}.support-message.mine{margin-inline-start:auto;background:#e5efff}.support-ticket{cursor:pointer;text-align:start;width:100%;border:1px solid #e1e8f2;background:#fff;border-radius:12px;padding:12px;margin:6px 0}.support-ticket.active{border-color:#2458a6;background:#f2f7ff}
+.souq-chat-messages{display:grid;gap:9px;max-height:48vh;overflow:auto;padding:10px 2px;margin:10px 0}
+.souq-chat-bubble{max-width:88%;padding:10px 12px;border-radius:14px;background:#eef3fa;line-height:1.65;overflow-wrap:anywhere;white-space:pre-wrap}
+.souq-chat-bubble.mine{margin-inline-start:auto;background:#e4efff}
+.souq-chat-meta{font-size:10px;color:#718096;margin-top:5px}
+.souq-chat-form{display:flex;gap:8px;align-items:center}
+.souq-chat-form input{flex:1;min-width:0;margin:0}
+.souq-chat-form button{width:auto;white-space:nowrap;margin:0}
+.souq-conversation-item{width:100%;text-align:start;display:block;border:1px solid #e5eaf2;background:#fff;border-radius:14px;padding:13px;margin:8px 0}
+.souq-conversation-item b{display:block;margin-bottom:5px}
+.souq-conversation-item .muted{font-size:12px;line-height:1.7}
+.souq-notification-item{border-top:1px solid #edf0f5;padding:9px 0;font-size:12px;line-height:1.7}
 .souq-assistant-heading h3{margin:0 0 6px}
 .souq-assistant-close{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:#eef2f8;color:#34445c;font-size:21px;line-height:1}
 @media(min-width:700px){.souq-assistant-widget{right:max(22px,calc((100vw - 820px)/2))}}
@@ -170,7 +181,20 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="muted">اختار صورة واضحة، وتجنب نشر أي بيانات شخصية داخل الصورة.</div>
 <button class="btn primary" id="saveBtn" type="button" onclick="addAd()">نشر الإعلان</button></div>
 <div class="note">الإعلانات النصية تُحفظ على قاعدة بيانات سوق وتظهر للمستخدمين. تنبيه: صور الإعلانات لا تُرفع إلى التخزين السحابي حالياً، لذلك قد لا تظهر للمستخدمين على أجهزة أخرى. نعمل على تجهيز تخزين آمن للصور قبل تفعيل الميزة.</div></section>
-<section id="messages" class="screen"><div class="section-head"><h2>المحادثات</h2></div><div class="empty"><b>💬 محادثاتك هتظهر هنا</b>تقدر تتابع رسائلك مع البائعين والمشترين من الصفحة دي قريباً.</div></section>
+<section id="messages" class="screen">
+<div class="section-head"><h2>💬 المحادثات</h2><button class="small-link" type="button" onclick="loadSouqConversations()">تحديث</button></div>
+<div id="souqChatSignedOut" class="empty" style="display:none"><b>سجّل الدخول أولاً</b>سجّل الدخول لبدء المحادثات مع البائعين والمشترين.<button class="btn primary" style="margin-top:12px" onclick="show('account')">تسجيل الدخول</button></div>
+<div id="souqChatWorkspace" style="display:none">
+<div id="souqNotificationArea" class="card" style="display:none"><b>🔔 إشعارات جديدة</b><div id="souqNotificationList"></div></div>
+<div id="souqConversationList"></div>
+<div id="souqChatThread" class="card" style="display:none">
+<div class="section-head"><button class="small-link" type="button" onclick="closeSouqConversation()">← كل المحادثات</button><b id="souqChatTitle">المحادثة</b></div>
+<div id="souqChatAdTitle" class="muted"></div>
+<div id="souqChatMessages" class="souq-chat-messages" aria-live="polite"></div>
+<form id="souqChatForm" class="souq-chat-form"><input id="souqChatInput" maxlength="5000" autocomplete="off" placeholder="اكتب رسالتك..." required><button class="btn primary" id="souqChatSend" type="submit">إرسال</button></form>
+</div>
+</div>
+</section>
 <section id="favorites" class="screen"><div class="section-head"><h2>إعلانات أعجبتك ❤️</h2></div><div id="favoritesList" class="ad-grid"></div></section>
 <section id="mine" class="screen"><div class="section-head"><h2>إعلاناتي</h2></div><div id="myAds" class="ad-grid"></div></section>
 <section id="account" class="screen"><div class="section-head"><h2>حسابي</h2></div>
@@ -243,7 +267,7 @@ function categoryIcon(c){
  return art[normalizeCategory(c)]||art['أخرى'];
 }
 function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c])=>'<button type="button" class="cat" data-category="'+esc(c)+'" onclick="openCategory(this.dataset.category)"><span class="cat-icon">'+categoryIcon(c)+'</span><small>'+esc(c)+'</small></button>').join('')}
-function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));document.getElementById('topSettingsButton')?.classList.toggle('active',id==='settings');window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
+function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));document.getElementById('topSettingsButton')?.classList.toggle('active',id==='settings');window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='messages')window.loadSouqConversations?.();if(id==='admin')renderAdmin()}
 function openCategory(c){currentCategoryPage=c;activeCat='';renderCats();document.getElementById('categoryPageTitle').textContent='إعلانات '+c;show('categoryPage')}
 function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&categoryMatches(a.category,c));const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
@@ -371,7 +395,7 @@ function renderMine(){
  document.getElementById('myAds').innerHTML=mine.length?mine.slice().sort((a,b)=>b.date-a.date).map(a=>'<div>'+card(a)+'<div class="actions"><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">تم البيع</button></div>'+ (window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" style="width:100%;margin-top:5px" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn danger" style="width:100%;margin-top:5px" onclick="deleteAd(\''+a.id+'\')">حذف الإعلان</button></div>').join(''):'<div class="empty"><b>لم تضف إعلانات بعد</b>إعلاناتك هتظهر هنا.</div>';
 }
 function toggleFav(id){favs=favs.includes(id)?favs.filter(x=>x!==id):[...favs,id];persist();renderAds();renderFavorites()}
-function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div><div class="actions">'+(window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
+function details(id){const a=ads.find(x=>x.id===id);if(!a)return;const pics=photosOf(a);document.getElementById('modalContent').innerHTML=(pics.length?'<div class="detail-photo"><img id="mainDetailPhoto" src="'+pics[0]+'" alt=""></div>' :'<div class="detail-photo">'+categoryIcon(a.category)+'</div>')+(pics.length>1?'<div class="gallery">'+pics.map((p,i)=>'<img src="'+p+'" alt="صورة '+(i+1)+'" onclick="document.getElementById(\'mainDetailPhoto\').src=this.src">').join('')+'</div>':'')+'<div class="muted">'+esc(a.category)+' • '+esc(a.place)+'</div><h2 style="margin:8px 0">'+esc(a.title)+'</h2><div class="ad-price">'+money(a.price)+'</div><p style="line-height:1.8">'+esc(a.desc||'لا يوجد وصف إضافي.')+'</p><span class="status-badge '+statusClass(a)+'">'+statusText(a)+'</span><div class="muted">تاريخ النشر: '+new Date(a.date).toLocaleDateString('ar-EG')+'</div><div class="actions"><a class="btn primary" href="tel:'+esc(a.phone)+'">اتصال بالبائع</a><a class="btn secondary" target="_blank" rel="noopener" href="https://wa.me/'+whatsappNumber(a.phone)+'">واتساب</a></div>'+(a.ownerId&&a.ownerId!==window.souqUserId?'<button class="btn secondary" style="width:100%;margin-top:8px" type="button" onclick="startSouqConversation(\''+esc(a.id)+'\')">💬 مراسلة البائع داخل سوق</button>':'')+'<div class="actions">'+(window.souqIsAdmin||a.ownerId===window.souqUserId?'<button class="btn secondary" onclick="editAd(\''+a.id+'\')">تعديل الإعلان</button>':'')+'<button class="btn secondary" onclick="shareAd(\''+a.id+'\')">مشاركة</button></div><button class="btn danger" style="width:100%;margin-top:10px" onclick="reportAd(\''+a.id+'\')">⚑ الإبلاغ عن الإعلان</button>';document.getElementById('modal').classList.add('show')}
 function reportAd(id){const a=ads.find(x=>x.id===id);if(!a)return;const reason=prompt('سبب الإبلاغ؟\\n1- إعلان مضلل\\n2- محتوى مخالف\\n3- سعر أو بيانات غير صحيحة\\n4- سبب آخر');if(!reason||!reason.trim())return;reports.push({id:'rep_'+Date.now(),adId:id,title:a.title,reason:reason.trim().slice(0,180),date:Date.now()});try{localStorage.setItem(RKEY,JSON.stringify(reports));alert('تم تسجيل البلاغ على هذا الجهاز للمراجعة التجريبية.')}catch(e){reports.pop();alert('تعذر حفظ البلاغ بسبب مساحة التخزين.')}} 
 
 function renderAdminCategories(){
@@ -453,6 +477,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, se
 import { getFirestore, collection, getDocs, doc, setDoc, getDoc, deleteDoc, addDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-firestore.js";
 import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-ai.js";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app-check.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.53.0";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDR2uwA4O1WsUvEsAFFYK2vpi9RB3exoJ8",
@@ -474,6 +499,11 @@ if (SOUQ_APP_CHECK_SITE_KEY) {
 }
 const auth = getAuth(app);
 const db = getFirestore(app);
+const SOUQ_SUPABASE_URL = "https://pvsjqjmfzjhfhhwgcjww.supabase.co";
+const SOUQ_SUPABASE_KEY = "sb_publishable_uDrFEFzJxsTQ_mz43chDyQ_jsFUQUut";
+const souqSupabase = createClient(SOUQ_SUPABASE_URL, SOUQ_SUPABASE_KEY, {
+  accessToken: async () => auth.currentUser ? await auth.currentUser.getIdToken() : null
+});
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
 const souqAiModel = getGenerativeModel(souqAi, {
   model: "gemini-3.5-flash-lite",
