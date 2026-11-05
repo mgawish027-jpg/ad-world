@@ -145,6 +145,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="muted">اختار صورة واضحة، وتجنب نشر أي بيانات شخصية داخل الصورة.</div>
 <button class="btn primary" id="saveBtn" type="button" onclick="addAd()">نشر الإعلان</button></div>
 <div class="note">الإعلانات النصية تُحفظ على قاعدة بيانات سوق وتظهر للمستخدمين. تنبيه: صور الإعلانات لا تُرفع إلى التخزين السحابي حالياً، لذلك قد لا تظهر للمستخدمين على أجهزة أخرى. نعمل على تجهيز تخزين آمن للصور قبل تفعيل الميزة.</div></section>
+<section id="messages" class="screen"><div class="section-head"><h2>المحادثات</h2></div><div class="empty"><b>💬 محادثاتك هتظهر هنا</b>تقدر تتابع رسائلك مع البائعين والمشترين من الصفحة دي قريباً.</div></section>
 <section id="favorites" class="screen"><div class="section-head"><h2>إعلانات أعجبتك ❤️</h2></div><div id="favoritesList" class="ad-grid"></div></section>
 <section id="mine" class="screen"><div class="section-head"><h2>إعلاناتي</h2></div><div id="myAds" class="ad-grid"></div></section>
 <section id="account" class="screen"><div class="section-head"><h2>حسابي</h2></div>
@@ -165,7 +166,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="section-head"><h2>سجل عمليات الإدارة</h2><button class="small-link" onclick="clearAuditLog()">مسح السجل</button></div><div id="adminAudit"></div>
 <div class="section-head"><h2>إدارة الحسابات والصلاحيات</h2></div><div class="card"><b>غير مفعّلة في النسخة الحالية</b><p class="muted">لا يوجد تسجيل حسابات أو خادم مستخدمين حتى الآن. بعد ربط Firebase سنضيف التحقق من هوية المالك، أدوار المديرين، الحظر، وسجل الصلاحيات من الخادم. لن نعرض تحكمًا وهميًا في حسابات غير موجودة.</p></div></section>
 </main>
-<nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
+<nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="messages" onclick="show('messages',this)"><b>✉</b>المحادثات</button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modalbox"><div class="modal-head"><b>تفاصيل الإعلان</b><button class="close" onclick="closeModal()">×</button></div><div id="modalContent"></div></div></div>
 <footer>سوق © 2026</footer>
 <script>
