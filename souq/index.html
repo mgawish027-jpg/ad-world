@@ -203,8 +203,48 @@ function openCategory(c){currentCategoryPage=c;activeCat='';renderCats();documen
 function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&categoryMatches(a.category,c));const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
 function searchOnEnter(event){if(event.key==='Enter')runSearch()}
-function runSearch(){activeCat='';document.getElementById('listTitle').textContent='نتائج البحث';renderCats();renderAds();document.getElementById('homeAdListing')?.scrollIntoView({behavior:'smooth',block:'start'})}
-function clearSearch(){document.getElementById('search').value='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderAds()}
+function normalizeSearchText(value){
+ return String(value??'').normalize('NFC').toLowerCase()
+  .replace(/[\u064B-\u065F\u0670\u0640]/g,'')
+  .replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه')
+  .replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim();
+}
+function categoryForSearch(query){
+ const q=normalizeSearchText(query);
+ const aliases=[
+  {category:'موبايلات',words:['موبايل','موبايلات','جوال','جوالات','تليفون','تليفونات','هاتف','هواتف','سمارت فون','smartphone','mobile','mobiles']},
+  {category:'سيارات',words:['سياره','سيارات','عربيه','عربيات','car','cars']},
+  {category:'وظائف',words:['وظيفه','وظائف','شغل','عمل','فرص عمل','job','jobs']},
+  {category:'عقارات',words:['عقار','عقارات','شقه','شقق','فيلا','اراضي','عقار للبيع']},
+  {category:'إلكترونيات',words:['الكترونيات','الكتروني','الكترونيه','electronics']},
+  {category:'أجهزة',words:['اجهزه','جهاز','لابتوب','كمبيوتر','حاسوب','تابلت','لاب توب']},
+  {category:'أثاث',words:['اثاث','موبيليا','كنب','غرفه نوم']},
+  {category:'ملابس',words:['ملابس','لبس','ملابس رجاليه','ملابس حريميه']}
+ ];
+ const match=aliases.find(item=>item.words.some(word=>normalizeSearchText(word)===q));
+ return match?.category||'';
+}
+function runSearch(){
+ const raw=document.getElementById('search').value.trim();
+ const matchedCategory=categoryForSearch(raw);
+ if(matchedCategory){
+  const actual=cats.find(item=>normalizeSearchText(item[0])===normalizeSearchText(matchedCategory));
+  if(actual){openCategory(actual[0]);return}
+ }
+ activeCat='';
+ document.getElementById('listTitle').textContent=raw?'نتائج البحث عن: '+raw:'أحدث الإعلانات';
+ const listing=document.getElementById('homeAdListing');
+ if(listing)listing.style.display='block';
+ renderCats();renderAds();
+ listing?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function clearSearch(){
+ document.getElementById('search').value='';
+ document.getElementById('listTitle').textContent='أحدث الإعلانات';
+ const listing=document.getElementById('homeAdListing');
+ if(listing)listing.style.display='none';
+ renderAds();
+}
 function statusText(a){return a.status==='sold'?'مباع':a.status==='paused'?'موقوف':'نشط'}
 function statusClass(a){return a.status==='sold'?'status-sold':a.status==='paused'?'status-paused':''}
 function photosOf(a){return Array.isArray(a.photos)&&a.photos.length?a.photos:(a.photo?[a.photo]:[])}
