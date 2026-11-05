@@ -656,7 +656,13 @@ window.loginAccount = async () => {
   const email = document.getElementById("authEmail").value.trim();
   const password = document.getElementById("authPassword").value;
   if (!email || !password) return alert("اكتب البريد الإلكتروني وكلمة المرور.");
+  const loginButton = document.querySelector('#authForm button[onclick="loginAccount()"]');
+  if (loginButton) { loginButton.disabled = true; loginButton.textContent = "جارٍ تسجيل الدخول..."; }
   try {
+    // Wait until the initial anonymous session has fully settled. Without this,
+    // its pending signInAnonymously() can race with email/password sign-in
+    // and replace the real account with an anonymous user.
+    await authReady;
     const credential = await signInWithEmailAndPassword(auth, email, password);
     await reload(credential.user);
     if (credential.user.email === "mgawish027@gmail.com" && !credential.user.emailVerified) {
@@ -670,6 +676,8 @@ window.loginAccount = async () => {
     show("home");
   } catch (error) {
     alert("تعذر تسجيل الدخول: " + (error.code || error.message));
+  } finally {
+    if (loginButton) { loginButton.disabled = false; loginButton.textContent = "تسجيل الدخول"; }
   }
 };
 window.createAccount = async () => {
