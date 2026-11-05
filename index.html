@@ -760,7 +760,7 @@ window.askBuyerAI = async () => {
  if(!request){alert("اكتب وصفًا للي بتدور عليه الأول.");return;}
  const sourceAds=window.getCurrentAdsForBuyerAI?.()||[];
  const candidates=sourceAds.slice(0,80).map((ad,index)=>({
-  id:String(ad.id||("sample-"+index)),
+  id:String(ad.id||("sample-"+sourceAds.indexOf(ad))),
   title:String(ad.title||""),
   category:String(ad.category||""),
   place:String(ad.place||""),
