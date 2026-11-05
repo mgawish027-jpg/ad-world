@@ -194,7 +194,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 </section><section id="support" class="screen"><div class="section-head"><h2>🎧 دعم العملاء</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div id="supportSignedOut" class="empty" style="display:none">سجّل الدخول أولاً للتواصل مع فريق دعم سوق.</div><div id="supportWorkspace" style="display:none"><div class="card"><h3>إرسال استفسار أو شكوى</h3><label for="supportSubject">عنوان الطلب</label><input id="supportSubject" maxlength="90" placeholder="مثلاً: مشكلة في إعلان أو الحساب"><label for="supportFirstMessage">اكتب رسالتك</label><textarea id="supportFirstMessage" rows="4" maxlength="2000" placeholder="اشرح لنا المشكلة بالتفصيل..."></textarea><button class="btn primary" id="supportCreateBtn" type="button" onclick="createSupportTicket()">إرسال إلى الدعم</button></div><div class="section-head"><h3 id="supportListTitle">طلباتي</h3><button class="small-link" type="button" onclick="loadSupportTickets()">تحديث</button></div><div id="supportTicketList"></div><div class="card" id="supportConversation" style="display:none"><div class="section-head"><h3 id="supportConversationTitle">المحادثة</h3><button class="small-link" onclick="closeSupportConversation()">إغلاق</button></div><div id="supportMessages" class="support-thread"></div><label for="supportReply">اكتب ردك</label><textarea id="supportReply" rows="3" maxlength="2000" placeholder="اكتب رسالتك هنا..."></textarea><div class="actions"><button class="btn primary" id="supportSendBtn" type="button" onclick="sendSupportMessage()">إرسال</button><button class="btn secondary" id="supportCloseTicketBtn" type="button" onclick="setSupportTicketStatus('closed')" style="display:none">إغلاق الطلب</button><button class="btn secondary" id="supportReopenTicketBtn" type="button" onclick="setSupportTicketStatus('open')" style="display:none">إعادة فتح الطلب</button></div></div></div></section><section id="admin" class="screen">
 <div class="section-head"><h2>🛡️ لوحة تحكم المدير</h2><button class="small-link" onclick="show('account')">رجوع</button></div>
 <div class="note">لوحة إدارة مباشرة متصلة بقاعدة بيانات سوق. الحظر يوقف المستخدم من استخدام وظائف التطبيق، ويمكنك إعادة تفعيله.</div>
-<div class="card"><div class="section-head"><h3>إدارة المستخدمين</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudUsers" class="muted">جارٍ تحميل المستخدمين...</div></div>
+<div class="card"><div class="section-head"><h3>إدارة المستخدمين</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminUsersCount" class="note" style="margin:10px 0">إجمالي المستخدمين: جارٍ الحساب...</div><div id="adminCloudUsers" class="muted">جارٍ تحميل المستخدمين...</div></div>
 <div class="card"><div class="section-head"><h3>إدارة الإعلانات</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudAds" class="muted">جارٍ تحميل الإعلانات...</div></div>
 </section>
 </main>
@@ -759,10 +759,12 @@ window.openAdminPanel = async function(){
 };
 window.loadAdminCloudData = async function(){
   if(!window.souqIsAdmin || !auth.currentUser)return;
-  const usersBox=$("adminCloudUsers"),adsBox=$("adminCloudAds");
+  const usersBox=$("adminCloudUsers"),adsBox=$("adminCloudAds"),usersCountBox=$("adminUsersCount");
   usersBox.textContent="جارٍ تحميل المستخدمين...";adsBox.textContent="جارٍ تحميل الإعلانات...";
+  if(usersCountBox)usersCountBox.textContent="إجمالي المستخدمين: جارٍ الحساب...";
   try{
     const [usersSnap,adsSnap]=await Promise.all([getDocs(collection(db,"sellerProfiles")),getDocs(collection(db,"ads"))]);
+    if(usersCountBox)usersCountBox.textContent="إجمالي المستخدمين المسجلين: "+usersSnap.size;
     usersBox.innerHTML=usersSnap.docs.map(d=>{
       const u=d.data(),blocked=u.blocked===true;
       return '<div class="card"><b>'+esc(u.name||"مستخدم")+'</b><p class="muted">'+esc(d.id)+'</p><p class="muted">الحالة: '+(blocked?"موقوف":"نشط")+'</p><button class="btn '+(blocked?"secondary":"danger")+'" onclick="adminSetUserBlocked('+JSON.stringify(d.id)+','+(!blocked)+')">'+(blocked?"إلغاء الحظر":"حظر المستخدم")+'</button></div>';
