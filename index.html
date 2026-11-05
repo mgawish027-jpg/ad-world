@@ -20,8 +20,8 @@ h2{font-size:18px;margin:20px 2px 12px}.grid{display:grid;grid-template-columns:
 .cat span{display:block;font-size:25px;margin-bottom:7px}
 .card{background:white;border:1px solid var(--line);border-radius:15px;padding:14px;margin:9px 0}
 .muted{color:var(--muted);font-size:13px}.adtitle{font-weight:700;margin:5px 0}
-nav{position:sticky;bottom:0;background:white;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:9px 4px;max-width:720px;margin:auto}
-nav button{background:none;border:0;color:var(--muted);font-size:12px;padding:5px}
+nav{position:sticky;bottom:0;z-index:20;background:white;border-top:1px solid var(--line);display:flex;justify-content:flex-start;gap:8px;padding:9px 8px;max-width:720px;margin:auto;overflow-x:auto;overflow-y:hidden;white-space:nowrap;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+nav button{flex:0 0 auto;min-width:66px;background:none;border:0;color:var(--muted);font-size:12px;padding:5px 7px;white-space:nowrap}
 nav button b{display:block;font-size:19px;margin-bottom:3px}
 .screen{display:none}.screen.active{display:block}.back{background:#eef2ff;color:#334155;margin:0 0 10px}.empty{padding:18px;text-align:center;color:var(--muted)}.cat{min-height:92px}
 input,textarea,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;margin:7px 0;font:inherit;background:white}
