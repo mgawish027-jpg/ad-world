@@ -181,6 +181,8 @@ function read(k,f){try{const x=JSON.parse(localStorage.getItem(k));return Array.
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(ads));localStorage.setItem(FKEY,JSON.stringify(favs));return true}catch(e){alert('مساحة التخزين على الهاتف غير كافية. جرّب صورة أصغر أو احذف بعض الإعلانات.');return false}}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function money(v){return v?Number(v).toLocaleString('ar-EG')+' جنيه':'السعر عند التواصل'}
+function normalizeCategory(value){return String(value??'').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,' ')}
+function categoryMatches(adCategory,selectedCategory){return normalizeCategory(adCategory)===normalizeCategory(selectedCategory)}
 function categoryIcon(c){
  const art={
  'سيارات':'<svg viewBox="0 0 64 64" role="img" aria-label="سيارات"><defs><linearGradient id="carG" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#2563eb"/></linearGradient></defs><path d="M12 36l4-13a7 7 0 0 1 6.7-5h18.6a7 7 0 0 1 6.7 5l4 13v11H9V36z" fill="url(#carG)"/><path d="M20 25h24l-3-7H23z" fill="#dbeafe"/><path d="M10 36h44" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round"/><circle cx="19" cy="46" r="6" fill="#1e293b"/><circle cx="45" cy="46" r="6" fill="#1e293b"/><circle cx="19" cy="46" r="2.5" fill="#cbd5e1"/><circle cx="45" cy="46" r="2.5" fill="#cbd5e1"/></svg>',
@@ -192,12 +194,12 @@ function categoryIcon(c){
  'أثاث':'<svg viewBox="0 0 64 64" role="img" aria-label="أثاث"><path d="M12 31v-8a7 7 0 0 1 7-7h26a7 7 0 0 1 7 7v8" fill="#fb923c"/><path d="M8 31h48v19H8z" rx="5" fill="#f97316"/><path d="M12 49v8m40-8v8" stroke="#9a3412" stroke-width="5" stroke-linecap="round"/><path d="M32 31v19" stroke="#fed7aa" stroke-width="3"/><rect x="17" y="20" width="12" height="10" rx="4" fill="#ffedd5"/><rect x="35" y="20" width="12" height="10" rx="4" fill="#ffedd5"/></svg>',
  'أخرى':'<svg viewBox="0 0 64 64" role="img" aria-label="أقسام أخرى"><path d="M7 20h50v35H7z" rx="6" fill="#0ea5e9"/><path d="M5 13a5 5 0 0 1 5-5h44a5 5 0 0 1 5 5v8H5z" fill="#38bdf8"/><path d="M24 31h16v9H24z" fill="#e0f2fe"/><path d="M29 35h6" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/></svg>'
  };
- return art[c]||art['أخرى'];
+ return art[normalizeCategory(c)]||art['أخرى'];
 }
 function renderCats(){document.getElementById('categories').innerHTML=cats.map(([c])=>'<button type="button" class="cat" data-category="'+esc(c)+'" onclick="openCategory(this.dataset.category)"><span class="cat-icon">'+categoryIcon(c)+'</span><small>'+esc(c)+'</small></button>').join('')}
 function show(id,btn){if(id==='admin'&&!window.souqIsAdmin){alert('هذه الصفحة مخصصة للمديرين فقط.');return}if(id==='add'&&!editingId){document.getElementById('saveBtn').textContent='نشر الإعلان على هذا الجهاز'}document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.screen===id));window.scrollTo(0,0);if(id==='home')renderAds();if(id==='categoryPage')renderCategoryAds(currentCategoryPage);if(id==='favorites')renderFavorites();if(id==='mine')renderMine();if(id==='admin')renderAdmin()}
 function openCategory(c){currentCategoryPage=c;activeCat='';renderCats();document.getElementById('categoryPageTitle').textContent='إعلانات '+c;show('categoryPage')}
-function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&a.category===c);const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
+function renderCategoryAds(c){const box=document.getElementById('categoryAds');if(!box)return;let list=ads.filter(a=>(!a.status||a.status==='active')&&categoryMatches(a.category,c));const sort=document.getElementById('sort').value;if(sort==='low')list.sort((a,b)=>(Number(a.price)||Infinity)-(Number(b.price)||Infinity));else if(sort==='high')list.sort((a,b)=>(Number(b.price)||0)-(Number(a.price)||0));else list.sort((a,b)=>(Number(!!b.featured)-Number(!!a.featured))||b.date-a.date);document.getElementById('categoryCount').textContent=list.length+' إعلان';box.innerHTML=list.length?list.map(card).join(''):'<div class="empty"><b>لا توجد إعلانات في قسم '+esc(c)+'</b>يمكنك الرجوع للأقسام أو إضافة إعلان جديد.</div>'}
 function resetFilter(){activeCat='';document.getElementById('listTitle').textContent='أحدث الإعلانات';renderCats();renderAds()}
 function clearSearch(){document.getElementById('search').value='';renderAds()}
 function statusText(a){return a.status==='sold'?'مباع':a.status==='paused'?'موقوف':'نشط'}
@@ -208,7 +210,7 @@ function renderAds(){
  const q=document.getElementById('search').value.trim().toLowerCase();
  const min=Number(document.getElementById('minPrice')?.value)||0;
  const max=Number(document.getElementById('maxPrice')?.value)||Infinity;
- let list=ads.filter(a=>(!a.status||a.status==='active')&&(!activeCat||a.category===activeCat)&&(!q||(a.title+' '+a.category+' '+a.place+' '+a.desc).toLowerCase().includes(q))&&((!min&&!Number.isFinite(max))||(a.price!==''&&a.price!==null&&a.price!==undefined&&Number(a.price)>=min&&Number(a.price)<=max)));
+ let list=ads.filter(a=>(!a.status||a.status==='active')&&(!activeCat||categoryMatches(a.category,activeCat))&&(!q||(a.title+' '+a.category+' '+a.place+' '+a.desc).toLowerCase().includes(q))&&((!min&&!Number.isFinite(max))||(a.price!==''&&a.price!==null&&a.price!==undefined&&Number(a.price)>=min&&Number(a.price)<=max)));
  const featured=list.filter(a=>a.featured).sort((a,b)=>b.date-a.date);
  const fw=document.getElementById('featuredWrap');
  if(fw){fw.style.display=featured.length?'block':'none';document.getElementById('featuredAds').innerHTML=featured.slice(0,4).map(card).join('')}
