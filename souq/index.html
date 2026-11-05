@@ -186,6 +186,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <section id="settings" class="screen">
 <div class="section-head"><h2>⚙️ الإعدادات</h2><button class="small-link" onclick="show('home')">الرئيسية</button></div>
 <div class="card settings-card"><div class="settings-card-icon">🌐</div><div><h3>لغة التطبيق</h3><p class="muted">اختار اللغة اللي تحب تستخدم سوق بيها.</p></div><div class="settings-language-switch"><button id="settingsArabic" type="button" onclick="setSouqLanguage('ar')">العربية</button><button id="settingsEnglish" type="button" onclick="setSouqLanguage('en')">English</button></div><p class="muted" id="settingsLanguageStatus">اللغة الحالية: العربية</p></div>
+<div class="card settings-card" id="settingsAdminAccess" style="display:none"><div class="settings-card-icon">🛡️</div><div><h3>لوحة تحكم المدير</h3><p class="muted">إدارة المستخدمين وحظر الحسابات ومراجعة الإعلانات وحذف المخالف منها.</p></div><button class="btn secondary settings-action" type="button" onclick="openAdminPanel()">فتح لوحة الإدارة</button></div>
 <div class="card settings-card"><div class="settings-card-icon">👤</div><div><h3>الحساب والأمان</h3><p class="muted">إدارة ملفك الشخصي وتسجيل الدخول وكلمة المرور.</p></div><button class="btn secondary settings-action" onclick="show('account')">فتح الملف الشخصي</button></div>
 <div class="card settings-card"><div class="settings-card-icon">🎧</div><div><h3>المساعدة والدعم</h3><p class="muted">تواصل مع فريق سوق لو عندك استفسار أو مشكلة.</p></div><button class="btn secondary settings-action" onclick="openCustomerSupport()">التواصل مع الدعم</button></div>
 <div class="card settings-card"><div class="settings-card-icon">🛡️</div><div><h3>الأمان عند البيع والشراء</h3><p class="muted">عاين المنتج بنفسك قبل الدفع، ولا تشارك كلمة المرور أو رموز التحقق أو بياناتك البنكية مع أي شخص.</p></div></div>
@@ -777,6 +778,7 @@ function renderAuthState(user) {
   window.souqUserId = user ? user.uid : null;
   window.souqIsAdmin = !!(user && user.email === "mgawish027@gmail.com" && user.emailVerified === true);
   $("adminAccess").style.display = window.souqIsAdmin ? "block" : "none";
+  $("settingsAdminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   $("authLoggedOut").style.display = user ? "none" : "block";
   $("authLoggedIn").style.display = user ? "block" : "none";
   if (user) {
