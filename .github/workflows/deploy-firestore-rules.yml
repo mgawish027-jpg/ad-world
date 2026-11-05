@@ -33,4 +33,4 @@ jobs:
           node-version: "20"
 
       - name: Deploy Firestore rules
-        run: npx --yes firebase-tools deploy --only firestore:rules,storage --project ad-world-37f9b
+        run: npx --yes firebase-tools deploy --only firestore:rules,storage --project souq-2db97
