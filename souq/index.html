@@ -519,8 +519,7 @@ window.souqSaveCloudAd = async function(ad) {
   const existing = await getDoc(adRef);
   let ownerId = user.uid;
   if (existing.exists()) {
-    const roleDoc = await getDoc(doc(db,"users",user.uid));
-    const isAdmin = roleDoc.exists() && roleDoc.data().role === "admin";
+    const isAdmin = user.email === "mgawish027@gmail.com" && user.emailVerified === true;
     const isOwner = existing.data().ownerId === user.uid;
     if (!isAdmin && !isOwner) throw new Error("يمكنك تعديل إعلاناتك فقط.");
     ownerId = existing.data().ownerId;
@@ -631,8 +630,8 @@ onAuthStateChanged(auth,async user=>{
   $("adminAccess").style.display="none";
   $("authLoggedOut").style.display=user?"none":"block"; $("authLoggedIn").style.display=user?"block":"none";
   if(user){ $("profileName").textContent=user.displayName||"أهلاً بيك في سوق"; $("profileEmail").textContent=user.email||"";
-    try { const roleDoc=await getDoc(doc(db,"users",user.uid)); window.souqIsAdmin=roleDoc.exists()&&roleDoc.data().role==="admin"; $("adminAccess").style.display=window.souqIsAdmin?"block":"none"; }
-    catch(error){ console.error("Admin role check failed",error); authMessage("تعذر التحقق من صلاحية المدير.",true); }
+    window.souqIsAdmin = user.email === "mgawish027@gmail.com" && user.emailVerified === true;
+    $("adminAccess").style.display=window.souqIsAdmin?"block":"none";
   }
   loadCloudAds();
 });
