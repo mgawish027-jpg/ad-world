@@ -683,6 +683,259 @@ window.sendSupportMessage=async function(){const u=auth.currentUser,t=activeSupp
 window.setSupportTicketStatus=async function(status){if(!window.souqIsAdmin||!activeSupportTicket)return;try{await updateDoc(doc(db,"supportTickets",activeSupportTicket.id),{status,updatedAt:Date.now()});await openSupportTicket(activeSupportTicket.id);await loadSupportTickets()}catch(e){console.error(e);alert("تعذر تحديث حالة الطلب.")}};
 window.closeSupportConversation=function(){activeSupportTicketId=null;activeSupportTicket=null;$("supportConversation").style.display="none"};
 
+
+let souqActiveChatId = null;
+let souqChatRealtime = null;
+let souqNotificationRealtime = null;
+let souqChatLoading = false;
+
+async function ensureSouqFirebaseRole(user) {
+  const token = await user.getIdToken();
+  const response = await fetch("/api/souq-role", {
+    method: "POST",
+    headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+    body: "{}"
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload.error || "تعذر تجهيز صلاحية الحساب للمحادثات.");
+  if (payload.refreshToken) await user.getIdToken(true);
+}
+
+function souqChatMessageTime(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  return date.toLocaleString("ar-EG", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+}
+
+function closeSouqRealtimeChannels() {
+  if (souqChatRealtime) souqSupabase.removeChannel(souqChatRealtime);
+  souqChatRealtime = null;
+}
+
+function closeSouqConversation() {
+  closeSouqRealtimeChannels();
+  souqActiveChatId = null;
+  $("souqChatThread").style.display = "none";
+  $("souqConversationList").style.display = "block";
+}
+
+async function loadSouqNotifications() {
+  const user = auth.currentUser;
+  if (!user || !window.souqSupabaseAuthReady) return;
+  const { data, error } = await souqSupabase
+    .from("souq_notifications")
+    .select("id,title,body,created_at,data")
+    .eq("recipient_firebase_uid", user.uid)
+    .is("read_at", null)
+    .order("created_at", { ascending: false })
+    .limit(10);
+  if (error) throw error;
+  const rows = data || [];
+  const area = $("souqNotificationArea");
+  const list = $("souqNotificationList");
+  area.style.display = rows.length ? "block" : "none";
+  list.innerHTML = rows.map(n =>
+    '<button class="souq-notification-item" type="button" style="width:100%;text-align:start;background:transparent;border:0" onclick="openSouqNotification(\''+esc(n.id)+'\',\''+esc(n.data?.conversationId||'')+'\')"><b>'+esc(n.title)+'</b><div>'+esc(n.body||"")+'</div><span class="muted">'+souqChatMessageTime(n.created_at)+'</span></button>'
+  ).join("");
+  const nav = $("souqMessagesBadge");
+  if (nav) {
+    nav.textContent = rows.length > 9 ? "9+" : String(rows.length);
+    nav.style.display = rows.length ? "inline-flex" : "none";
+  }
+}
+
+window.openSouqNotification = async function(notificationId, conversationId) {
+  try {
+    await souqSupabase.from("souq_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("id", notificationId);
+    await loadSouqNotifications();
+    if (conversationId) await openSouqConversation(conversationId);
+  } catch (error) {
+    console.error("SouQ notification error:", error);
+    alert("تعذر فتح الإشعار. حاول تحديث المحادثات.");
+  }
+};
+
+window.loadSouqConversations = async function() {
+  const user = auth.currentUser;
+  $("souqChatSignedOut").style.display = user ? "none" : "block";
+  $("souqChatWorkspace").style.display = user ? "block" : "none";
+  if (!user) return;
+  if (!window.souqSupabaseAuthReady) {
+    $("souqConversationList").innerHTML = '<div class="empty">جارٍ تجهيز الاتصال الآمن بالمحادثات...</div>';
+    return;
+  }
+  if (souqChatLoading) return;
+  souqChatLoading = true;
+  $("souqConversationList").innerHTML = '<div class="empty">جارٍ تحميل محادثاتك...</div>';
+  try {
+    const { data: memberships, error: memberError } = await souqSupabase
+      .from("souq_conversation_members")
+      .select("conversation_id,last_read_at")
+      .eq("firebase_uid", user.uid);
+    if (memberError) throw memberError;
+    const ids = (memberships || []).map(row => row.conversation_id);
+    if (!ids.length) {
+      $("souqConversationList").innerHTML = '<div class="empty"><b>لسه مفيش محادثات</b>افتح أي إعلان واضغط «مراسلة البائع داخل سوق» لبدء أول محادثة.</div>';
+      await loadSouqNotifications();
+      return;
+    }
+    const [{ data: conversations, error: conversationError }, { data: members, error: membersError }, { data: messages, error: messagesError }] = await Promise.all([
+      souqSupabase.from("souq_conversations").select("*").in("id", ids).order("last_message_at", { ascending: false, nullsFirst: false }),
+      souqSupabase.from("souq_conversation_members").select("conversation_id,firebase_uid,display_name").in("conversation_id", ids),
+      souqSupabase.from("souq_messages").select("conversation_id,body,sender_firebase_uid,created_at").in("conversation_id", ids).is("deleted_at", null).order("created_at", { ascending: false }).limit(250)
+    ]);
+    if (conversationError) throw conversationError;
+    if (membersError) throw membersError;
+    if (messagesError) throw messagesError;
+    const ownRead = new Map((memberships || []).map(row => [row.conversation_id, row.last_read_at]));
+    const otherNames = new Map();
+    (members || []).forEach(row => {
+      if (row.firebase_uid !== user.uid) otherNames.set(row.conversation_id, row.display_name || "مستخدم سوق");
+    });
+    const latest = new Map();
+    (messages || []).forEach(row => { if (!latest.has(row.conversation_id)) latest.set(row.conversation_id, row); });
+    $("souqConversationList").innerHTML = (conversations || []).map(conversation => {
+      const last = latest.get(conversation.id);
+      const readAt = ownRead.get(conversation.id);
+      const unread = !!(last && last.sender_firebase_uid !== user.uid && (!readAt || new Date(last.created_at) > new Date(readAt)));
+      return '<button class="souq-conversation-item" type="button" onclick="openSouqConversation(\''+esc(conversation.id)+'\')"><b>'+esc(otherNames.get(conversation.id)||"مستخدم سوق")+(unread?' <span class="status-badge">جديد</span>':'')+'</b><div class="muted">'+esc(conversation.ad_title||"محادثة حول إعلان")+'</div><div class="muted">'+esc(last?.body||"ابدأ المحادثة الآن")+' · '+souqChatMessageTime(last?.created_at||conversation.created_at)+'</div></button>';
+    }).join("") || '<div class="empty">لا توجد محادثات حتى الآن.</div>';
+    await loadSouqNotifications();
+  } catch (error) {
+    console.error("SouQ conversation list error:", error);
+    $("souqConversationList").innerHTML = '<div class="empty">تعذر تحميل المحادثات. '+esc(error.message||"تحقق من إعداد ربط Firebase في Supabase.")+'</div>';
+  } finally {
+    souqChatLoading = false;
+  }
+};
+
+window.startSouqConversation = async function(adId) {
+  const user = auth.currentUser;
+  if (!user) {
+    closeModal();
+    show("account");
+    authMessage("سجّل الدخول أولاً لمراسلة البائع.");
+    return;
+  }
+  const ad = ads.find(item => String(item.id) === String(adId));
+  if (!ad || !ad.ownerId) { alert("لا يمكن بدء محادثة لأن الإعلان لا يحتوي على حساب بائع مرتبط."); return; }
+  if (ad.ownerId === user.uid) { alert("ده إعلانك أنت. لا يمكنك مراسلة نفسك."); return; }
+  if (!window.souqSupabaseAuthReady) { alert("المحادثات لم تجهز بعد. حدّث الصفحة بعد إكمال ربط Firebase داخل Supabase."); return; }
+  try {
+    let { data: conversation, error } = await souqSupabase.from("souq_conversations")
+      .select("*").eq("ad_id", String(ad.id))
+      .eq("buyer_firebase_uid", user.uid)
+      .eq("ad_owner_firebase_uid", ad.ownerId).maybeSingle();
+    if (error) throw error;
+    if (!conversation) {
+      const created = await souqSupabase.from("souq_conversations").insert({
+        created_by_firebase_uid: user.uid,
+        ad_id: String(ad.id),
+        ad_title: String(ad.title||"إعلان سوق").slice(0,160),
+        ad_owner_firebase_uid: ad.ownerId,
+        buyer_firebase_uid: user.uid
+      }).select("*").single();
+      if (created.error) throw created.error;
+      conversation = created.data;
+      const buyerName = user.displayName || user.email || "مشتري";
+      const sellerName = ad.ownerName || "البائع";
+      const added = await souqSupabase.from("souq_conversation_members").insert([
+        { conversation_id: conversation.id, firebase_uid: user.uid, display_name: buyerName },
+        { conversation_id: conversation.id, firebase_uid: ad.ownerId, display_name: sellerName }
+      ]);
+      if (added.error) throw added.error;
+    }
+    closeModal();
+    show("messages");
+    await openSouqConversation(conversation.id);
+  } catch (error) {
+    console.error("SouQ start conversation error:", error);
+    alert("تعذر بدء المحادثة: "+(error.message||"تحقق من ربط Firebase مع Supabase."));
+  }
+};
+
+window.openSouqConversation = async function(conversationId) {
+  const user = auth.currentUser;
+  if (!user || !window.souqSupabaseAuthReady) return;
+  try {
+    const [{ data: conversation, error: conversationError }, { data: members, error: membersError }] = await Promise.all([
+      souqSupabase.from("souq_conversations").select("*").eq("id", conversationId).single(),
+      souqSupabase.from("souq_conversation_members").select("firebase_uid,display_name").eq("conversation_id", conversationId)
+    ]);
+    if (conversationError) throw conversationError;
+    if (membersError) throw membersError;
+    const other = (members||[]).find(row => row.firebase_uid !== user.uid);
+    souqActiveChatId = conversationId;
+    $("souqConversationList").style.display = "none";
+    $("souqChatThread").style.display = "block";
+    $("souqChatTitle").textContent = other?.display_name || "مستخدم سوق";
+    $("souqChatAdTitle").textContent = conversation.ad_title || "محادثة حول إعلان";
+    await loadSouqChatMessages();
+    await souqSupabase.from("souq_conversation_members")
+      .update({ last_read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId).eq("firebase_uid", user.uid);
+    await loadSouqNotifications();
+    closeSouqRealtimeChannels();
+    souqChatRealtime = souqSupabase.channel("souq-chat-"+conversationId)
+      .on("postgres_changes", { event:"INSERT", schema:"public", table:"souq_messages", filter:"conversation_id=eq."+conversationId }, () => loadSouqChatMessages())
+      .subscribe();
+  } catch (error) {
+    console.error("SouQ open conversation error:", error);
+    alert("تعذر فتح المحادثة. "+(error.message||""));
+  }
+};
+
+async function loadSouqChatMessages() {
+  if (!souqActiveChatId) return;
+  const { data, error } = await souqSupabase.from("souq_messages")
+    .select("id,sender_firebase_uid,body,created_at")
+    .eq("conversation_id", souqActiveChatId)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: true })
+    .limit(300);
+  if (error) throw error;
+  $("souqChatMessages").innerHTML = (data||[]).map(message =>
+    '<div class="souq-chat-bubble '+(message.sender_firebase_uid===auth.currentUser?.uid?"mine":"")+'">'+esc(message.body)+'<div class="souq-chat-meta">'+souqChatMessageTime(message.created_at)+'</div></div>'
+  ).join("") || '<div class="empty">ابدأ أول رسالة في المحادثة.</div>';
+  $("souqChatMessages").scrollTop = $("souqChatMessages").scrollHeight;
+}
+
+$("souqChatForm").addEventListener("submit", async event => {
+  event.preventDefault();
+  const user = auth.currentUser, body = $("souqChatInput").value.trim();
+  if (!user || !souqActiveChatId || !body || !window.souqSupabaseAuthReady) return;
+  const button = $("souqChatSend");
+  button.disabled = true;
+  try {
+    const { error } = await souqSupabase.from("souq_messages").insert({
+      conversation_id: souqActiveChatId,
+      sender_firebase_uid: user.uid,
+      body: body.slice(0,5000)
+    });
+    if (error) throw error;
+    $("souqChatInput").value = "";
+    await loadSouqChatMessages();
+    await loadSouqConversations();
+  } catch (error) {
+    console.error("SouQ send message error:", error);
+    alert("تعذر إرسال الرسالة: "+(error.message||""));
+  } finally {
+    button.disabled = false;
+  }
+});
+
+function subscribeSouqNotifications(user) {
+  if (souqNotificationRealtime) souqSupabase.removeChannel(souqNotificationRealtime);
+  souqNotificationRealtime = souqSupabase.channel("souq-notifications-"+user.uid)
+    .on("postgres_changes", { event:"INSERT", schema:"public", table:"souq_notifications", filter:"recipient_firebase_uid=eq."+user.uid }, () => {
+      loadSouqNotifications().catch(error => console.warn("SouQ notification refresh:", error));
+      if (document.getElementById("messages")?.classList.contains("active")) window.loadSouqConversations();
+    })
+    .subscribe();
+}
+
 let cloudAdsLoadVersion = 0;
 async function loadCloudAds() {
   const loadVersion = ++cloudAdsLoadVersion;
@@ -767,12 +1020,29 @@ $("signOutBtn").addEventListener("click",async()=>{
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
 onAuthStateChanged(auth,async user=>{
-  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false;
+  window.souqUserId=user?user.uid:null; window.souqIsAdmin=false; window.souqSupabaseAuthReady=false;
   $("adminAccess").style.display="none";
   $("authLoggedOut").style.display=user?"none":"block"; $("authLoggedIn").style.display=user?"block":"none";
-  if(user){ $("profileName").textContent=user.displayName||"أهلاً بيك في سوق"; $("profileEmail").textContent=user.email||"";
+  if(user){
+    $("profileName").textContent=user.displayName||"أهلاً بيك في سوق";
+    $("profileEmail").textContent=user.email||"";
     window.souqIsAdmin = user.email === "mgawish027@gmail.com" && user.emailVerified === true;
     $("adminAccess").style.display=window.souqIsAdmin?"block":"none";
+    ensureSouqFirebaseRole(user).then(()=>{
+      window.souqSupabaseAuthReady=true;
+      subscribeSouqNotifications(user);
+      loadSouqConversations();
+    }).catch(error=>{
+      console.error("SouQ Firebase/Supabase auth bridge:",error);
+      authMessage("تم تسجيل الدخول، لكن إعداد المحادثات يحتاج إكمال ربط Firebase داخل Supabase.",true);
+    });
+  } else {
+    if(souqNotificationRealtime) souqSupabase.removeChannel(souqNotificationRealtime);
+    souqNotificationRealtime=null;
+    closeSouqRealtimeChannels();
+    $("souqConversationList").innerHTML="";
+    $("souqNotificationArea").style.display="none";
+    $("souqChatThread").style.display="none";
   }
   loadCloudAds();
 });
