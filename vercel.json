@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "",
-  "buildCommand": null,
+  "buildCommand": "echo Static SOUQ site ready",
   "outputDirectory": "souq"
 }
