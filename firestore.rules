@@ -23,8 +23,11 @@ service cloud.firestore {
       allow read: if true;
       allow create: if activeUser()
         && request.resource.data.ownerId == request.auth.uid;
-      // Only the verified primary super-admin may edit an existing advertisement.
-      allow update: if admin();
+      // The verified primary super-admin may edit any ad; a signed-in owner may edit only their own ad without changing ownership.
+      allow update: if admin()
+        || (activeUser()
+          && resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == resource.data.ownerId);
       allow delete: if admin()
         || (activeUser() && resource.data.ownerId == request.auth.uid);
     }
