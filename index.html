@@ -50,6 +50,14 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 #account .auth-profile{margin-top:18px;padding-top:12px;border-top:1px solid #edf0f5}
 #account .auth-logout{width:100%;height:45px;border:0;border-radius:12px;background:#fff1f2;color:#be123c;font-weight:700;margin-top:14px}
 #account .auth-footnote{text-align:center;color:#9aa3b4;font-size:11px;margin:16px 0 0}
+
+/* Buyer-facing AI discovery */
+.buyer-ai-card{border:1px solid #dbeafe;background:linear-gradient(135deg,#eff6ff,#f5f3ff);padding:15px}
+.buyer-ai-title{font-size:17px;font-weight:800;color:#1e3a8a}
+.buyer-ai-card textarea{background:#fff;min-height:76px}
+.buyer-ai-status{font-size:12px;line-height:1.7;color:#475569;margin-top:8px}
+.buyer-ai-match{border-right:4px solid #7c3aed}
+
 </style>
 </head>
 <body>
@@ -61,6 +69,16 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 </header>
 <main class="wrap">
 <section id="home" class="screen active">
+
+ <div class="card buyer-ai-card">
+  <div class="buyer-ai-title">🧠 مساعد المشتري الذكي</div>
+  <p class="muted">احكي لسوق عن اللي بتدور عليه، وسيبحث في الإعلانات المنشورة ويرشح لك الأنسب.</p>
+  <textarea id="buyerAIQuery" rows="2" maxlength="700" placeholder="مثال: بدور على شقة غرفتين في الغردقة بسعر مناسب..."></textarea>
+  <button id="buyerAIButton" class="btn primary" style="width:100%" onclick="askBuyerAI()">✨ دور لي بالذكاء الاصطناعي</button>
+  <div id="buyerAIStatus" class="buyer-ai-status">اكتب طلبك بالتفصيل، وسأبحث في الإعلانات الموجودة فقط.</div>
+  <div id="buyerAIResults"></div>
+ </div>
+
  <h2>تصفح الأقسام</h2>
  <div class="grid">
   <button class="cat" onclick="openCategory('سيارات')"><span>🚗</span>سيارات</button>
@@ -299,6 +317,22 @@ window.replyToInquiry=async(id)=>{
 }
 function startNotificationsListener(user){if(!user||user.isAnonymous){if(notificationsUnsubscribe)notificationsUnsubscribe();notificationsUnsubscribe=null;notificationsUserId=null;notificationItems=[];renderNotifications();return;}if(notificationsUserId===user.uid&&notificationsUnsubscribe)return;if(notificationsUnsubscribe)notificationsUnsubscribe();notificationsUserId=user.uid;notificationsUnsubscribe=onSnapshot(query(collection(db,'notifications'),where('recipientId','==',user.uid),orderBy('createdAt','desc')),snap=>{if(notificationsUserId!==user.uid)return;notificationItems=snap.docs.map(d=>({id:d.id,...d.data()}));renderNotifications();},err=>{console.warn('Notifications listener failed',err);const box=document.getElementById('notificationList');if(box)box.textContent='تعذر تحميل الإشعارات حاليًا.';});}
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0)}
+
+window.getCurrentAdsForBuyerAI = () => ads;
+window.renderBuyerAIResults = (matches) => {
+ const box=document.getElementById("buyerAIResults");if(!box)return;
+ if(!matches.length){box.innerHTML='<div class="card empty">ملقتش إعلانًا مطابقًا حاليًا. جرّب توسيع البحث أو تغيير المدينة والسعر.</div>';return;}
+ const allAds=ads;
+ box.innerHTML=matches.map(match=>{
+  const ad=allAds.find((item,index)=>String(item.id||("sample-"+index))===String(match.id));
+  if(!ad)return "";
+  const reason=match.reason?'<div class="notice" style="margin:8px 0">💡 '+escapeHtml(match.reason)+'</div>':'';
+  const image=ad.imageUrl?'<img src="'+escapeHtml(ad.imageUrl)+'" alt="صورة الإعلان" style="width:100%;max-height:210px;object-fit:contain;border-radius:12px;background:#f1f5f9;margin-bottom:8px">':'';
+  return '<div class="card buyer-ai-match">'+image+'<div class="muted">'+escapeHtml(ad.category||"")+' · '+escapeHtml(ad.place||"")+'</div><div class="adtitle">'+escapeHtml(ad.title||"إعلان")+'</div><b>'+(ad.price?Number(ad.price).toLocaleString("en-US")+' جنيه':'السعر عند التواصل')+'</b><p class="muted">'+escapeHtml(ad.description||"")+'</p>'+reason+contactButtons(ad)+favoriteButton(ad)+'</div>';
+ }).join("");
+ matches.forEach(match=>{const ad=allAds.find((item,index)=>String(item.id||("sample-"+index))===String(match.id));if(ad?.ownerId)loadSellerRating(ad.id,ad.ownerId);});
+};
+
 function renderAds(){
  let q=(document.getElementById('search').value||'').trim().toLowerCase();
  let category=document.getElementById('filterCategory')?.value||'';
@@ -715,6 +749,48 @@ window.generateAdWithAI = async () => {
     button.disabled = false;
     button.textContent = "✨ حسّن إعلاني بالذكاء الاصطناعي";
   }
+};
+
+
+window.askBuyerAI = async () => {
+ const input=document.getElementById("buyerAIQuery");
+ const status=document.getElementById("buyerAIStatus");
+ const button=document.getElementById("buyerAIButton");
+ const request=(input?.value||"").trim();
+ if(!request){alert("اكتب وصفًا للي بتدور عليه الأول.");return;}
+ const sourceAds=window.getCurrentAdsForBuyerAI?.()||[];
+ const candidates=sourceAds.slice(0,80).map((ad,index)=>({
+  id:String(ad.id||("sample-"+index)),
+  title:String(ad.title||""),
+  category:String(ad.category||""),
+  place:String(ad.place||""),
+  price:String(ad.price||""),
+  description:String(ad.description||"").slice(0,350)
+ }));
+ if(!candidates.length){status.textContent="لسه مفيش إعلانات متاحة للبحث.";return;}
+ button.disabled=true;button.textContent="🧠 بفهم طلبك وبراجع الإعلانات...";
+ status.textContent="جارٍ تحليل طلبك ومقارنة الإعلانات المنشورة...";
+ document.getElementById("buyerAIResults").innerHTML="";
+ try{
+  const prompt="أنت مساعد مشتري داخل تطبيق إعلانات مصري اسمه سوق. حلل طلب المشتري التالي واختر الإعلانات الأنسب من القائمة المرفقة فقط. لا تخترع إعلانات ولا تضف منتجات غير موجودة. قارن القسم والمكان والسعر والوصف، واسمح بتقارب المعنى وليس التطابق الحرفي. أعد JSON صحيحًا فقط بالشكل: {\\"matches\\":[{\\"id\\":\\"معرّف الإعلان كما هو\\",\\"reason\\":\\"سبب الترشيح بالعربية في جملة قصيرة\\"}],\\"message\\":\\"رسالة عربية قصيرة\\"}. أعد حتى 8 نتائج مرتبة من الأنسب، ولا تكرر أي id. إذا لم يوجد إعلان مناسب أعد matches فارغة. طلب المشتري: "+request+"\nالإعلانات المتاحة: "+JSON.stringify(candidates);
+  const result=await adWriterModel.generateContent(prompt);
+  const raw=result.response.text().trim().replace(/^\x60{3}(?:json)?\s*/i,"").replace(/\s*\x60{3}$/,"");
+  const data=JSON.parse(raw);
+  const allowed=new Set(candidates.map(ad=>ad.id));
+  const seen=new Set();
+  const matches=(Array.isArray(data.matches)?data.matches:[]).filter(item=>{
+   const id=String(item?.id||"");
+   if(!allowed.has(id)||seen.has(id))return false;
+   seen.add(id);return true;
+  }).slice(0,8).map(item=>({id:String(item.id),reason:String(item.reason||"")})); 
+  window.renderBuyerAIResults(matches);
+  status.textContent=matches.length?(data.message||"دي أقرب الإعلانات لطلبك. راجع التفاصيل وتواصل مع المعلن مباشرة."):"ملقتش إعلانًا مناسبًا في الإعلانات المنشورة حاليًا. جرّب وصفًا مختلفًا.";
+ }catch(error){
+  console.error("Buyer AI search failed:",error);
+  status.textContent="تعذر إتمام البحث الذكي حاليًا. جرّب مرة أخرى بعد التأكد من اتصال الإنترنت. ("+(error.code||error.message||"خطأ غير معروف")+")";
+ }finally{
+  button.disabled=false;button.textContent="✨ دور لي بالذكاء الاصطناعي";
+ }
 };
 
 async function loadSellerRating(adId,sellerId){
