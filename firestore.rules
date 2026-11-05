@@ -108,6 +108,55 @@ service cloud.firestore {
       allow delete: if admin();
     }
 
+    // Customer support: each customer can access only their own tickets and messages.
+    match /supportTickets/{ticketId} {
+      allow create: if activeUser()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0
+        && request.resource.data.subject.size() <= 90
+        && request.resource.data.status == "open"
+        && request.resource.data.createdAt is number
+        && request.resource.data.updatedAt is number;
+      allow read: if admin()
+        || (activeUser() && resource.data.ownerId == request.auth.uid);
+      allow update: if (admin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+          && request.resource.data.status in ['open', 'answered', 'closed']
+          && request.resource.data.updatedAt is number)
+        || (activeUser()
+          && resource.data.ownerId == request.auth.uid
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['updatedAt'])
+          && request.resource.data.updatedAt is number);
+      allow delete: if admin();
+    }
+
+    match /supportMessages/{messageId} {
+      allow read: if admin()
+        || (activeUser()
+          && resource.data.ticketId is string
+          && exists(/databases/$(database)/documents/supportTickets/$(resource.data.ticketId))
+          && get(/databases/$(database)/documents/supportTickets/$(resource.data.ticketId)).data.ownerId == request.auth.uid);
+      allow create: if activeUser()
+        && request.resource.data.ticketId is string
+        && exists(/databases/$(database)/documents/supportTickets/$(request.resource.data.ticketId))
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 2000
+        && request.resource.data.createdAt is number
+        && (
+          (admin() && request.resource.data.senderRole == "admin")
+          ||
+          (!admin()
+            && request.resource.data.senderRole == "user"
+            && get(/databases/$(database)/documents/supportTickets/$(request.resource.data.ticketId)).data.ownerId == request.auth.uid
+            && get(/databases/$(database)/documents/supportTickets/$(request.resource.data.ticketId)).data.status != "closed")
+        );
+      allow update, delete: if admin();
+    }
+
     match /sellerRatings/{ratingId} {
       allow read: if true;
       allow create: if activeUser()
