@@ -226,7 +226,8 @@ function contactButtons(ad){
  const raw=String(ad.contactPhone||'').trim();let phoneHtml='';
  if(raw){let digits=raw.replace(/\D/g,'');if(digits.startsWith('00'))digits=digits.slice(2);if(digits.startsWith('0'))digits='20'+digits.slice(1);const encoded=encodeURIComponent('مرحبًا، أتواصل معك بخصوص إعلانك: '+String(ad.title||''));phoneHtml='<a class="btn primary" style="text-decoration:none" href="tel:'+digits+'">📞 اتصال</a><a class="btn" style="background:#dcfce7;color:#166534;text-decoration:none" href="https://wa.me/'+digits+'?text='+encoded+'" target="_blank" rel="noopener noreferrer">واتساب</a>';}
  const inquiryCall='sendAdInquiry('+JSON.stringify(String(ad.ownerId||''))+','+JSON.stringify(String(ad.id||''))+')';
- const inquiryHtml=ad.ownerId&&ad.ownerId!==window.currentAdUserId?'<button class="btn light" onclick="'+escapeHtml(inquiryCall)+'">✉️ أرسل استفسارًا</button><button class="btn primary" onclick="openChatWithSeller(\'+JSON.stringify(String(ad.ownerId||\'\'))+\',\'+JSON.stringify(String(ad.title||\'إعلان\'))+\')">💬 مراسلة مباشرة</button>':'';
+ const chatCall='openChatWithSeller('+JSON.stringify(String(ad.ownerId||''))+','+JSON.stringify(String(ad.title||'إعلان'))+')';
+ const inquiryHtml=ad.ownerId&&ad.ownerId!==window.currentAdUserId?'<button class="btn light" onclick="'+escapeHtml(inquiryCall)+'">✉️ أرسل استفسارًا</button><button class="btn primary" onclick="'+escapeHtml(chatCall)+'">💬 مراسلة مباشرة</button>':'';
  return phoneHtml+inquiryHtml?'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+phoneHtml+inquiryHtml+'</div>':'';
 }
 function favoriteButton(ad){const key=adFavoriteKey(ad);return '<button class="btn light" style="margin-top:8px;color:#be123c" onclick="toggleFavorite('+JSON.stringify(key)+')">'+(isFavorite(ad)?'♥ إزالة من المفضلة':'♡ أضف للمفضلة')+'</button>';}
@@ -238,6 +239,7 @@ function renderNotifications(){
 }
 function showNotifications(){show('notifications');renderNotifications();if(!currentUser||currentUser.isAnonymous)return;const unread=notificationItems.filter(n=>!n.read);Promise.all(unread.map(n=>updateDoc(doc(db,'notifications',n.id),{read:true}))).catch(e=>console.warn('Could not mark notifications read',e));}
 window.loadChats=async()=>{
+ show("chats");
  const list=document.getElementById("chatList"),room=document.getElementById("chatRoom");if(room)room.style.display="none";if(list)list.style.display="block";list.innerHTML='<p class="muted">جارٍ تحميل المحادثات...</p>';
  await authReady;const user=auth.currentUser;if(!user||user.isAnonymous){list.innerHTML='<div class="card empty">سجّل الدخول لعرض محادثاتك.</div>';return;}
  try{const client=getSupabaseClient();const {data:members,error:me}=await client.from("souq_conversation_members").select("conversation_id,joined_at").eq("firebase_uid",user.uid).order("joined_at",{ascending:false});if(me)throw me;
