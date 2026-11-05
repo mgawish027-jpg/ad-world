@@ -632,7 +632,8 @@ window.openSupportTicket=async function(id){try{const snap=await getDoc(doc(db,"
 window.sendSupportMessage=async function(){const u=auth.currentUser,t=activeSupportTicket,msg=$("supportReply").value.trim(),b=$("supportSendBtn");if(!u||!t||!msg)return;if(t.status==="closed"&&!window.souqIsAdmin)return;b.disabled=true;try{const now=Date.now();await addDoc(collection(db,"supportMessages"),{ticketId:t.id,senderId:u.uid,senderEmail:u.email||"",senderRole:window.souqIsAdmin?"admin":"user",text:msg.slice(0,2000),createdAt:now});await updateDoc(doc(db,"supportTickets",t.id),window.souqIsAdmin?{status:"answered",updatedAt:now}:{updatedAt:now});$("supportReply").value="";await openSupportTicket(t.id);await loadSupportTickets()}catch(e){console.error(e);alert("تعذر إرسال الرسالة. حاول مرة أخرى.")}finally{b.disabled=false}};
 window.setSupportTicketStatus=async function(status){if(!window.souqIsAdmin||!activeSupportTicket)return;try{await updateDoc(doc(db,"supportTickets",activeSupportTicket.id),{status,updatedAt:Date.now()});await openSupportTicket(activeSupportTicket.id);await loadSupportTickets()}catch(e){console.error(e);alert("تعذر تحديث حالة الطلب.")}};
 window.closeSupportConversation=function(){activeSupportTicketId=null;activeSupportTicket=null;$("supportConversation").style.display="none"};
-\nlet cloudAdsLoadVersion = 0;
+
+let cloudAdsLoadVersion = 0;
 async function loadCloudAds() {
   const loadVersion = ++cloudAdsLoadVersion;
   try {
