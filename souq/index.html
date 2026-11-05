@@ -712,7 +712,7 @@ function closeSouqRealtimeChannels() {
   souqChatRealtime = null;
 }
 
-function closeSouqConversation() {
+window.closeSouqConversation = function() {
   closeSouqRealtimeChannels();
   souqActiveChatId = null;
   $("souqChatThread").style.display = "none";
