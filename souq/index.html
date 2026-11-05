@@ -136,7 +136,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <section id="categoryPage" class="screen"><div class="section-head"><button class="small-link" onclick="show('home')">← رجوع للأقسام</button><span class="count" id="categoryCount"></span></div><div class="section-head" style="margin-top:8px"><h2 id="categoryPageTitle">إعلانات القسم</h2></div><div id="categoryAds" class="ad-grid"></div></section>
 <section id="add" class="screen"><div class="section-head"><h2>أضف إعلانك</h2></div><div class="card">
 <label for="title">عنوان الإعلان *</label><input id="title" maxlength="70" placeholder="مثال: موبايل بحالة ممتازة">
-<label for="category">القسم *</label><select id="category"><option>سيارات</option><option>وظائف</option><option>عقارات</option><option>إلكترونيات</option><option>موبايلات</option><option>أجهزة</option><option>أثاث</option><option>أخرى</option></select>
+<label for="category">القسم *</label><select id="category"><option>سيارات</option><option>وظائف</option><option>عقارات</option><option>إلكترونيات</option><option>موبايلات</option><option>أجهزة</option><option>أثاث</option><option>ملابس</option><option>أخرى</option></select>
 <label for="price">السعر بالجنيه المصري</label><input id="price" type="number" min="0" inputmode="numeric" placeholder="اكتب السعر أو اتركه فارغاً">
 <label for="place">المحافظة / المنطقة *</label><input id="place" maxlength="70" placeholder="مثال: أبو المطامير - البحيرة">
 <label for="phone">رقم التواصل *</label><input id="phone" type="tel" inputmode="tel" maxlength="20" placeholder="01xxxxxxxxx">
@@ -173,7 +173,7 @@ const KEY='souq_ads_v2',FKEY='souq_favs_v1',RKEY='souq_reports_v1';
 let reports=read(RKEY,[]);
 let ads=read(KEY,[]),favs=read(FKEY,[]),activeCat='',editingId=null,currentCategoryPage='';
 if(!ads.length){const old=read('souq_ads',[]);if(old.length){ads=old.map((a,i)=>({...a,id:a.id||('old_'+(a.date||Date.now())+'_'+i),date:a.date||Date.now(),photo:a.photo||''}));try{localStorage.setItem(KEY,JSON.stringify(ads))}catch(e){}}}
-const baseCategories=[['سيارات','🚗'],['وظائف','💼'],['عقارات','🏠'],['إلكترونيات','📺'],['موبايلات','📱'],['أجهزة','💻'],['أثاث','🛋️'],['أخرى','📦']];
+const baseCategories=[['سيارات','🚗'],['وظائف','💼'],['عقارات','🏠'],['إلكترونيات','📺'],['موبايلات','📱'],['أجهزة','💻'],['أثاث','🛋️'],['ملابس','👕'],['أخرى','📦']];
 let cats=read('souq_categories_v1',baseCategories);
 // أضف الأقسام الأساسية الجديدة للمستخدمين الحاليين مع الحفاظ على أقسامهم المخصصة.
 for(const item of baseCategories){if(!cats.some(x=>Array.isArray(x)&&x[0]===item[0]))cats.push(item)}
