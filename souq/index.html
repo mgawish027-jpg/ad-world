@@ -400,7 +400,9 @@ document.getElementById("souqAiForm").addEventListener("submit",async event=>{
     souqAiBubble(answer);
   } catch(error) {
     console.error("SouQ buyer AI error",error);
-    souqAiBubble("حصلت مشكلة في الاتصال بمساعد الذكاء الاصطناعي. جرّب تاني بعد شوية.");
+    const errorCode=String(error?.code||error?.name||"UnknownError");
+    const errorMessage=String(error?.message||error||"بدون تفاصيل").replace(/https?:\/\/\S+/g,"[رابط]").slice(0,220);
+    souqAiBubble("تعذر الاتصال بالمساعد.\\nرمز الخطأ: "+errorCode+"\\nالتفاصيل: "+errorMessage+"\\nابعتلي نص الخطأ ده عشان أصلحه بدقة.");
   } finally {
     souqAiSend.disabled=false;souqAiSend.textContent="إرسال";souqAiInput.focus();
   }
