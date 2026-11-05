@@ -743,27 +743,19 @@ $("signOutBtn").addEventListener("click",async()=>{
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
 window.openAdminPanel = async function(){
-  try {
-    await authPersistenceReady;
-    await auth.authStateReady();
-    const user = auth.currentUser;
-    const email = (user?.email || "").trim().toLowerCase();
-    const isOwner = email === "mgawish027@gmail.com";
-    window.souqIsAdmin = isOwner;
-    if (!isOwner) {
-      alert("تعذر فتح لوحة الإدارة: جلسة المدير غير موجودة أو البريد الحالي مختلف. البريد الحالي: " + (email || "لا يوجد حساب مسجل"));
-      show("account");
-      return;
-    }
-    $("adminAccess").style.display = "block";
-    $("settingsAdminAccess").style.display = "block";
-    $("accountAdminAccess").style.display = "block";
-    show("admin");
-    await window.loadAdminCloudData();
-  } catch (error) {
-    console.error("SouQ admin panel error:", error);
-    alert("تعذر فتح لوحة الإدارة: " + (error?.message || error));
+  // استخدم نفس فحص الحساب الذي كان يعمل في النسخة السابقة.
+  const user = auth.currentUser;
+  renderAuthState(user);
+  if (!window.souqIsAdmin) {
+    alert("الدخول متاح لحساب المدير فقط. تأكد من تسجيل الدخول ببريد المدير.");
+    show("account");
+    return;
   }
+  $("adminAccess").style.display = "block";
+  $("settingsAdminAccess").style.display = "block";
+  $("accountAdminAccess").style.display = "block";
+  show("admin");
+  await loadAdminCloudData();
 };
 window.loadAdminCloudData = async function(){
   if(!window.souqIsAdmin || !auth.currentUser)return;
