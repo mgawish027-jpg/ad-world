@@ -121,6 +121,17 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 .ad-photo>svg{width:66px;height:66px;filter:drop-shadow(0 4px 5px #1e3a5f18)}
 @media(max-width:380px){.cat-icon{width:46px;height:46px}.cat-icon svg{width:37px;height:37px}}
 
+
+/* Compact floating SouQ assistant */
+.souq-assistant-widget{position:fixed;right:14px;bottom:calc(82px + env(safe-area-inset-bottom));z-index:8;direction:rtl}
+.souq-assistant-launcher{width:54px;height:54px;border:0;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#1765d8,#5946bd);color:#fff;font-size:25px;box-shadow:0 6px 20px #173f7540;outline:3px solid #fff}
+.souq-assistant-widget .ai-panel{display:none;position:absolute;right:0;bottom:66px;width:min(350px,calc(100vw - 28px));max-height:min(70vh,540px);overflow:auto;margin:0;padding:14px;background:#fff;box-shadow:0 16px 45px #10284b35;border:1px solid #dce5f4;border-radius:18px}
+.souq-assistant-widget.open .ai-panel{display:block}
+.souq-assistant-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.souq-assistant-heading h3{margin:0 0 6px}
+.souq-assistant-close{flex:none;width:30px;height:30px;border:0;border-radius:50%;background:#eef2f8;color:#34445c;font-size:21px;line-height:1}
+@media(min-width:700px){.souq-assistant-widget{right:max(22px,calc((100vw - 820px)/2))}}
+
 </style></head>
 <body>
 <header class="hero"><div class="hero-inner"><div class="topline"><div><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M5 11h22l-2 16H7L5 11zm6 0a5 5 0 0 1 10 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></span>سوق</div><div class="tag">كل اللي بتدور عليه.. في مكان واحد</div></div><div class="location"><span aria-hidden="true">⌖</span> مصر</div></div><div class="searchbox"><input id="search" placeholder="بتدور على إيه؟" aria-label="ابحث في الإعلانات" onkeydown="searchOnEnter(event)"><button type="button" class="search-action" onclick="runSearch()">🔍 بحث</button><button type="button" onclick="clearSearch()">مسح</button></div></div></header>
@@ -128,16 +139,7 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <section id="home" class="screen active">
 <div class="section-head"><h2>تصفح الأقسام</h2><button class="small-link" onclick="resetFilter()">عرض الكل</button></div>
 <div class="categories" id="categories"></div>
-<div class="ai-panel" id="souqAskPanel">
- <h3>🤖 اسأل مساعد سوق</h3>
- <p>اكتب اللي بتدور عليه، وهبحث لك في إعلانات سوق والأقسام الموجودة.</p>
- <div style="display:flex;gap:8px">
-  <input id="souqAskInput" type="search" placeholder="مثلاً: عايز موبايل سامسونج" aria-label="اسأل مساعد سوق" onkeydown="if(event.key==='Enter')askSouqAssistant()">
-  <button class="btn primary" type="button" style="width:auto;white-space:nowrap;margin:0" onclick="askSouqAssistant()">اسأل</button>
- </div>
- <div id="souqAskStatus" class="ai-status" role="status" aria-live="polite">هبحث داخل الإعلانات المنشورة في سوق فقط.</div>
- <div id="souqAskResults" class="ad-grid" style="margin-top:10px"></div>
-</div>
+
 <div class="promo-panel"><h3>بيع أسرع.. ووصل لمشتري أكتر</h3><p>اعرض منتجك بصورة واضحة وتفاصيل كاملة، وخلي المشتري يتواصل معاك مباشرة.</p><button onclick="show('add')">＋ أضف إعلانك الآن</button></div><div class="trust-row"><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg></b>بحث سهل وسريع</div><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h3l2 5-2 1.5a15 15 0 0 0 5.5 5.5L15 14l5 2v3a2 2 0 0 1-2 2C10 20 4 14 3 6a2 2 0 0 1 2-2z"/></svg></b>تواصل مباشر</div><div class="trust-item"><b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 8.8c0 5.1-8.5 11-8.5 11s-8.5-5.9-8.5-11A4.8 4.8 0 0 1 12 6a4.8 4.8 0 0 1 8.5 2.8z"/></svg></b>احفظ المفضلة</div></div><div id="featuredWrap" style="display:none"><div class="section-head"><h2>⭐ إعلانات مميزة</h2><span class="count">اختيارات بارزة</span></div><div id="featuredAds" class="ad-grid"></div></div>
 <div id="homeAdListing" style="display:none"><div class="section-head"><h2 id="listTitle">أحدث الإعلانات</h2><span class="count" id="adCount"></span></div>
 <div class="toolbar"><select id="sort" aria-label="ترتيب الإعلانات"><option value="new">الأحدث أولاً</option><option value="low">السعر: الأقل</option><option value="high">السعر: الأعلى</option></select></div><div class="filter-row"><input id="minPrice" type="number" min="0" inputmode="numeric" placeholder="أقل سعر"><input id="maxPrice" type="number" min="0" inputmode="numeric" placeholder="أعلى سعر"></div>
@@ -176,6 +178,19 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="section-head"><h2>سجل عمليات الإدارة</h2><button class="small-link" onclick="clearAuditLog()">مسح السجل</button></div><div id="adminAudit"></div>
 <div class="section-head"><h2>إدارة الحسابات والصلاحيات</h2></div><div class="card"><b>غير مفعّلة في النسخة الحالية</b><p class="muted">لا يوجد تسجيل حسابات أو خادم مستخدمين حتى الآن. بعد ربط Firebase سنضيف التحقق من هوية المالك، أدوار المديرين، الحظر، وسجل الصلاحيات من الخادم. لن نعرض تحكمًا وهميًا في حسابات غير موجودة.</p></div></section>
 </main>
+<div class="souq-assistant-widget" id="souqAssistantWidget">
+ <button class="souq-assistant-launcher" id="souqAssistantToggle" type="button" onclick="toggleSouqAssistant()" aria-label="افتح مساعد سوق" aria-expanded="false">🤖</button>
+ <div class="ai-panel" id="souqAskPanel">
+  <div class="souq-assistant-heading"><h3>🤖 اسأل مساعد سوق</h3><button type="button" class="souq-assistant-close" onclick="toggleSouqAssistant(false)" aria-label="إغلاق">×</button></div>
+  <p>اكتب اللي بتدور عليه، وهبحث لك في إعلانات سوق والأقسام الموجودة.</p>
+  <div style="display:flex;gap:8px">
+   <input id="souqAskInput" type="search" placeholder="مثلاً: عايز موبايل سامسونج" aria-label="اسأل مساعد سوق" onkeydown="if(event.key==='Enter')askSouqAssistant()">
+   <button class="btn primary" type="button" style="width:auto;white-space:nowrap;margin:0" onclick="askSouqAssistant()">اسأل</button>
+  </div>
+  <div id="souqAskStatus" class="ai-status" role="status" aria-live="polite">هبحث داخل الإعلانات المنشورة في سوق فقط.</div>
+  <div id="souqAskResults" class="ad-grid" style="margin-top:10px"></div>
+ </div>
+</div>
 <nav><div class="navin"><button class="active" data-screen="home" onclick="show('home',this)"><b>⌂</b>الرئيسية</button><button data-screen="favorites" onclick="show('favorites',this)"><b>♡</b>المفضلة</button><button data-screen="messages" onclick="show('messages',this)"><b>✉</b>المحادثات</button><button data-screen="add" onclick="show('add',this)"><b>＋</b>أضف إعلان</button><button data-screen="mine" onclick="show('mine',this)"><b>▤</b>إعلاناتي</button><button data-screen="account" onclick="show('account',this)"><b>♙</b>حسابي</button></div></nav>
 <div id="modal" class="modal" onclick="if(event.target===this)closeModal()"><div class="modalbox"><div class="modal-head"><b>تفاصيل الإعلان</b><button class="close" onclick="closeModal()">×</button></div><div id="modalContent"></div></div></div>
 <footer>سوق © 2026</footer>
@@ -254,6 +269,14 @@ function clearSearch(){
  const listing=document.getElementById('homeAdListing');
  if(listing)listing.style.display='none';
  renderAds();
+}
+function toggleSouqAssistant(force){
+ const widget=document.getElementById('souqAssistantWidget');
+ const launcher=document.getElementById('souqAssistantToggle');
+ const open=typeof force==='boolean'?force:!widget.classList.contains('open');
+ widget.classList.toggle('open',open);
+ launcher.setAttribute('aria-expanded',String(open));
+ if(open)document.getElementById('souqAskInput')?.focus();
 }
 function askSouqAssistant(){
  const input=document.getElementById('souqAskInput');
