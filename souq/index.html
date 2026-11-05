@@ -743,8 +743,24 @@ $("signOutBtn").addEventListener("click",async()=>{
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
 window.openAdminPanel = async function(){
-  if(!window.souqIsAdmin){alert("الدخول متاح لحساب المدير الموثّق فقط.");show("account");return;}
-  show("admin");await loadAdminCloudData();
+  const user = auth.currentUser;
+  if (user) {
+    try {
+      await user.reload();
+      await user.getIdToken(true);
+    } catch (error) {
+      console.warn("Could not refresh owner authentication before opening admin panel:", error);
+    }
+  }
+  const freshUser = auth.currentUser || null;
+  renderAuthState(freshUser);
+  if (!window.souqIsAdmin) {
+    alert("الدخول متاح لحساب المدير الموثّق فقط.");
+    show("account");
+    return;
+  }
+  show("admin");
+  await loadAdminCloudData();
 };
 window.loadAdminCloudData = async function(){
   if(!window.souqIsAdmin || !auth.currentUser)return;
