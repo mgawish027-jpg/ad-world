@@ -779,7 +779,8 @@ function renderAuthState(user) {
   window.souqIsAdmin = !!(user && user.email === "mgawish027@gmail.com" && user.emailVerified === true);
   $("adminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   $("settingsAdminAccess").style.display = window.souqIsAdmin ? "block" : "none";
-  $("accountAdminAccess").style.display = window.souqIsAdmin ? "block" : "none";
+  const isOwnerAccount = !!(user && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com");
+  $("accountAdminAccess").style.display = isOwnerAccount ? "block" : "none";
   $("authLoggedOut").style.display = user ? "none" : "block";
   $("authLoggedIn").style.display = user ? "block" : "none";
   if (user) {
