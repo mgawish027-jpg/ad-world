@@ -49,7 +49,7 @@ jobs:
       - name: Upload Android download
         uses: actions/upload-artifact@v4
         with:
-          name: Android
+          name: SOUQ-Android-APK
           path: Android.apk
           if-no-files-found: error
           retention-days: 30
