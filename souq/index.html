@@ -786,8 +786,19 @@ function renderAuthState(user) {
     $("profileEmail").textContent = user.email || "";
   }
 }
-onAuthStateChanged(auth, user => {
-  renderAuthState(user);
+onAuthStateChanged(auth, async user => {
+  // Refresh the Firebase user before checking the verified-email admin gate.
+  // This prevents a stale emailVerified value from keeping the owner shortcut hidden.
+  if (user) {
+    try {
+      await user.reload();
+      await user.getIdToken(true);
+    } catch (error) {
+      console.warn("Could not refresh the signed-in user before rendering admin access:", error);
+    }
+  }
+  const freshUser = auth.currentUser || null;
+  renderAuthState(freshUser);
   loadCloudAds();
 });
 </script>
