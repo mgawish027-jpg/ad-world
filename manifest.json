@@ -1,6 +1,6 @@
 {
-  "name": "AD WORLD",
-  "short_name": "AD WORLD",
+  "name": "سوق",
+  "short_name": "سوق",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
