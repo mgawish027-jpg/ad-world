@@ -475,6 +475,8 @@ async function generateSouqAiContent(parts) {
     }
   }
 }
+// Expose the module-scoped Firebase AI function to the buyer assistant script.
+window.generateSouqAiContent = generateSouqAiContent;
 
 const aiStatusEl = document.getElementById("aiStatus");
 const aiResultEl = document.getElementById("aiResult");
