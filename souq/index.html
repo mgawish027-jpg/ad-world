@@ -743,7 +743,7 @@ $("signOutBtn").addEventListener("click",async()=>{
   catch(error){authMessage(friendlyAuthError(error),true)}
 });
 window.openAdminPanel = async function(){
-  if(!window.souqIsAdmin){alert("الدخول متاح لحساب المدير الموثّق فقط.");show("account");return;}
+  if(!window.souqIsAdmin){alert("الدخول متاح لحساب المدير فقط.");show("account");return;}
   show("admin");await loadAdminCloudData();
 };
 window.loadAdminCloudData = async function(){
@@ -776,7 +776,7 @@ window.adminDeleteCloudAd = async function(adId){
 };
 function renderAuthState(user) {
   window.souqUserId = user ? user.uid : null;
-  window.souqIsAdmin = !!(user && user.email === "mgawish027@gmail.com" && user.emailVerified === true);
+  window.souqIsAdmin = !!(user && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com");
   $("adminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   $("settingsAdminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   const isOwnerAccount = !!(user && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com");
