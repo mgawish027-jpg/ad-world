@@ -417,13 +417,12 @@ function clearAuditLog(){if(!confirm('مسح سجل العمليات المحل�
 function renderAdmin(){
  document.getElementById('statAds').textContent=ads.length;
  document.getElementById('statReports').textContent=reports.length;
- document.getElementById('adminAds').innerHTML=ads.length?ads.slice().sort((a,b)=>b.date-a.date).map(a=>'<div class="card"><b>'+esc(a.title)+'</b><div class="muted">'+esc(a.category)+' • '+esc(a.place)+' • '+money(a.price)+' • الحالة: '+statusText(a)+'</div><div class="actions"><button class="btn secondary" onclick="details(\''+a.id+'\')">عرض</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">مباع</button><button class="btn secondary" onclick="toggleFeatured(\''+a.id+'\')">'+(a.featured?'إلغاء التمييز':'تمييز الإعلان')+'</button><button class="btn danger" onclick="adminDeleteAd(\''+a.id+'\')">حذف</button></div></div>').join(''):'<div class="empty">لا توجد إعلانات حالياً.</div>';
+ document.getElementById('adminAds').innerHTML=ads.length?ads.slice().sort((a,b)=>b.date-a.date).map(a=>'<div class="card"><b>'+esc(a.title)+'</b><div class="muted">'+esc(a.category)+' • '+esc(a.place)+' • '+money(a.price)+' • الحالة: '+statusText(a)+'</div><div class="actions"><button class="btn secondary" onclick="details(\''+a.id+'\')">عرض</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'active\')">تنشيط</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'paused\')">إيقاف</button><button class="btn secondary" onclick="changeStatus(\''+a.id+'\',\'sold\')">مباع</button><button class="btn secondary" onclick="toggleFeatured(\''+a.id+'\')">'+(a.featured?'إلغاء التمييز':'تمييز الإعلان')+'</button></div></div>').join(''):'<div class="empty">لا توجد إعلانات حالياً.</div>';
  renderAdminCategories();renderAudit();
  document.getElementById('adminReports').innerHTML=reports.length?reports.slice().sort((a,b)=>b.date-a.date).map(r=>'<div class="card"><b>'+esc(r.title)+'</b><p class="muted">السبب: '+esc(r.reason)+'<br>التاريخ: '+new Date(r.date).toLocaleString('ar-EG')+'</p><div class="actions"><button class="btn secondary" onclick="adminViewReported(\''+r.adId+'\')">عرض الإعلان</button><button class="btn danger" onclick="dismissReport(\''+r.id+'\')">إغلاق البلاغ</button></div></div>').join(''):'<div class="empty">لا توجد بلاغات مسجلة.</div>';
 }
 function changeStatus(id,status){const a=ads.find(x=>x.id===id);if(!a)return;const old=a.status;a.status=status;audit('تغيير حالة إعلان',a.title+' ← '+statusText(a));if(!persist()){a.status=old;return}renderAds();renderMine();renderAdmin();renderFavorites();if(document.getElementById('modal').classList.contains('show'))details(id)}
 
-async function adminDeleteAd(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}if(!confirm('حذف الإعلان نهائياً من قاعدة البيانات ومن التطبيق كله؟'))return;const deleted=ads.find(a=>a.id===id);try{if(typeof window.souqDeleteCloudAd!=='function')throw new Error('خدمة الحذف السحابي غير جاهزة. حدّث الصفحة وحاول مرة أخرى.');await window.souqDeleteCloudAd(id)}catch(error){alert('لم يتم حذف الإعلان من قاعدة البيانات: '+(error.message||'تحقق من الاتصال والصلاحيات.'));return}ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان من قاعدة البيانات',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine();renderFavorites();alert('تم حذف الإعلان من قاعدة البيانات ومن التطبيق كله.')}
 function adminViewReported(id){if(!ads.some(a=>a.id===id)){alert('الإعلان لم يعد موجوداً.');return}details(id)}
 function dismissReport(id){audit('إغلاق بلاغ',id);reports=reports.filter(r=>r.id!==id);try{localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin()}catch(e){alert('تعذر تحديث البلاغات.')}}
 
@@ -771,7 +770,7 @@ window.loadAdminCloudData = async function(){
     }).join("")||'<p class="empty">لا توجد ملفات مستخدمين بعد.</p>';
     adsBox.innerHTML=adsSnap.docs.map(d=>{
       const a=d.data();
-      return '<div class="card"><b>'+esc(a.title||"إعلان بدون عنوان")+'</b><p class="muted">'+esc(a.category||"")+' · '+esc(a.place||"")+'</p><button class="btn danger" onclick="adminDeleteCloudAd('+JSON.stringify(d.id)+')">حذف الإعلان</button></div>';
+      return '<div class="card"><b>'+esc(a.title||"إعلان بدون عنوان")+'</b><p class="muted">'+esc(a.category||"")+' · '+esc(a.place||"")+'</p></div>';
     }).join("")||'<p class="empty">لا توجد إعلانات منشورة.</p>';
   }catch(e){usersBox.textContent="تعذر تحميل البيانات: "+(e.message||e);adsBox.textContent="تحقق من صلاحيات المدير واتصال الإنترنت."}
 };
@@ -780,12 +779,6 @@ window.adminSetUserBlocked = async function(uid,blocked){
   if(!confirm(blocked?"تأكيد حظر هذا المستخدم؟":"تأكيد إلغاء حظر هذا المستخدم؟"))return;
   try{await updateDoc(doc(db,"sellerProfiles",uid),{blocked,updatedAt:Date.now()});await loadAdminCloudData();alert(blocked?"تم حظر المستخدم.":"تم إلغاء الحظر.");}
   catch(e){alert("تعذر تنفيذ العملية: "+(e.message||e));}
-};
-window.adminDeleteCloudAd = async function(adId){
-  if(!window.souqIsAdmin)return alert("غير مصرح.");
-  if(!confirm("هل تريد حذف هذا الإعلان نهائياً؟"))return;
-  try{await deleteDoc(doc(db,"ads",adId));await loadAdminCloudData();await loadCloudAds();alert("تم حذف الإعلان.");}
-  catch(e){alert("تعذر حذف الإعلان: "+(e.message||e));}
 };
 function renderAuthState(user) {
   window.souqUserId = user ? user.uid : null;
