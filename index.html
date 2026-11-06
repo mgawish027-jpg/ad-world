@@ -169,49 +169,17 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  </div>
 </section>
 <section id="admin" class="screen">
- <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-  <h2>مركز المالك والإدارة 🛡️</h2>
-  <button class="btn back" onclick="show('home')">الرئيسية</button>
- </div>
- <div class="notice">🔐 مساحة خاصة بمالك سوق فقط. لا تظهر في قائمة التطبيق للحسابات العادية، ويتم التحقق من الصلاحية قبل تحميل بيانات الإدارة.</div>
- <div class="grid" style="grid-template-columns:repeat(2,1fr);margin-top:12px">
-  <div class="card"><div class="muted">إجمالي الإعلانات</div><strong id="adminTotalAds" style="font-size:25px">—</strong></div>
-  <div class="card"><div class="muted">إعلانات معروضة</div><strong id="adminVisibleAds" style="font-size:25px">—</strong></div>
- </div>
- <div class="card">
-  <b>إدارة ومراجعة الإعلانات</b>
-  <input id="adminAdsSearch" placeholder="ابحث بعنوان الإعلان أو المدينة أو القسم..." oninput="filterAdminAds()">
-  <div class="actions"><button class="btn primary" onclick="openAdminPanel()">↻ تحديث البيانات</button></div>
-  <div id="adminAdsList" style="margin-top:10px">جارٍ التحميل...</div>
- </div>
- <div class="card">
-  <b>ملخص المنصة</b>
-  <div class="grid" style="grid-template-columns:repeat(2,1fr)">
-   <div><div class="muted">المستخدمون المسجلون</div><strong id="adminUsersCount">—</strong></div>
-   <div><div class="muted">الاستفسارات</div><strong id="adminInquiriesCount">—</strong></div>
-   <div><div class="muted">التقييمات</div><strong id="adminRatingsCount">—</strong></div>
-   <div><div class="muted">الحسابات الموقوفة</div><strong id="adminBlockedCount">—</strong></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+   <h2>لوحة تحكم المدير 🛡️</h2>
+   <button class="btn back" onclick="show('home')">الرئيسية</button>
   </div>
- </div>
- <div class="card">
-  <b>إدارة المستخدمين</b>
-  <p class="muted">عرض الحسابات التي أنشأت ملفًا داخل التطبيق، مع إمكانية إيقافها أو إعادة تفعيلها.</p>
-  <input id="adminUsersSearch" placeholder="ابحث بالاسم أو رقم الحساب..." oninput="filterAdminUsers()">
-  <div id="adminUsersList" class="muted">جارٍ تحميل المستخدمين...</div>
- </div>
- <div class="card">
-  <b>إرسال إشعار عام 📢</b>
-  <label>عنوان الإشعار</label><input id="adminBroadcastTitle" maxlength="80" placeholder="مثال: تحديث جديد في سوق">
-  <label>نص الرسالة</label><textarea id="adminBroadcastMessage" rows="3" maxlength="500" placeholder="اكتب الرسالة التي ستصل للمستخدمين"></textarea>
-  <button class="btn primary" style="width:100%" onclick="adminBroadcast()">إرسال لجميع المستخدمين</button>
-  <div id="adminBroadcastStatus" class="muted" style="margin-top:8px"></div>
- </div>
- <div class="card">
-  <b>حساب المالك</b>
-  <p class="muted" id="adminOwnerEmail">mgawish027@gmail.com</p>
-  <p class="muted">حالة الدخول: مدير موثّق</p>
- </div>
-</section>
+  <div class="notice">🔐 لوحة خاصة بمالك سوق.</div>
+  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));margin-top:12px">
+   <button class="btn primary" type="button" onclick="openAdminSubscribers()">👥 المشتركين</button>
+   <button class="btn" type="button" style="background:#fee2e2;color:#991b1b" onclick="openAdminAds()">🗑️ حذف الإعلانات</button>
+  </div>
+  <div id="adminWorkspace" style="margin-top:14px"></div>
+ </section>
 <section id="business" class="screen">
  <h2>إعلانات الشركات</h2>
  <div class="card"><b>روّج لنشاطك التجاري</b><p class="muted">مساحة مخصصة للمحلات والشركات والعروض الممولة.</p><button class="btn primary" onclick="alert('نموذج حساب الشركات سيُضاف في المرحلة التالية.')">ابدأ كصاحب نشاط</button></div>
@@ -564,7 +532,7 @@ let adminAdsCache = [];
 function isOwnerAdmin(user) {
   return !!(user && !user.isAnonymous && String(user.email||"").toLowerCase() === "mgawish027@gmail.com" && user.emailVerified === true);
 }
-window.openAdminPanel = async () => {
+window.openAdminPanel = () => {
   const user = auth.currentUser;
   if (!isOwnerAdmin(user)) {
     alert("هذه المساحة خاصة بمالك التطبيق فقط. تأكد من تسجيل الدخول ببريد المالك وتأكيده.");
@@ -572,21 +540,26 @@ window.openAdminPanel = async () => {
     return;
   }
   show("admin");
+  const workspace = document.getElementById("adminWorkspace");
+  if (workspace) workspace.innerHTML = "";
+};
+window.openAdminSubscribers = async () => {
+  if (!isOwnerAdmin(auth.currentUser)) return alert("غير مصرح.");
+  const workspace = document.getElementById("adminWorkspace");
+  workspace.innerHTML = '<div class="card"><b>المشتركين</b><div class="grid" style="grid-template-columns:repeat(2,1fr)"><div>إجمالي الحسابات: <strong id="adminUsersCount">—</strong></div><div>الحسابات الموقوفة: <strong id="adminBlockedCount">—</strong></div><div>الاستفسارات: <strong id="adminInquiriesCount">—</strong></div><div>التقييمات: <strong id="adminRatingsCount">—</strong></div></div><input id="adminUsersSearch" placeholder="ابحث بالاسم أو رقم الحساب..." oninput="filterAdminUsers()"><div id="adminUsersList" class="muted">جارٍ تحميل المشتركين...</div></div>';
+  await loadAdminOverview();
+};
+window.openAdminAds = async () => {
+  if (!isOwnerAdmin(auth.currentUser)) return alert("غير مصرح.");
+  const workspace = document.getElementById("adminWorkspace");
+  workspace.innerHTML = '<div class="card"><b>الإعلانات — اختر الإعلان المراد حذفه</b><input id="adminAdsSearch" placeholder="ابحث بعنوان الإعلان أو المدينة أو القسم..." oninput="filterAdminAds()"><div id="adminAdsList" style="margin-top:10px">جارٍ تحميل الإعلانات...</div></div>';
   const box = document.getElementById("adminAdsList");
-  box.textContent = "جارٍ تحميل بيانات الإدارة...";
   try {
     const snap = await getDocs(query(collection(db, "ads"), orderBy("createdAt", "desc")));
     adminAdsCache = snap.docs.map(d => ({id:d.id,...d.data()}));
-    const total = document.getElementById("adminTotalAds");
-    const visible = document.getElementById("adminVisibleAds");
-    if(total) total.textContent = String(adminAdsCache.length);
-    if(visible) visible.textContent = String(adminAdsCache.length);
-    const owner = document.getElementById("adminOwnerEmail");
-    if(owner) owner.textContent = user.email;
     filterAdminAds();
-    await loadAdminOverview();
   } catch (e) {
-    box.textContent = "تعذر تحميل البيانات: " + (e.code || e.message) + " — راجع قواعد Firestore.";
+    box.textContent = "تعذر تحميل الإعلانات: " + (e.code || e.message);
   }
 };
 let adminUsersCache = [];
