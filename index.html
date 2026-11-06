@@ -155,6 +155,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
    </div>
    <div id="sellerProfileEditor" class="auth-profile" style="display:none"><label for="sellerDisplayName">اسم المعلن الظاهر</label><input id="sellerDisplayName" maxlength="50" placeholder="اسمك أو اسم نشاطك"><button class="btn primary auth-login" onclick="saveSellerDisplayName()">حفظ الاسم</button></div>
    <button id="logoutButton" class="auth-logout" style="display:none" onclick="logoutAccount()">تسجيل الخروج</button>
+   <button class="btn light" style="width:100%;margin-top:10px;border:1px solid #dbe3f0" onclick="shareSouq()">📤 مشاركة تطبيق سوق</button>
   </div>
   <p class="auth-footnote">🔒 بياناتك محفوظة بأمان مع سوق</p>
  </div>
@@ -230,6 +231,16 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
 </nav>
 <footer>سوق · نموذج أولي تجريبي</footer>
 <script>
+async function shareSouq(){
+ const shareUrl='https://souq-tan.vercel.app/';
+ const shareData={title:'سوق',text:'حمّل تطبيق سوق — كل اللي بتدور عليه في مكان واحد',url:shareUrl};
+ try{
+  if(navigator.share){await navigator.share(shareData);}
+  else if(navigator.clipboard && window.isSecureContext){await navigator.clipboard.writeText(shareUrl);alert('تم نسخ رابط سوق. يمكنك إرساله لأصدقائك.');}
+  else{window.prompt('انسخ رابط تطبيق سوق وشاركه مع أصدقائك:',shareUrl);}
+ }catch(error){if(error && error.name!=='AbortError') alert('تعذرت المشاركة. يمكنك نسخ الرابط: '+shareUrl);}
+}
+
 let sample=[
  {title:'هاتف ذكي بحالة ممتازة',category:'إلكترونيات',price:'8500',place:'مصر - الغردقة',description:'إعلان تجريبي لعرض شكل الإعلانات.'},
  {title:'شقة للإيجار',category:'عقارات',price:'6000',place:'مصر - الإسكندرية',description:'شقة تجريبية بالقرب من الخدمات.'},
