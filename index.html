@@ -644,7 +644,7 @@ window.filterAdminAds = () => {
     const details = escapeHtml([a.category,a.place].filter(Boolean).join(" · "));
     const owner = escapeHtml(a.ownerId || "غير معروف");
     const price = a.price ? Number(a.price).toLocaleString("en-US") + " جنيه" : "السعر غير محدد";
-    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd('+JSON.stringify(a.id)+')">حذف الإعلان</button></div>';
+    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd(\''+escapeHtml(a.id)+'\')">حذف الإعلان</button></div>';
   }).join("");
 };
 window.adminDeleteAd = async (id) => {
