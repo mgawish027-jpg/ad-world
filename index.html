@@ -395,6 +395,19 @@ window.previewAdImage = event => {const file=event.target.files?.[0];if(!file)re
 window.clearAdImage = () => {const input=document.getElementById('adImage');if(input)input.value='';const preview=document.getElementById('imagePreview');if(preview)preview.style.display='none';const img=document.getElementById('previewImg');if(img)img.removeAttribute('src')};
 renderAds();
 if('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+// Reliable admin-delete click bridge: capture clicks before nested UI handlers.
+document.addEventListener("click", function(event) {
+  const button = event.target && event.target.closest ? event.target.closest("[data-admin-delete]") : null;
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const deleteAction = window.adminDeleteAd;
+  if (typeof deleteAction !== "function") {
+    alert("تعذر تشغيل الحذف: أعد تحميل الصفحة ثم حاول مرة أخرى.");
+    return;
+  }
+  deleteAction(button.getAttribute("data-admin-delete"));
+}, true);
 </script>
  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
@@ -644,7 +657,7 @@ window.filterAdminAds = () => {
     const details = escapeHtml([a.category,a.place].filter(Boolean).join(" · "));
     const owner = escapeHtml(a.ownerId || "غير معروف");
     const price = a.price ? Number(a.price).toLocaleString("en-US") + " جنيه" : "السعر غير محدد";
-    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button type="button" class="btn" data-admin-delete="'+escapeHtml(a.id)+'" onclick="window.adminDeleteAd(this.dataset.adminDelete)" style="background:#fee2e2;color:#991b1b;margin-top:8px">حذف الإعلان</button></div>';
+    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button type="button" class="btn" data-admin-delete="'+escapeHtml(a.id)+'" style="background:#fee2e2;color:#991b1b;margin-top:8px">حذف الإعلان</button></div>';
   }).join("");
 };
 window.adminDeleteAd = async (id) => {
