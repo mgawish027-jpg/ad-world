@@ -65,7 +65,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:14px}
  <div class="brand">🌍 سوق</div>
  <div class="tag">سوقك وإعلاناتك في مكان واحد</div>
  <input class="search" id="search" placeholder="ابحث عن منتج أو خدمة أو إعلان..." oninput="renderAds()">
- <div class="actions"><button class="btn light" onclick="show('add')">＋ أضف إعلانًا</button><button class="btn light" onclick="show('account')">دخول / اشتراك</button></div>
+ <div class="actions"><button class="btn light" onclick="show('add')">＋ أضف إعلانًا</button><button class="btn light" onclick="show('account')">دخول / اشتراك</button><button class="btn light" onclick="shareSouq()">📤 مشاركة سوق</button></div>
 </header>
 <main class="wrap">
 <section id="home" class="screen active">
@@ -644,8 +644,11 @@ window.filterAdminAds = () => {
     const details = escapeHtml([a.category,a.place].filter(Boolean).join(" · "));
     const owner = escapeHtml(a.ownerId || "غير معروف");
     const price = a.price ? Number(a.price).toLocaleString("en-US") + " جنيه" : "السعر غير محدد";
-    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button class="btn" style="background:#fee2e2;color:#991b1b;margin-top:8px" onclick="adminDeleteAd(\''+escapeHtml(a.id)+'\')">حذف الإعلان</button></div>';
+    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button type="button" class="btn" data-admin-delete="'+escapeHtml(a.id)+'" style="background:#fee2e2;color:#991b1b;margin-top:8px">حذف الإعلان</button></div>';
   }).join("");
+  box.querySelectorAll("[data-admin-delete]").forEach(button => {
+    button.addEventListener("click", () => window.adminDeleteAd(button.dataset.adminDelete));
+  });
 };
 window.adminDeleteAd = async (id) => {
   const user = auth.currentUser;
