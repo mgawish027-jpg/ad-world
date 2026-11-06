@@ -644,26 +644,8 @@ window.filterAdminAds = () => {
     const details = escapeHtml([a.category,a.place].filter(Boolean).join(" · "));
     const owner = escapeHtml(a.ownerId || "غير معروف");
     const price = a.price ? Number(a.price).toLocaleString("en-US") + " جنيه" : "السعر غير محدد";
-    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div><button type="button" class="btn" data-admin-delete="'+escapeHtml(a.id)+'" style="background:#fee2e2;color:#991b1b;margin-top:8px">حذف الإعلان</button></div>';
+    return '<div class="card" style="margin:10px 0;border-right:4px solid #7c3aed"><b>'+title+'</b><div class="muted">'+details+'</div><div class="muted">السعر: '+escapeHtml(price)+'</div><div class="muted" style="word-break:break-all">صاحب الإعلان: '+owner+'</div></div>';
   }).join("");
-  box.querySelectorAll("[data-admin-delete]").forEach(button => {
-    button.addEventListener("click", () => window.adminDeleteAd(button.dataset.adminDelete));
-  });
-};
-window.adminDeleteAd = async (id) => {
-  const user = auth.currentUser;
-  if (!isOwnerAdmin(user)) return alert("غير مصرح لك بتنفيذ هذا الإجراء.");
-  const ad = adminAdsCache.find(a => a.id === id);
-  if (!ad) return alert("الإعلان غير موجود أو تم تحديث القائمة.");
-  if (!confirm("هل أنت متأكد من حذف الإعلان التالي نهائيًا؟\\n" + (ad.title || "إعلان"))) return;
-  try {
-    await deleteDoc(doc(db, "ads", id));
-    adminAdsCache = adminAdsCache.filter(a => a.id !== id);
-    alert("تم حذف الإعلان بنجاح.");
-    await openAdminPanel();
-  } catch (e) {
-    alert("تعذر الحذف: " + (e.code || e.message) + " — تحقق من صلاحيات Firestore.");
-  }
 };
 
 window.loginAccount = async () => {
