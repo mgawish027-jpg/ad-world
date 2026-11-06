@@ -771,9 +771,23 @@ window.loadAdminCloudData = async function(){
     }).join("")||'<p class="empty">لا توجد ملفات مستخدمين بعد.</p>';
     adsBox.innerHTML=adsSnap.docs.map(d=>{
       const a=d.data();
-      return '<div class="card"><b>'+esc(a.title||"إعلان بدون عنوان")+'</b><p class="muted">'+esc(a.category||"")+' · '+esc(a.place||"")+'</p></div>';
+      const deleteButton=window.souqIsAdmin?'<button class="btn danger" type="button" style="margin-top:8px;width:100%" onclick="adminDeleteCloudAd('+JSON.stringify(d.id)+')">🗑️ حذف الإعلان</button>':'';
+      return '<div class="card"><b>'+esc(a.title||"إعلان بدون عنوان")+'</b><p class="muted">'+esc(a.category||"")+' · '+esc(a.place||"")+'</p>'+deleteButton+'</div>';
     }).join("")||'<p class="empty">لا توجد إعلانات منشورة.</p>';
   }catch(e){usersBox.textContent="تعذر تحميل البيانات: "+(e.message||e);adsBox.textContent="تحقق من صلاحيات المدير واتصال الإنترنت."}
+};
+window.adminDeleteCloudAd = async function(adId){
+  if(!window.souqIsAdmin || !auth.currentUser){alert("حذف الإعلانات متاح للمدير فقط.");return;}
+  const title=(document.querySelector('#adminCloudAds .card b')||{}).textContent||"هذا الإعلان";
+  if(!confirm("تأكيد حذف الإعلان نهائياً من قاعدة البيانات؟\nلن يمكن استعادته بعد الحذف."))return;
+  try{
+    if(typeof window.souqDeleteCloudAd!=="function")throw new Error("خدمة حذف الإعلانات غير جاهزة.");
+    await window.souqDeleteCloudAd(adId);
+    audit("حذف إعلان من لوحة المدير",title);
+    await loadAdminCloudData();
+    await loadCloudAds();
+    alert("تم حذف الإعلان نهائياً من قاعدة البيانات.");
+  }catch(e){alert("لم يتم حذف الإعلان: "+(e.message||"تحقق من صلاحيات المدير واتصال الإنترنت."));}
 };
 window.adminSetUserBlocked = async function(uid,blocked){
   if(!window.souqIsAdmin)return alert("غير مصرح.");
