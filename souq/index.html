@@ -484,15 +484,13 @@ const authPersistenceReady = setPersistence(auth, browserLocalPersistence);
 authPersistenceReady.catch(error => console.error("SouQ auth persistence error:", error));
 const db = getFirestore(app);
 const souqAi = getAI(app, { backend: new GoogleAIBackend() });
-// النموذج الأساسي المستقر
+// نفس إعداد Gemini الذي ثبت عمله في الإصدار 1.4
 const souqAiModel = getGenerativeModel(souqAi, {
-  model: "gemini-2.5-flash",
+  model: "gemini-3.8-flash",
   generationConfig: { maxOutputTokens: 500 }
 });
-
-// النموذج الاحتياطي
 const souqAiFallbackModel = getGenerativeModel(souqAi, {
-  model: "gemini-3.5-flash-lite",
+  model: "gemini-3.1-flash-lite",
   generationConfig: { maxOutputTokens: 500 }
 });
 function souqAiWithTimeout(requestPromise, label) {
