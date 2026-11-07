@@ -492,7 +492,7 @@ const souqAiModel = getGenerativeModel(souqAi, {
 
 // النموذج الاحتياطي
 const souqAiFallbackModel = getGenerativeModel(souqAi, {
-  model: "gemini-2.5-flash-lite",
+  model: "gemini-3.5-flash-lite",
   generationConfig: { maxOutputTokens: 500 }
 });
 function souqAiWithTimeout(requestPromise, label) {
