@@ -193,9 +193,15 @@ nav button.active:before{content:"";display:block;width:22px;height:3px;border-r
 <div class="card settings-card"><div class="settings-card-icon">ℹ️</div><div><h3>عن تطبيق سوق</h3><p class="muted">منصة للبيع والشراء والإعلانات المبوبة.</p><span class="settings-version">الإصدار 1.4</span></div></div>
 </section><section id="support" class="screen"><div class="section-head"><h2>🎧 دعم العملاء</h2><button class="small-link" onclick="show('account')">رجوع</button></div><div id="supportSignedOut" class="empty" style="display:none">سجّل الدخول أولاً للتواصل مع فريق دعم سوق.</div><div id="supportWorkspace" style="display:none"><div class="card"><h3>إرسال استفسار أو شكوى</h3><label for="supportSubject">عنوان الطلب</label><input id="supportSubject" maxlength="90" placeholder="مثلاً: مشكلة في إعلان أو الحساب"><label for="supportFirstMessage">اكتب رسالتك</label><textarea id="supportFirstMessage" rows="4" maxlength="2000" placeholder="اشرح لنا المشكلة بالتفصيل..."></textarea><button class="btn primary" id="supportCreateBtn" type="button" onclick="createSupportTicket()">إرسال إلى الدعم</button></div><div class="section-head"><h3 id="supportListTitle">طلباتي</h3><button class="small-link" type="button" onclick="loadSupportTickets()">تحديث</button></div><div id="supportTicketList"></div><div class="card" id="supportConversation" style="display:none"><div class="section-head"><h3 id="supportConversationTitle">المحادثة</h3><button class="small-link" onclick="closeSupportConversation()">إغلاق</button></div><div id="supportMessages" class="support-thread"></div><label for="supportReply">اكتب ردك</label><textarea id="supportReply" rows="3" maxlength="2000" placeholder="اكتب رسالتك هنا..."></textarea><div class="actions"><button class="btn primary" id="supportSendBtn" type="button" onclick="sendSupportMessage()">إرسال</button><button class="btn secondary" id="supportCloseTicketBtn" type="button" onclick="setSupportTicketStatus('closed')" style="display:none">إغلاق الطلب</button><button class="btn secondary" id="supportReopenTicketBtn" type="button" onclick="setSupportTicketStatus('open')" style="display:none">إعادة فتح الطلب</button></div></div></div></section><section id="admin" class="screen">
 <div class="section-head"><h2>🛡️ لوحة تحكم المدير</h2><button class="small-link" onclick="show('account')">رجوع</button></div>
-<div class="note">لوحة إدارة مباشرة متصلة بقاعدة بيانات سوق. الحظر يوقف المستخدم من استخدام وظائف التطبيق، ويمكنك إعادة تفعيله.</div>
-<div class="card"><div class="section-head"><h3>إدارة المستخدمين</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminUsersCount" class="note" style="margin:10px 0">إجمالي المستخدمين: جارٍ الحساب...</div><div id="adminCloudUsers" class="muted">جارٍ تحميل المستخدمين...</div></div>
-<div class="card"><div class="section-head"><h3>إدارة الإعلانات</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudAds" class="muted">جارٍ تحميل الإعلانات...</div></div>
+<div class="note">لوحة الإدارة تجمع بين بيانات الحسابات والإعلانات المتصلة بقاعدة البيانات، وأدوات إدارة البيانات المحلية على هذا الجهاز.</div>
+<div class="card"><div class="section-head"><h3>إدارة المستخدمين والحسابات</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminUsersCount" class="note" style="margin:10px 0">إجمالي المستخدمين: جارٍ الحساب...</div><div id="adminCloudUsers" class="muted">جارٍ تحميل المستخدمين...</div></div>
+<div class="card"><div class="section-head"><h3>إدارة الإعلانات المنشورة على الخادم</h3><button class="btn secondary" onclick="loadAdminCloudData()">تحديث</button></div><div id="adminCloudAds" class="muted">جارٍ تحميل الإعلانات...</div></div>
+<div class="card"><div class="section-head"><h3>ملخص الإدارة المحلية</h3><button class="btn secondary" onclick="renderAdmin()">تحديث</button></div><div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr))"><div class="note">الإعلانات المحلية: <b id="statAds">0</b></div><div class="note">البلاغات المحلية: <b id="statReports">0</b></div></div><p class="muted">هذه البيانات محفوظة على الجهاز الحالي، وليست بلاغات أو إعلانات عامة على الخادم.</p></div>
+<div class="card"><h3>إدارة الإعلانات المحلية</h3><div id="adminAds"></div></div>
+<div class="card"><div class="section-head"><h3>مراجعة البلاغات المحلية</h3><button class="btn secondary" onclick="renderAdmin()">تحديث</button></div><div id="adminReports"></div></div>
+<div class="card"><div class="section-head"><h3>إدارة الأقسام</h3><button class="btn secondary" onclick="adminAddCategory()">إضافة قسم</button></div><div id="adminCategories"></div><button class="btn secondary" style="margin-top:10px" onclick="adminResetCategories()">استعادة الأقسام الأساسية</button></div>
+<div class="card"><h3>النسخ الاحتياطي المحلي</h3><p class="muted">تصدير واستعادة بيانات هذا الجهاز فقط. لا يشمل قاعدة بيانات Firebase.</p><div class="actions"><button class="btn secondary" onclick="exportBackup()">تصدير نسخة احتياطية</button><label class="btn secondary" for="adminBackupFile">استيراد نسخة</label><input id="adminBackupFile" type="file" accept="application/json,.json" onchange="importBackup(event)" hidden></div></div>
+<div class="card"><div class="section-head"><h3>سجل عمليات الإدارة المحلية</h3><button class="btn secondary" onclick="clearAuditLog()">مسح السجل</button></div><div id="adminAudit"></div></div>
 </section>
 </main>
 <div class="souq-assistant-widget" id="souqAssistantWidget">
@@ -757,6 +763,7 @@ window.openAdminPanel = async function(){
   $("settingsAdminAccess").style.display = "block";
   $("accountAdminAccess").style.display = "block";
   show("admin");
+  renderAdmin();
   await loadAdminCloudData();
 };
 window.loadAdminCloudData = async function(){
@@ -791,7 +798,7 @@ window.adminDeleteCloudAd = async function(adId){
 };
 function renderAuthState(user) {
   window.souqUserId = user ? user.uid : null;
-  window.souqIsAdmin = !!(user && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com");
+  window.souqIsAdmin = !!(user && !user.isAnonymous && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com" && user.emailVerified === true);
   $("adminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   $("settingsAdminAccess").style.display = window.souqIsAdmin ? "block" : "none";
   const isOwnerAccount = !!(user && (user.email || "").trim().toLowerCase() === "mgawish027@gmail.com");
