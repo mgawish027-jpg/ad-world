@@ -500,12 +500,18 @@ function souqAiWithTimeout(requestPromise, label) {
 }
 async function generateSouqAiContent(parts) {
   try {
-    return await souqAiModel.generateContent(parts);
+    return await souqAiWithTimeout(
+      souqAiModel.generateContent(parts),
+      "Gemini 2.5 Flash"
+    );
   } catch (primaryError) {
-    console.warn("فشل النموذج الأساسي، جاري التجربة بالنموذج الاحتياطي...", primaryError);
+    console.warn("فشل النموذج الأساسي أو انتهت مهلته؛ جاري تجربة النموذج الاحتياطي...", primaryError);
     setAiStatus("النموذج الأساسي لم يستجب؛ جارٍ تجربة النموذج الاحتياطي...");
     try {
-      return await souqAiFallbackModel.generateContent(parts);
+      return await souqAiWithTimeout(
+        souqAiFallbackModel.generateContent(parts),
+        "Gemini 2.5 Flash Lite"
+      );
     } catch (fallbackError) {
       console.error("فشل الذكاء الاصطناعي تماماً:", fallbackError);
       throw fallbackError;
