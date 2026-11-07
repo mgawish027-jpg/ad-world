@@ -429,7 +429,7 @@ function renderAdmin(){
 }
 function changeStatus(id,status){const a=ads.find(x=>x.id===id);if(!a)return;const old=a.status;a.status=status;audit('تغيير حالة إعلان',a.title+' ← '+statusText(a));if(!persist()){a.status=old;return}renderAds();renderMine();renderAdmin();renderFavorites();if(document.getElementById('modal').classList.contains('show'))details(id)}
 
-async async function adminDeleteAd(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}if(!confirm('حذف الإعلان نهائياً من قاعدة البيانات ومن التطبيق كله؟'))return;const deleted=ads.find(a=>a.id===id);try{if(typeof window.souqDeleteCloudAd!=='function')throw new Error('خدمة الحذف السحابي غير جاهزة. حدّث الصفحة وحاول مرة أخرى.');await window.souqDeleteCloudAd(id)}catch(error){alert('لم يتم حذف الإعلان من قاعدة البيانات: '+(error.message||'تحقق من الاتصال والصلاحيات.'));return}ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان من قاعدة البيانات',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine();renderFavorites();alert('تم حذف الإعلان من قاعدة البيانات ومن التطبيق كله.')}
+async function adminDeleteAd(id){if(!window.souqIsAdmin){alert('هذه العملية مخصصة للمدير فقط.');return}if(!confirm('حذف الإعلان نهائياً من قاعدة البيانات ومن التطبيق كله؟'))return;const deleted=ads.find(a=>a.id===id);try{if(typeof window.souqDeleteCloudAd!=='function')throw new Error('خدمة الحذف السحابي غير جاهزة. حدّث الصفحة وحاول مرة أخرى.');await window.souqDeleteCloudAd(id)}catch(error){alert('لم يتم حذف الإعلان من قاعدة البيانات: '+(error.message||'تحقق من الاتصال والصلاحيات.'));return}ads=ads.filter(a=>a.id!==id);favs=favs.filter(x=>x!==id);reports=reports.filter(r=>r.adId!==id);audit('حذف إعلان من قاعدة البيانات',deleted?deleted.title:id);persist();localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin();renderAds();renderMine();renderFavorites();alert('تم حذف الإعلان من قاعدة البيانات ومن التطبيق كله.')}
 function adminViewReported(id){if(!ads.some(a=>a.id===id)){alert('الإعلان لم يعد موجوداً.');return}details(id)}
 function dismissReport(id){audit('إغلاق بلاغ',id);reports=reports.filter(r=>r.id!==id);try{localStorage.setItem(RKEY,JSON.stringify(reports));renderAdmin()}catch(e){alert('تعذر تحديث البلاغات.')}}
 
@@ -516,7 +516,7 @@ async function generateSouqAiContent(parts) {
     try {
       return await souqAiWithTimeout(
         souqAiFallbackModel.generateContent(parts),
-        "Gemini 2.5 Flash Lite"
+        "Gemini 3.5 Flash Lite"
       );
     } catch (fallbackError) {
       console.error("فشل الذكاء الاصطناعي تماماً:", fallbackError);
@@ -546,6 +546,7 @@ function aiListingContext() {
   };
 }
 async function souqAiRequest(kind) {
+  await authPersistenceReady;
   const user = auth.currentUser;
   if (!user) {
     setAiStatus("سجّل الدخول أولاً من صفحة «حسابي» لاستخدام مساعد الذكاء الاصطناعي.", true);
@@ -575,8 +576,9 @@ async function souqAiRequest(kind) {
     if (kind === "write") {
       prompt = "اكتب وصف إعلان عربي واضح وجذاب لمنصة إعلانات مبوبة مصرية. استخدم المعلومات المذكورة فقط، ولا تخترع مواصفات أو حالة أو ضماناً أو ملحقات. لا تكرر العنوان. اجعل الوصف من 3 إلى 5 جمل قصيرة، من دون مبالغة أو رموز كثيرة. أعد الوصف فقط.\n"+context;
     } else if (kind === "improve") {
-      if (!data.description) throw new Error("اكتب وصفاً أولاً حتى أستطيع تحسينه.");
-      prompt = "حسّن صياغة وصف الإعلان التالي بالعربية ليكون واضحاً ومقنعاً ومختصراً. حافظ على كل الحقائق كما هي ولا تضف أي معلومة غير مذكورة. أعد الوصف المحسّن فقط.\n"+context;
+      prompt = data.description
+        ? "حسّن صياغة وصف الإعلان التالي بالعربية ليكون واضحاً ومقنعاً ومختصراً. حافظ على كل الحقائق كما هي ولا تضف أي معلومة غير مذكورة. أعد الوصف المحسّن فقط.\\n"+context
+        : "اكتب وصفاً إعلانياً عربياً واضحاً ومقنعاً ومختصراً اعتماداً على عنوان الإعلان وبياناته فقط. لا تخترع أي مواصفات أو حقائق غير مذكورة. أعد الوصف فقط.\\n"+context;
     } else if (kind === "price") {
       prompt = "قدّم تقديراً استرشادياً غير ملزم لنطاق سعر هذا المنتج في مصر بالجنيه المصري. اذكر أن التقدير تقريبي وقد لا يعكس أسعار السوق الحالية، ووضح العوامل التي قد ترفع أو تخفض السعر. لا تدّع أنك تحققت من أسعار مباشرة ولا تخترع بيانات سوقية. إذا كانت المعلومات غير كافية فاطلب تفاصيل إضافية بدلاً من اختلاق رقم.\n"+context;
     } else if (kind === "image") {
