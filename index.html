@@ -432,7 +432,7 @@ function updateAccountUI(user) {
   const box = document.getElementById("accountStatus");
   const logout = document.getElementById("logoutButton");
   const authControls = document.querySelectorAll("#authForm label, #authForm input, #authForm button");
-  const headerAccount = document.querySelector("header .actions button:last-child");
+  const headerAccount = document.querySelector("header .actions button:nth-child(2)");
   const adminButton = document.getElementById("adminNavButton");
   const isAdmin = !!(user && !user.isAnonymous && user.email === "mgawish027@gmail.com" && user.emailVerified);
   if (adminButton) adminButton.style.display = isAdmin ? "block" : "none";
